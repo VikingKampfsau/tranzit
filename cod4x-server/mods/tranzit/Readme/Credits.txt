@@ -1,0 +1,54 @@
+*****************************************************
+*		    Credits			    *
+*****************************************************
+
+Map mp_forsaken_world:
+- Atomic Chimney prefab by Etheross
+- Brecourt house prefab by asus8911
+- Bunker prefab by Gbomb (for cod:waw - ported to cod4 myself)
+- Leningrad house 5 prefab by asus8911 (for cod:waw - ported to cod4 myself)
+- Loadscreen by zrbrochnn
+- Vehicle model by asus89
+
+TranZit mod:
+- Apothicon Servant by trgcod4mw (model fixed myself)
+- Beretta hibana skin by hibana
+- Chainsaw model from "Dead by Daylight" exported by admin
+- Fists by mist
+- Flamethrower by trgcod4mw (fire fx by myself)
+- Minigun by bear
+- Navmesh convert script fixed by 3aGl3
+- Raygun MK3 by shippuden1592 (for cod:waw - ported to cod4 myself)
+- Usp spectrum skin by Ultrawins005 and Quaddamage
+- Wave Gun by mist
+- Zapgun by Gogeta, Ricko0z and shippuden1592
+
+Translations:
+- Russian by zrbrochnn
+
+Tools:
+- Greyhound by Scobalula
+
+I hope I did not forget about anything/anybody.
+
+*****************************************************
+*		     Thanks			    *
+*****************************************************
+
+Thanks to Infinity Ward for providing the tools/assets.
+Thanks to 3aGl3 for helping when ever i was stuck.
+Thanks to GlaZ and zrbrochnn for hosting the testserver and testing the mod.
+
+Thanks to everyone still playing the mod!
+Thanks to all BETA-Testers!
+
+*****************************************************
+*	       Additional Notes	    		    *
+*****************************************************
+
+All original and composed textures or assets in this 
+modification remain property of the sources respective
+owners.
+
+All used sound tracks are licensed by it's original
+owners and were used for promotional use only.

@@ -1,0 +1,53 @@
+Apothicon Servant	winchester1200_reflex_mp
+Chainsaw		skorpion_acog_mp
+EMP Grenade		uzi_reflex_mp
+Knife			airstrike_mp
+Katana			helicopter_mp
+Minigun			saw_grip_mp
+Sentry Gun		artillery_mp
+Generator		radar_mp
+Riot Shield		flash_grenade_mp
+Monkey Bomb		frag_grenade_short_mp
+Fists			defaultweapon_mp
+Flamethrower		uzi_acog_mp
+Frag (no cook)		frag_grenade_mp
+Perk Bottle		smoke_grenade_mp
+Raygun			briefcase_bomb_mp
+Raygun Upgrade		briefcase_bomb_defuse_mp
+Revive (anim)		concussion_grenade_mp
+Wavegun			ak74u_reflex_mp
+Wavegun (Upgrade)	ak74u_acog_mp
+Wunderwaffe		m1014_reflex_mp
+Zombie - Hellhound	ak47_gl_mp
+Zombie - Human		g3_gl_mp
+Zombie - Screecher	g36c_gl_mp
+Zombie - Quad		m14_gl_mp
+MP44 Upgrade		m4_gl_mp
+RPG Upgrade		at4_mp
+Ak47 Upgrade		ak47_acog_mp
+Ak74u Upgrade		ak74u_silencer_mp
+Barrett Upgrade		barrett_acog_mp
+Beretta Upgrade		beretta_silencer_mp
+Colt45 Upgrade		colt45_silencer_mp
+Deserteagle Upgrade	deserteaglegold_mp
+Dragunov Upgrade	dragunov_acog_mp
+G36c Upgrade		g36c_acog_mp
+G3 Upgrade		g3_acog_mp
+M1014 Upgrade		m1014_grip_mp
+M14 Upgrade		m14_acog_mp
+M16 Upgrade		m16_acog_mp
+M21 Upgrade		m21_acog_mp
+M40a3 Upgrade		m40a3_acog_mp
+M4 Upgrade		m4_acog_mp
+M60e4 Upgrade		m60e4_acog_mp
+Mp5 Upgrade		mp5_silencer_mp
+P90 Upgrade		p90_silencer_mp
+Remington700 Upgrade	remington700_acog_mp
+Rpd Upgrade		rpd_acog_mp
+Saw Upgrade		saw_acog_mp
+Skorpion Upgrade	skorpion_silencer_mp
+Usp Upgrade		usp_silencer_mp
+Uzi Upgrade		uzi_silencer_mp
+Winchester1200 Upgrade	winchester1200_grip_mp
+Zombie Death Electric	m14_reflex_mp
+Zombie Death Gravity	m14_silencer_mp
