@@ -30,11 +30,7 @@ calcPlayerRank()
 	self endon("disconnect");
 	
 	if(isDefined(self.pers["isBot"]) && !self.pers["isBot"])
-	{
-		//disable ranks for bot zombies
-		self setRank(100, 0);
 		return;
-	}
 	
 	currentDate = createDateArray(TimeToString(getRealTime(), 0, "%F"), "-");
 	playerOfflineDays = self getOfflineDays(currentDate);
@@ -55,12 +51,12 @@ calcPlayerRank()
 	self setStat(2440, playerZombieRank);
 	self setStat(2442, playerTallyMarks);
 	
-	self upDateLastSeenValue();
+	self updateLastSeenValue(currentDate);
 }
 
-upDateLastSeenValue()
+updateLastSeenValue(currentDate)
 {
-	self setStat(2441, currentDate[0] + "" + currentDate[1] + "" + currentDate[2]);
+	self setStat(2441, int(currentDate[0] + "" + currentDate[1] + "" + currentDate[2]));
 }
 
 getZombieRank(playerOfflineDays)
