@@ -102,6 +102,9 @@ onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor
 
 onZombieDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor)
 {
+	if(!isDefined(self) || !isAlive(self))
+		return;
+
 	self thread zombiePainSound();
 	
 	if(!isDefined(sHitLoc) || !isDefined(sMeansOfDeath))

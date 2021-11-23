@@ -417,6 +417,12 @@ AffectingSentry(sentry, checkDamageAngle)
 {
 	self endon("disconnect");
 	self endon("death");
+	
+	if(isPlayer(self))
+	{
+		if(!isDefined(self.model) || self.model == "")
+			return false;
+	}
 
 	pos = self getEye();
 	

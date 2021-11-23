@@ -220,6 +220,14 @@ spawnZombie(zombieType, target)
 
 setZombieModel()
 {
+	//debug to fix invisible avagadro
+	if(self.zombieType == "avagadro")
+	{
+		consolePrint("1. " + self.zombieType + "\n");
+		consolePrint("2. " + self.zombieTypeNo + "\n");
+		consolePrint("3. " + level.zombieModels[self.zombieType][self.zombieTypeNo].body + "\n");
+	}
+
 	self detachAll();
 	self setModel(level.zombieModels[self.zombieType][self.zombieTypeNo].body);
 	
@@ -565,7 +573,10 @@ avagadroBehavior(forcedTarget)
 		if(self.atTarget || self.isAttacking)
 		{
 			if(self.model == "")
+			{
+				consolePrint("Avagadro without model - calling setZombieModel \n");
 				self setZombieModel();
+			}
 		}
 	
 		self.myTarget = undefined;

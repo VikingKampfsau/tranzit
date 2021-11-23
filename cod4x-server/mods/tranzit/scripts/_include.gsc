@@ -1207,6 +1207,9 @@ giveNewWeapon(newWeapon, noWeaponSwitch, keepHands)
 		{
 			self takeCurrentWeapon();
 			slot = self getEmptyWeaponSlot();
+			
+			if(!isDefined(slot))
+				return false;
 		}
 		
 		self.pers[slot] = newWeapon;
@@ -1226,6 +1229,8 @@ giveNewWeapon(newWeapon, noWeaponSwitch, keepHands)
 		if(!isDefined(noWeaponSwitch) || !noWeaponSwitch)
 			self switchToNewWeapon(newWeapon, .05);
 	}
+	
+	return true;
 }
 
 /*-----------------------|

@@ -291,8 +291,12 @@ activateVendingMachine(localPowerSupply, delay)
 		wait 7;
 	}
 
-	self.power = true;
 	self.booting = false;
+
+	if(self.power)
+		return;
+
+	self.power = true;
 	self.isInUse = false;
 	self.trigger = spawn("trigger_radius", self.origin - (0,0,25), 0, 50, 50);
 	
