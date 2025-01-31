@@ -36,7 +36,8 @@ findTranslation(ref)
 		case "ERROR_MAP_NOT_WAYPOINTED": return "^1На карте нет путевых точек!";
 		case "GENERATOR_BAD_SPOT": return "Недопустимое место!";
 		case "PACKAPUNCH_FAIL_BAD_WEAPON": return "^1Нельзя модернизировать это оружие!";
-		case "PUNISHMENT_ELEVATOR": return "^1Пожалуйста, не используйте лифт!";		
+		case "PUNISHMENT_ELEVATOR": return "^1Пожалуйста, не используйте лифт!";	
+		case "FACEMASK_ALREADY_WEARING_DIFFERENT_TYPE": return "Ты уже в маске!";
 		
 		//these are used by huds so they are localized strings 
 		case "BARRICADES_BLOCKER_OPEN": return &"^3[{+activate}] ^7убрать баррикаду [^1&&1^7]";
@@ -56,17 +57,46 @@ findTranslation(ref)
 		case "MISTERYBOX_OPEN_PRESS_BUTTON": return &"^3[{+activate}] ^7чтобы использовать коробку [^1&&1^7]";
 		case "MONEY_OPEN_VAULT": return &"^3[{+activate}] ^7чтобы открыть свой банковский счет.";
 		case "PACKAPUNCH_USE_PRESS_BUTTON": return &"^3[{+activate}] ^7чтобы обновить свое оружие [^1&&1^7]";
-		case "PERK_VENDING_BUY_SODA": return &"^3[{+activate}] ^7чтобы получить перк-а-колу [^1&&1^7]";
+		case "PERK_VENDING_BUY_SODA": return &"^3[{+activate}] ^7чтобы купить &&1";
 		case "POWER_SWITCH_USE": return &"^3[{+activate}] ^7чтобы включить электричество.";
 		case "READYUP_PRESS_BUTTON": return &"Нажмите ^3[{+activate}] ^7для готовности к бою!";
 		case "READYUP_WAITING": return &"Ожидаем, когда все игроки будут готовы";
 		case "REVIVE_HEAL_PRESS_BUTTON": return &"Удерживайте ^3[{+activate}] ^7чтобы возродить &&1^7.";
-		case "REVIVE_LAST_STAND": return &"^1Истекаете кровью, умрёте через: &&1";
+		case "REVIVE_LAST_STAND": return &"^1Истекаете кровью, умрёте через &&1";
 		case "SENTRYGUN_DEPLOY_PRESS_BUTTON": return &"Нажмите ^3[{+attack}] ^7чтобы развернуть Турель.";
 		case "SENTRYGUN_PICKUP_PRESS_BUTTON": return &"^3[{+activate}] ^7чтобы забрать Турель";
 		case "VEHICLE_START_PRESS_BUTTON": return &"^3[{+activate}] ^7чтобы завести транспорт.";
 		case "WALLWEAPON_BUY_AMMO": return &"^3[{+activate}] ^7чтобы купить патроны [^1&&1^7]";
-		case "WALLWEAPON_BUY_WEAPON": return &"^3[{+activate}] ^7чтобы купить оружие [^1&&1^7]";
+		case "WALLWEAPON_BUY_WEAPON": return &"^3[{+activate}] ^7чтобы купить оружие &&1";
+		case "FACEMASK_PICKUP_PRESS_USE": return &"^7Нажмите ^3[{+activate}] ^7поднимите маску.";
+		case "GAME_OVER_SURVIVED_NO_ROUND": return &"Ты не выдержал ни одного раунда.";
+		case "GAME_OVER_SURVIVED_SINGLE_ROUND": return &"Ты выдержал один раунд.";
+		case "GAME_OVER_SURVIVED_MULTIPLE_ROUNDS": return &"Вы пережили &&1 раундов.";
+		case "MANTLE_HINT": return &"Нажмите ^3[{+gostand}]^7 чтобы: ";
+		
+		//used by huds but NO localized strings because the are added with setText to a localized string
+		case "PERK_QUICKREVIVE": return "Revive";
+		case "PERK_TOMBSTONE": return "RIP";
+
+		case "PERK_SPECIALGRENADE": return "Особые гранаты x3";
+		case "PERK_FRAGGRENADE": return "Осколочные x 3";
+		case "PERK_EXTRAAMMO": return "Патронташ";
+		case "PERK_DETECTEXPLOSIVE": return "Саперная команда";
+		case "PERK_BULLETDAMAGE": return "Убойная сила";
+		case "PERK_ARMORVEST": return "Джаггернаут";
+		case "PERK_FASTRELOAD": return "Ловкость рук";
+		case "PERK_ROF": return "Двойной выстрел";
+		case "PERK_TWOPRIMARIES": return "Командо";
+		case "PERK_GPSJAMMER": return "Генератор помех";
+		case "PERK_EXPLOSIVEDAMAGE": return "Ударная волна";
+		case "PERK_LONGERSPRINT": return "Экстремальная подготовка";
+		case "PERK_BULLETACCURACY": return "Неподвижный прицел";
+		case "PERK_PISTOLDEATH": return "Последний выстрел";
+		case "PERK_GRENADEPULLDEATH": return "Мученик";
+		case "PERK_BULLETPENETRATION": return "Проникающий удар";
+		case "PERK_HOLDBREATH": return "Железные легкие";
+		case "PERK_QUIETER": return "Мертвая тишина";
+		case "PERK_PARABOLIC": return "Подслушивание";
 		
 		//nothing found - return empty strings
 		//importand: when a localized string (&"EXAMPLE") is expected this will crash because we return a normal string

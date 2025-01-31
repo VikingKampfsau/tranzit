@@ -2,22 +2,36 @@
 
 init()
 {
+	precacheShader("waypoint_empty");
+
 	precacheShader("hud_overlay_claws_00");
 	precacheShader("hud_overlay_claws_01");
 	precacheShader("hud_overlay_claws_02");
+
+	precacheShader("hint_mantle");
 
 	precacheModel("viewmodel_hands_bare");
 
 	level.surviormodels = [];
 	
-	initSurvivorModel("body_complete_mp_russian_farmer", "");
-	initSurvivorModel("body_complete_mp_zakhaev", "");
-	initSurvivorModel("body_complete_mp_zakhaevs_son_coup", "");
-	initSurvivorModel("body_complete_mp_vip", "");
-	initSurvivorModel("body_mp_vip_pres", "head_mp_usmc_zack");
+	initSurvivorModel("body_complete_mp_russian_farmer", "", true);
+	initSurvivorModel("body_complete_mp_zakhaev", "", true);
+	initSurvivorModel("body_complete_mp_zakhaevs_son_coup", "", true);
+	initSurvivorModel("body_complete_mp_vip", "", true);
+	//initSurvivorModel("body_mp_vip_pres", "head_mp_usmc_zack", false);
+	
+	/*the tranzit_extrafunctions plugin adds this new functions:
+	player printWeaponState(); -> returns the current weaponState integer
+	player isSwitchingWeapons(); -> returns if the player cycles weapons
+	player isFiring(); -> returns if the player shoots
+	player isMeleeing(); -> returns if the player melees
+	player isReloading(); -> returns if the player reloads his weapon
+	player isThrowingGrenade(); -> returns if the player throws a greande
+	player isSprinting(); -> returns if the player sprints
+	*/
 }
 
-initSurvivorModel(body, head)
+initSurvivorModel(body, head, hasSilhouette)
 {
 	precacheModel(body);
 	
@@ -29,6 +43,12 @@ initSurvivorModel(body, head)
 	level.surviormodels[curEntry].entry = curEntry;
 	level.surviormodels[curEntry].body = body;
 	level.surviormodels[curEntry].head = head;
+	
+	if(isDefined(hasSilhouette) && hasSilhouette)
+	{
+		level.surviormodels[curEntry].silhouette = body + "_silhouette";
+		precacheModel(level.surviormodels[curEntry].silhouette);
+	}
 }
 
 spawnSurvivor()
@@ -41,22 +61,31 @@ spawnSurvivor()
 	if(game["tranzit"].wave > 0)
 		self.pers["lives"] = 0;
 
-	if(game["tranzit"].wave > 6)
-		self.pers["score"] = game["tranzit"].score_latejoiner;
-	else
-		self.pers["score"] = game["tranzit"].score_start;
+	//if(!self.wasAliveAtMatchStart)
+	{
+		if(game["tranzit"].wave > 6)
+		{
+			if(self.pers["score"] < game["tranzit"].score_latejoiner)
+				self.pers["score"] = game["tranzit"].score_latejoiner;
+		}
+		else
+		{
+			if(self.pers["score"] < game["tranzit"].score_start)
+				self.pers["score"] = game["tranzit"].score_start;
+		}
+	}
 			
 	self.score = self.pers["score"];
 	self setStat(2400, self.score);
 
-	self.godmode = false;
-
 	self.perk_hud = [];
 	self.headicon = "";
+	self.godmode = false;
 	self.banking = false;
 	self.isDrinkingSoda = false;
 	self.mantleInVehicle = false;
 	self.underDwarfAttack = false;
+	self.isNapalmBurning = false;
 	self.dwarfOnShoulders = undefined;
 	
 	self.buyingWallweapon = false;
@@ -69,6 +98,9 @@ spawnSurvivor()
 
 	if(isDefined(self.bleedOverlay))
 		self.bleedOverlay destroy();
+		
+	if(isDefined(self.mantleHintHud))
+		self.mantleHintHud destroy();
 
 	//not necessary - we detachAll right before the playermodel is set
 	//self detachOldWeaponModels();
@@ -79,14 +111,29 @@ spawnSurvivor()
 	self SetMoveSpeedScale(self.moveSpeedScale);
 
 	self thread monitorSpeed();
+	self thread checkVehicle();
 	//self thread watchForElevator(); //to much false positives
+	self thread damagePlayerInFog();
 	self thread monitorDiveToProne();
 	self thread createClawDamageHud();
-	self thread scripts\maparea::monitorMovementInMap();
+	self thread createPositionHudForTeam();
+	
+	//taken out
+	//the silhouette is only visible when the player is in the same portal of the map
+	//it's also not possible to show it to single players only
+	//self thread createSilhouetteWhenNooneCanSeeHim();
+	
+	if(isDefined(level.tranzitVehicle))
+		self thread createLocationHud();
 	
 	self scripts\perks::setZombiePerk("specialty_pistoldeath");
 	
-	self setClientDvar("ui_showStockScoreboard", 1); //remove this lince once there is a hook to hide the default scoreboard
+	self thread scripts\weather::playerWeather();
+	
+	if(game["debug"]["status"] && game["debug"]["playerValueHud"])
+	{
+		self thread scripts\debug\valuedebugging::privateValueDebugHuds();
+	}
 }
 
 detachOldWeaponModels()
@@ -133,26 +180,25 @@ setSurvivorModel()
 	
 	if(isDefined(level.surviormodels[self.curModelID].head) && level.surviormodels[self.curModelID].head != "")
 		self attach(level.surviormodels[self.curModelID].head);
-		
-	//for debugging
-	if(getDvar("debug_zom_anims") != "")
-	{
-		self.zombieTypeNo = 0;
-		self.zombieType = getDvar("debug_zom_anims");
-		self thread scripts\zombies::setZombieModel();
-	}
 }
 
 giveLoadout()
 {
-	self TakeAllWeapons();
+	self takeAllWeapons();
 	self scripts\perks::clearZombiePerks();
 
-	self GiveWeapon(game["tranzit"].player_start_weapon, 0);
-	self GiveMaxAmmo(game["tranzit"].player_start_weapon);
-	self SetSpawnWeapon(game["tranzit"].player_start_weapon);
-	
-	self GiveWeapon(game["tranzit"].player_empty_hands, 0);
+	self giveWeapon(game["tranzit"].player_empty_hands, 0);
+
+	self giveWeapon(game["tranzit"].player_start_weapon, 0);
+	self giveMaxAmmo(game["tranzit"].player_start_weapon);
+
+	if(game["tranzit"].playersReady)
+		self setSpawnWeapon(game["tranzit"].player_start_weapon);
+	else
+	{
+		self setSpawnWeapon(game["tranzit"].player_empty_hands);
+		self thread survivorWakeUp();
+	}
 	
 	self.pers["primaryWeapon"] = game["tranzit"].player_start_weapon;
 	self.pers["secondaryWeapon"] = game["tranzit"].player_empty_hands;
@@ -163,17 +209,129 @@ giveLoadout()
 	self switchToOffhand("frag_grenade_mp");
 
 	//clear the actionSlots
-	self SetActionSlot(1, ""); //craftables (nightvision)
-	self SetActionSlot(3, ""); //explosives (c4 etc slot)
-	self SetActionSlot(4, ""); //hardpoints (air support slot)
-	self.actionSlotItem = undefined;
-	self.actionSlotWeapon = undefined;
-	self.actionSlotHardpoint = undefined;
-
-	self thread scripts\battlechatter::monitorPlayerAmmo();
+	/*craftables (cod4: nightvision slot)*/	self SetActionSlot(1, ""); self.actionSlotItem = undefined;
+	/*facemasks  (cod4: unused slot)*/		self SetActionSlot(2, ""); self.facemask = spawnStruct(); //DO NOT USE SetActionSlot() FOR THIS SLOT!
+	/*explosives (cod4: c4/clay/rpg slot)*/	self SetActionSlot(3, ""); self.actionSlotWeapon = undefined;
+	/*hardpoints (cod4: hardpoints slot)*/	self SetActionSlot(4, ""); self.actionSlotHardpoint = undefined;
 	
-//for debugging
-//self giveActionslotWeapon("hardpoint", "carepackage");
+	self thread scripts\battlechatter::monitorPlayerAmmo();
+}
+
+survivorWakeUp()
+{
+	self endon("disconnect");
+	self endon("death");
+	
+	if(game["debug"]["status"] && !game["debug"]["playerAwakening"])
+	{
+		self.isAwake = true;
+		return;
+	}
+	
+	self.isAwake = false;
+	
+	self ShellShock("frag_grenade_mp", 10);
+	self thread survivorWakeUpPainSound();
+	
+	//why doing a new hud when i can use an existing one ;)
+	if(isDefined(self.maskToggleBg))
+		self.maskToggleBg destroy();
+	
+	self.maskToggleBg = newClientHudElem(self);
+	self.maskToggleBg.sort = -1;
+	self.maskToggleBg.alignX = "left";
+	self.maskToggleBg.alignY = "top";
+	self.maskToggleBg.x = 0;
+	self.maskToggleBg.y = 0;
+	self.maskToggleBg.horzAlign = "fullscreen";
+	self.maskToggleBg.vertAlign = "fullscreen";
+	self.maskToggleBg.foreground = false;
+	self.maskToggleBg setShader("black", 640, 480);
+	
+	while(self getStance() != "prone")
+	{
+		self freezeControls(false);
+		self setStance("prone");
+		wait .05;
+		self freezeControls(true);
+	}
+
+	self freezeControls(true);
+	self forceViewmodelAnimation("reload");
+
+	self.maskToggleBg.alpha = 1;
+	self.maskToggleBg fadeOverTime(2);
+	self.maskToggleBg.alpha = 0;
+	
+	wait 8.2;
+	
+	while(self getStance() != "stand")
+	{
+		self freezeControls(false);
+		self setStance("stand");
+		wait .05;
+		self freezeControls(true);
+	}
+	
+	self freezeControls(true);
+	
+	wait .6;
+	
+	self forceViewmodelAnimation("raise");
+	self.isAwake = true;
+	
+	//make sure I can move when just testing things on a map without zombies
+	if(getDvarInt("developer") > 0)
+		self freezeControls(false);
+		
+	if(isDefined(self.maskToggleBg))
+		self.maskToggleBg destroy();
+}
+
+survivorWakeUpPainSound()
+{
+	self endon("disconnect");
+	self endon("death");
+	
+	while(!self.isAwake)
+	{
+		self playLocalSound("breathing_hurt");
+		wait .784;
+		wait (0.1 + randomfloat (0.8));
+	}
+	
+	self stopLocalSound("breathing_hurt");
+	self playLocalSound("breathing_better");
+}
+
+playViewDeathAnim()
+{
+	self endon("disconnect");
+	self endon("death");
+
+	while(!self isOnGround())
+		wait .05;
+
+	//check if the player can go prone at the current position
+	if(!self canGoProne(self isOnGround(), self getStance() == "prone"))
+		self freezeControls(true);
+	else
+	{
+		self takeAllWeapons();
+		
+		while(self getStance() != "prone")
+		{
+			self execClientCommand("goprone");
+			wait .05;
+		}
+		
+		self freezeControls(true);
+		
+		deathWeapon = getWeaponFromCustomName("player_death");
+		
+		self giveWeapon(deathWeapon);
+		self switchToWeapon(deathWeapon);
+	}
 }
 
 diveFromSprinting()
@@ -309,12 +467,53 @@ monitorSpeed()
 	
 	while(1)
 	{
+		if(isDefined(self.myLocArrow))
+		{
+			self.myLocArrow.x = self.origin[0];
+			self.myLocArrow.y = self.origin[1];
+			self.myLocArrow.z = self.origin[2] + 64;
+		}
+	
 		self.velocity = self getVelocity();
 		self.moveSpeed = length(self.velocity);
 		wait .05;
 	}
 	
 	//result: sprint is 285
+}
+
+checkVehicle()
+{
+	self endon("disconnect");
+	self endon("death");
+	
+	while(1)
+	{
+		self.isOnTruck = scripts\vehicle::playerOnLoadingArea();
+		
+		if(!self.isOnTruck)
+		{
+			if(self scripts\vehicle::canMantleInVehicle(level.tranzitVehicle.mantleSpots[0]))
+			{
+				self thread scripts\survivors::showMantleHint();
+			
+				if(self jumpButtonPressed())				
+					self scripts\vehicle::doMantleInVehicle();
+			}
+			else
+			{
+				if(isDefined(self.mantleHintHud))
+					self.mantleHintHud destroy();
+			}
+		}
+		else
+		{
+			if(isDefined(self.mantleHintHud))
+				self.mantleHintHud destroy();
+		}
+		
+		wait .05;
+	}
 }
 
 watchForElevator()
@@ -354,6 +553,97 @@ watchForElevator()
 		}
 
 		detection = 0;
+	}
+}
+
+damagePlayerInFog()
+{
+	self endon("disconnect");
+	self endon("death");
+
+	if(game["debug"]["status"] && game["debug"]["noFog"])
+		return;
+
+	wasInFog = false;
+	soundPlayTime = 0;
+	soundPlaying = false;
+	lasthurttime = getTime();
+	while(1)
+	{
+		wait .1;
+	
+		if(self scripts\maparea::isInPlayArea())
+		{
+			if(wasInFog)
+			{
+				wasInFog = false;
+				
+				if(soundPlaying)
+				{
+					soundPlayTime = 0;
+					soundPlaying = false;
+					self StopLocalSound("tabun_shock");
+					self PlayLocalSound("tabun_shock_end");
+				}
+			}
+		
+			continue;
+		}
+	
+		//no damage when wearing the gas mask
+		if(	isDefined(self.facemask.active) && self.facemask.active &&
+			isDefined(self.facemask.type) && self.facemask.type == "gas")
+		{
+			if(soundPlaying)
+			{
+				soundPlayTime = 0;
+				soundPlaying = false;
+				self StopLocalSound("tabun_shock");
+				self PlayLocalSound("tabun_shock_end");
+			}
+		
+			continue;
+		}
+	
+		//no damage when riding the vehicle (that would just suck)
+		if(isDefined(self.isOnTruck) && self.isOnTruck)
+		{
+			if(soundPlaying)
+			{
+				soundPlayTime = 0;
+				soundPlaying = false;
+				self StopLocalSound("tabun_shock");
+				self PlayLocalSound("tabun_shock_end");
+			}
+		
+			continue;
+		}
+	
+		hurttime = getTime();
+		randomizedTime = randomFloatRange(1.88, 2.33);
+		if((hurttime - lasthurttime) < (randomizedTime*1000))
+			continue;
+
+		//restart the sound (tabun_shock has a length of 12 seconds)
+		if(soundPlayTime > 12)
+		{
+			soundPlayTime = 0;
+			soundPlaying = false;
+		}
+
+		if(!soundPlaying)
+		{
+			self PlayLocalSound("tabun_shock");
+			soundPlaying = true;
+		}
+
+		iDamage = 2;
+		wasInFog = true;
+		soundPlayTime += (randomizedTime + 0.1);
+		lasthurttime = hurttime;
+				
+		self ShellShock("frag_grenade_mp", 1);
+		self [[level.callbackPlayerDamage]](self, self, iDamage, 0, "MOD_MELEE", "ak47_mp", self getEye(), VectorToAngles(self.origin - self getEye()), "none", 0, "without mask in fog", true, true);
 	}
 }
 
@@ -415,4 +705,198 @@ destroyClawDmgHud()
 		if(isDefined(self.clawDmgHud[i]))
 			self.clawDmgHud[i] destroy();
 	}
+}
+
+createPositionHudForTeam(shader)
+{
+	self endon("death");
+	self endon("disconnect");
+
+	if(isDefined(self.myLocArrow))
+		self.myLocArrow destroy();
+	
+	if(!isDefined(shader))
+		shader = "waypoint_empty";
+	
+	self.myLocArrow = newTeamHudElem(self.pers["team"]);
+	self.myLocArrow.x = self.origin[0];
+	self.myLocArrow.y = self.origin[1];
+	self.myLocArrow.z = self.origin[2];
+	self.myLocArrow.isFlashing = false;
+	self.myLocArrow.isShown = true;
+	self.myLocArrow.baseAlpha = 1;
+	self.myLocArrow.alpha = 1;
+	self.myLocArrow.owner = self;
+	self.myLocArrow.team = self.pers["team"];
+	self.myLocArrow.target = self;
+	self.myLocArrow setShader(shader, 15, 15);
+	self.myLocArrow setWayPoint(false, shader);
+	self.myLocArrow setTargetEnt(self.myLocArrow.target);
+}
+
+updatePositionHudForTeam(shader, alpha)
+{
+	if(!isDefined(shader))
+		shader = "waypoint_empty";
+	
+	if(!isDefined(alpha))
+		alpha = 1;
+		
+	self.myLocArrow setShader(shader, 15, 15);
+	self.myLocArrow setWayPoint(false, shader);
+	self.myLocArrow.baseAlpha = alpha;
+	self.myLocArrow.alpha = alpha;
+}
+
+createSilhouetteWhenNooneCanSeeHim()
+{
+	self endon("disconnect");
+	self endon("death");
+	
+	self.silhouette = false;
+	
+	while(1)
+	{
+		wait 1;
+		
+		//don't draw a silhouette when the player is alone
+		if(level.aliveCount["allies"] == 1)
+		{
+			iPrintLnBold("only one player");
+			continue;
+		}
+		
+		drawSilhouette = true;
+		for(i=0;i<level.players.size;i++)
+		{
+			//draw the silhouette when NO friendly player can see him, otherwise players who can see him will see a white skin
+			if(level.players[i] isASurvivor())
+			{
+				if(level.players[i] == self)
+					continue;
+			
+				visibilityAmount = self SightConeTrace(level.players[i] getEye(), level.players[i]);
+				
+				self iPrintLnBold(level.players[i].name + " can see you with " + visibilityAmount + "perc");
+				
+				if(visibilityAmount >= 0.1)
+				{
+					drawSilhouette = false;
+					break;
+				}
+				
+			}
+		}
+		
+		//attach the silhouette model when it's not attached yet
+		//dettach the silhouette model when it's attached only
+		if(self.silhouette != drawSilhouette)
+		{
+			if(drawSilhouette)
+				self setModel(level.surviormodels[self.curModelID].silhouette);
+			else
+				self setModel(level.surviormodels[self.curModelID].body);
+			
+			if(self.model == level.surviormodels[self.curModelID].silhouette)
+				iPrintLnBold(self.name + " attached silhouette");
+		}
+		
+		self.silhouette = drawSilhouette;
+	}
+}
+
+createLocationHud()
+{
+	level endon( "game_ended" );
+
+	self endon("disconnect");
+	self endon("death");
+	
+	if(isDefined(self.locationTextHud))
+		self.locationTextHud destroy();
+
+	self.locationTextHud = NewClientHudElem(self);
+	self.locationTextHud.font = "default";
+	self.locationTextHud.fontScale = 1.4;
+	self.locationTextHud.alignX = "left";
+	self.locationTextHud.alignY = "top";
+	self.locationTextHud.horzAlign = "left";
+	self.locationTextHud.vertAlign = "top";
+	self.locationTextHud.alpha = 0.75;
+	self.locationTextHud.sort = 1;
+	self.locationTextHud.x = 6;
+	self.locationTextHud.y = 8;
+	self.locationTextHud.archived = false;
+	self.locationTextHud.foreground = true;
+	self.locationTextHud.hidewheninmenu = true;
+	self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
+
+	locationName = undefined;
+	if(isDefined(self.myAreaLocation))
+	{
+		locationName = scripts\maparea::getAreaNameFromID(self.myAreaLocation);
+		if(isDefined(locationName))
+		{
+			self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS");
+			self.locationTextHud setText(locationName);
+		}
+	}
+
+	while(1)
+	{
+		prevLocation = self.myAreaLocation;
+
+		wait 1;
+	
+		if(!isDefined(self.myAreaLocation))
+		{
+			self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
+			self.locationTextHud setText("");
+		}
+		else
+		{
+			if(isDefined(prevLocation) && prevLocation == self.myAreaLocation)
+				continue;
+		
+			locationName = scripts\maparea::getAreaNameFromID(self.myAreaLocation);
+			if(isDefined(locationName))
+			{
+				self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS");
+				self.locationTextHud setText(locationName);
+			}
+			else
+			{
+				self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
+				self.locationTextHud setText("");
+			}
+		}
+	}
+}
+
+showMantleHint()
+{
+	level endon( "game_ended" );
+
+	self endon("disconnect");
+	self endon("death");
+	
+	if(isDefined(self.mantleHintHud))
+		self.mantleHintHud destroy();
+	
+	self.mantleHintHud = NewClientHudElem(self);
+	self.mantleHintHud.font = "default";
+	self.mantleHintHud.fontScale = 1.4;
+	self.mantleHintHud.alignX = "right";
+	self.mantleHintHud.alignY = "middle";
+	self.mantleHintHud.horzAlign = "center";
+	self.mantleHintHud.vertAlign = "middle";
+	self.mantleHintHud.sort = 1;
+	self.mantleHintHud.x = 65;
+	self.mantleHintHud.y = 105;
+	self.mantleHintHud.archived = false;
+	self.mantleHintHud.foreground = true;
+	self.mantleHintHud.hidewheninmenu = true;
+	self.mantleHintHud.label = self getLocTextString("MANTLE_HINT");
+	self.mantleHintHud setShader("hint_mantle", 40, 40);
+	self.mantleHintHud.alpha = 1;
 }

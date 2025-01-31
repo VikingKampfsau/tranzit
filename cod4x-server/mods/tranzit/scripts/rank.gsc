@@ -47,16 +47,27 @@ calcPlayerRank()
 	self.zombieRank = playerZombieRank;
 	self.zombieRankCounts = self getStat(2443);
 	
+	if(game["debug"]["status"] && game["debug"]["playerRank"])
+	{
+		consolePrint("currentDate: " + TimeToString(getRealTime(), 0, "%F") + "\n");
+		consolePrint("player: " + self.name + "\n");
+		consolePrint("playerOfflineDays: " + playerOfflineDays + "\n");
+		consolePrint("playerTallyMarks: " + playerTallyMarks + "\n");
+		consolePrint("playerZombieRank: " + playerZombieRank + "\n");
+		consolePrint("playerIsAddicted: " + playerIsAddicted + "\n");
+	}
+	
 	self setRank(playerZombieRank, playerIsAddicted);
 	self setStat(2440, playerZombieRank);
 	self setStat(2442, playerTallyMarks);
+	self setStat(2326, playerIsAddicted);
 	
 	self updateLastSeenValue(currentDate);
 }
 
-updateLastSeenValue(currentDate)
+updateLastSeenValue(date)
 {
-	self setStat(2441, int(currentDate[0] + "" + currentDate[1] + "" + currentDate[2]));
+	self setStat(2441, int(date[0] + "" + date[1] + "" + date[2]));
 }
 
 getZombieRank(playerOfflineDays)
@@ -118,7 +129,7 @@ getOfflineDays(currentDate)
 		playerlastSeen = currentDate;
 	else
 		playerlastSeen = createDateArray("" + playerlastSeen);
-		
+	
 	playerOfflineDays = dateDiffInDays(currentDate, playerlastSeen);
 	
 	return playerOfflineDays;
@@ -126,7 +137,7 @@ getOfflineDays(currentDate)
 
 rankUpPlayer()
 {
-	self iPrintLnBold("rank up!");
+	//self iPrintLnBold("rank up!");
 
 	maxRank = int(tableLookup("mp/rankTable.csv", 0, "maxrank", 1));
 	currentRank = self getStat(2440);
@@ -143,6 +154,7 @@ rankUpPlayer()
 	
 	self setRank(playerZombieRank, playerIsAddicted);
 	self setStat(2440, playerZombieRank);
+	self setStat(2326, playerIsAddicted);
 	self setRankCounts(0);
 }
 

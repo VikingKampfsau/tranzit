@@ -83,7 +83,7 @@ init()
 
 createSpawnFile()
 {
-	wait .1; //used to makes sure the notify/waittill works
+	wait .1; //used to make sure the notify/waittill works
 
 	spawns = [];		// array with all spawns in the map file
 	spawn = undefined;
@@ -259,7 +259,7 @@ createSpawnFile()
 
 addMapAreaToSpawnFile(startAtLineNo)
 {
-	wait .1; //used to makes sure the notify/waittill works
+	wait .1; //used to make sure the notify/waittill works
 
 	if(!isDefined(startAtLineNo))
 		startAtLineNo = 0;
@@ -322,7 +322,7 @@ addMapAreaToSpawnFile(startAtLineNo)
 			
 			for(i=0;i<level.mapAreas.size;i++)
 			{
-				if(pointInGeometry(point, level.mapAreas[i], true))
+				if(pointInTrigger(point, level.mapAreas[i]))
 				{
 					maparea = level.mapAreas[i].spawner_id;
 					break;
@@ -348,7 +348,7 @@ addMapAreaToSpawnFile(startAtLineNo)
 
 createNavMeshFile(updateZValueInMapFile)
 {
-	wait .1; //used to makes sure the notify/waittill works
+	wait .1; //used to make sure the notify/waittill works
 
 	shapes = [];		// array with all shapes in the map file
 
@@ -551,7 +551,7 @@ createNavMeshFile(updateZValueInMapFile)
 
 createWaypointFile(startAtLineNo)
 {
-	wait .1; //used to makes sure the notify/waittill works
+	wait .1; //used to make sure the notify/waittill works
 
 	if(!isDefined(startAtLineNo))
 		startAtLineNo = 0;
@@ -574,7 +574,7 @@ createWaypointFile(startAtLineNo)
 			return;
 		}
 
-		consolePrint("Adding maparea to waypointfile\n");
+		consolePrint("createWaypointFile: Adding maparea to waypoint file\n");
 
 		if(!isDefined(level.mapAreas) || !level.mapAreas.size)
 		{
@@ -618,8 +618,12 @@ createWaypointFile(startAtLineNo)
 			line = fReadLn(inputFile);
 			curLineNum++;
 			
-			if(!isDefined(line) || line == "" || line == " ")
+			//if undefined then we reached the end of file
+			if(!isDefined(line))
 				break;
+
+			if(isEmptyString(line))
+				continue;
 
 			maparea = level.NoMapAreaValue;
 
@@ -629,7 +633,7 @@ createWaypointFile(startAtLineNo)
 			
 			for(i=0;i<level.mapAreas.size;i++)
 			{
-				if(pointInGeometry(point, level.mapAreas[i], true))
+				if(pointInTrigger(point, level.mapAreas[i]))
 				{
 					maparea = level.mapAreas[i].spawner_id;
 					break;
@@ -670,7 +674,10 @@ cleanupExportFolder()
 		tempFile = sourceFile + ".tmp";
 		
 		if( getDvarInt("navmeshtool_cleanup") == 2 )
-			lua_copyFile(sourceFile, targetFile);
+		{
+			if(fs_testFile(sourceFile))
+				lua_copyFile(sourceFile, targetFile);
+		}
 			
 		if(fs_testFile(sourceFile))
 			FS_Remove(sourceFile);
@@ -678,4 +685,134 @@ cleanupExportFolder()
 		if(fs_testFile(tempFile))
 			FS_Remove(tempFile);
 	}
+}
+
+//this is not part of the navmesh which is generated from terrain info
+//but is required when the navhmesh is generated with pathnodes
+addMapAreaToWaypointFile(startAtLineNo)
+{
+	if(!isDefined(startAtLineNo))
+		startAtLineNo = 0;
+
+	filePath = "waypoints/"+ toLower(getDvar("mapname")) + "_waypoints.csv";
+	
+	sourceFile = getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + filePath;
+	tempFile = getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + filePath + ".tmp";
+	
+	if(startAtLineNo > 0)
+	{
+		outputFile = openFile(filePath, "append");
+		consolePrint("addMapAreaToWaypointFile: Adding maparea to waypoint file (appending)\n");
+	}
+	else
+	{
+		lua_copyFile(sourceFile, tempFile);
+	
+		consolePrint("addMapAreaToWaypointFile: Adding maparea to waypoint file\n");
+
+		if(!isDefined(level.mapAreas) || !level.mapAreas.size)
+		{
+			consolePrint("^1No mapAreas defined yet - aborting\n");
+			wait .1; //used to make sure the notify/waittill works
+			level notify("navmeshtool_finished_addMapAreaToWaypointFile");
+			return;
+		}
+	
+		outputFile = openFile(filePath, "write");
+	}
+	
+	curLineNum = 0;
+	inputFile = openFile(filePath + ".tmp", "read");
+	
+	if(inputFile > 0 && outputFile > 0)
+	{
+		line = "";
+		if(startAtLineNo > 0)
+		{
+			for(i=0;i<startAtLineNo;i++)
+			{
+				line = fReadLn(inputFile);
+				curLineNum++;
+			}
+		}
+	
+		while(1)
+		{
+			//have to do this to avoid hitting the var limit
+			//during the tests i was able to run up to 9.000
+			//so 5000 should be fine to use
+			if((curLineNum - startAtLineNo) >= 5000)
+			{
+				closeFile(inputFile);
+				closeFile(outputFile);
+
+				thread addMapAreaToWaypointFile(curLineNum);
+				return;
+			}
+		
+			line = fReadLn(inputFile);
+			curLineNum++;
+			
+			//if undefined then we reached the end of file
+			if(!isDefined(line))
+			{
+				consolePrint("EOF at " + curLineNum + "\n");
+				break;
+			}
+
+			if(isEmptyString(line))
+				continue;
+
+			line = StrRepl(line, "\r", "");
+			line = StrRepl(line, "\n", "");
+
+			maparea = level.NoMapAreaValue;
+
+			tokens = strTok(line, ",");
+
+			point = tokens[1];
+			point = strTok(point, " ");
+			point = (float(point[0]), float(point[1]), float(point[2]));
+			
+			for(i=0;i<level.mapAreas.size;i++)
+			{
+				if(pointInTrigger(point, level.mapAreas[i]))
+				{
+					maparea = level.mapAreas[i].spawner_id;
+					break;
+				}
+			}
+			
+			consolePrint(line + "\n");
+			
+			childCount = tokens[2];
+			if(int(childCount))
+				newLine = line + ", " + maparea;
+			else
+			{
+				consolePrint("^1WP " + tokens[0] + " has no children!\n");
+				newLine = line + ", " + tokens[0] + ", " + maparea;
+			}
+				
+			newLine = StrRepl(newLine, ",,", ",");
+			
+			FS_WriteLine(outputFile, newLine);
+		}
+		
+		closeFile(inputFile);
+		closeFile(outputFile);
+	}
+	else
+	{
+		if(inputFile <= 0)
+			consolePrint("^1inputFile not found - aborting\n");
+		else if(outputFile <= 0)
+			consolePrint("^1outputFile not found - aborting\n");
+	}
+	
+	if(fs_testFile(tempFile))
+		FS_Remove(tempFile);
+	
+	wait .1; //used to make sure the notify/waittill works
+	level notify("navmeshtool_finished_addMapAreaToWaypointFile");
 }

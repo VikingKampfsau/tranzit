@@ -20,7 +20,7 @@ init()
 	//costs
 	game["tranzit"].score["suicide"] = -400;
 	game["tranzit"].score["ammobox"] = -1750;
-	game["tranzit"].score["laststand"] = -900;
+	game["tranzit"].score["laststand"] = -300;
 	game["tranzit"].score["packapunch"] = -5000;
 	game["tranzit"].score["treasure_chest"] = -950;
 	game["tranzit"].score["perk_doubletap"] = -2000;
@@ -291,6 +291,10 @@ onMoneyEvent(event, amount, multiplier)
 	if(!isDefined(value) || value == 0)
 		return;
 
+	surpressSound = false;
+	if(isDefined(event) && (event == "laststand" || event == "suicide"))
+		surpressSound = true;
+
 	if(isDefined(multiplier))
 		value *= multiplier;
 		
@@ -299,29 +303,105 @@ onMoneyEvent(event, amount, multiplier)
 	if(value > 0)
 		self gainMoney(value);
 	else
-		self wasteMoney(value);
+		self wasteMoney(value, surpressSound);
 }
 
 gainMoney(amount)
 {
+	if(game["powerup_doublepoints"])
+		amount *= 2;
+
 	self.pers["score"] += amount;
 	self.pers["score"] = int(self.pers["score"]);
 	self.score = self.pers["score"];
-	self.points = self.score; //rotu
+	self.amount = self.score; //rotu
 	
 	self setStat(2400, self.pers["score"]);
 	self notify("update_playerscore_hud");
+	
+	self thread moneyChangeHud(amount);
 }
 
-wasteMoney(amount)
+wasteMoney(amount, surpressSound)
 {
 	self.pers["score"] -= abs(amount);
 	self.pers["score"] = int(self.pers["score"]);
 	self.score = self.pers["score"];
-	self.points = self.score; //rotu
+	self.amount = self.score; //rotu
 
 	self setStat(2400, self.pers["score"]);
 	self notify("update_playerscore_hud");
 	
-	self playSoundRef("buy_item");
+	if(!isDefined(surpressSound) || !surpressSound)
+		self playSoundRef("buy_item");
+		
+	self thread moneyChangeHud(amount);
+}
+
+moneyChangeHud(amount)
+{
+	self endon("disconnect");
+	
+	//Copied from rotu
+	// START: Collection of upgradeamount
+	if(!isDefined(self.upgradeHudamount))
+		self.upgradeHudamount = 0;
+	
+	// We collect all upgradeamount we gain during two server frames, so we don't display
+	// too many upgradepoint increases/decreases on the player's screen, resulting in some of them not being displayed
+	self.upgradeHudamount += amount;
+	old = self.upgradeHudamount;
+	wait 0.05;
+	
+	if(self.upgradeHudamount != old)
+		return;
+	// END: Collection of upgradeamount
+	
+	amount = int(self.upgradeHudamount);
+	self.upgradeHudamount = 0;
+
+	moneyChange = newClientHudElem(self);
+	moneyChange.font = "objective";
+	moneyChange.fontscale = 1.4;
+	moneyChange.alignX = "right";
+	moneyChange.alignY = "middle";
+	moneyChange.horzAlign = "right";
+	moneyChange.vertAlign = "bottom";
+	moneyChange.alpha = 1;
+	moneyChange.sort = 1;
+	moneyChange.x = -100; // Location from hud.menu
+	moneyChange.y = -74; // Location from hud.menu
+	moneyChange.archived = true;
+	moneyChange.foreground = true;
+	moneyChange.hidewheninmenu = true;
+	
+	if(amount > 0)
+	{
+		moneyChange.color = (0.9, 0.9, 0);
+		moneyChange.label = &"MP_PLUS"; //SCRIPT_PLUS_DOLLAR
+		
+		thread scripts\statistics::incStatisticValue("money_gained", 2415, amount);
+	}
+	else
+	{
+		moneyChange.color = (0.423, 0.004, 0);
+		moneyChange.label = &"&&1"; //SCRIPT_DOLLAR
+		
+		thread scripts\statistics::incStatisticValue("money_lost", 2416, abs(amount));
+	}
+	
+	moneyChange setValue(amount);
+	
+	moneyChange moveOverTime(0.5);
+	moneyChange.x -= (20 + RandomInt(40)); 
+	moneyChange.y -= (-15 + RandomInt(30)); 
+	
+	wait(0.25);
+
+	moneyChange fadeOverTime(0.25); 
+	moneyChange.alpha = 0; 
+	
+	wait(0.25);
+
+	moneyChange destroy(); 
 }

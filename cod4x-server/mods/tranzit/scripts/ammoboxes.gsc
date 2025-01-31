@@ -3,26 +3,38 @@
 init()
 {
 	precacheModel("zombie_vending_ammo");
+	precacheModel("buildable_turret_ammo_box");
 
 	thread loadAmmoboxes();
 }
 
 loadAmmoboxes()
 {
-	level.ammoBoxes = getEntArray("ammobox", "targetname");
-	
-	//no ammoBoxes found - check for rotu map
-	if(!isDefined(level.ammoBoxes) || !level.ammoBoxes.size)
+	if(game["tranzit"].mapType == "tranzit")
+		level.ammoBoxes = getEntArray("ammobox", "targetname");
+	else if(game["tranzit"].mapType == "rotu")
 	{
-		wait 2;
-		
 		if(isDefined(level.rotuAmmoBoxName))
 			level.ammoBoxes = getEntArray(level.rotuAmmoBoxName, "targetname");
+	}
+	else
+	{
+		bombZones = getEntArray("bombzone", "targetname");
+		
+		level.ammoBoxes = [];
+		for(i=0;i<bombZones.size;i++)
+		{
+			level.ammoBoxes[level.ammoBoxes.size] = getEntArray(bombZones[i].target, "targetname")[0];
+			bombZones[i] delete(); //delete the visual bombZone model
+		}
 	}
 
 	//nothing found - return
 	if(!isDefined(level.ammoBoxes) || !level.ammoBoxes.size)
+	{
+		consolePrint("^1Map has no spawnpoints for ammoBoxes\n");
 		return;
+	}
 
 	for(i=0;i<level.ammoBoxes.size;i++)
 		level.ammoBoxes[i] thread initAmmoBox();
@@ -32,7 +44,12 @@ initAmmoBox()
 {
 	self endon("death");
 
-	self setModel("zombie_vending_ammo");
+	if(self.model != "zombie_vending_ammo")
+		self setModel("zombie_vending_ammo");
+	
+	if(game["tranzit"].mapType == "default")
+		self.angles += (0,90,0);
+	
 	self hidePart("tag_ammobox_lid", self.model);
 	
 	if(!isDefined(self.lid))

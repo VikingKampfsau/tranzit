@@ -6,6 +6,7 @@ init()
 addTestClients()
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	for(;;)
 	{
@@ -39,6 +40,7 @@ addTestClients()
 TestClientJoin()
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	self endon("disconnect");
 

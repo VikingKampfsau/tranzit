@@ -11,11 +11,10 @@ init()
 	precacheShader("specialty_rof");
 	precacheShader("specialty_armorvest");
 	
-	add_effect("light_on_blue", "tranzit/perksacola/light_on_blue");
-	add_effect("light_on_green", "tranzit/perksacola/light_on_green");
-	add_effect("light_on_red", "tranzit/perksacola/light_on_red");
-	add_effect("light_on_white", "tranzit/perksacola/light_on_white");
-	add_effect("light_on_yellow", "tranzit/perksacola/light_on_yellow");
+	add_effect("doubletap_light", "tranzit/perksacola/fx_zombie_cola_dtap_on");
+	add_effect("jugger_light", "tranzit/perksacola/fx_zombie_cola_jugg_on");
+	add_effect("revive_light", "tranzit/perksacola/fx_zombie_cola_revive_on");
+	add_effect("sleight_light", "tranzit/perksacola/fx_zombie_cola_fastrel_on");
 	
 	add_sound("jingle_doubletap", "jingle_doubletap");
 	add_sound("jingle_juggernaut", "jingle_juggernaut");
@@ -23,48 +22,77 @@ init()
 	add_sound("jingle_fastreload", "jingle_fastreload");
 	add_sound("perks_power_on", "perks_power_on");
 
-	add_weapon("perksacola", "smoke_grenade_mp");
+	add_weapon("perksacola", "smoke_grenade_mp", false);
 	
-	thread initZombiePerks();
-	thread initDefaultPerks();
+	thread initPerks();
 	thread loadVendingMachines();
 }
 
-initZombiePerks()
+initPerks()
 {
 	level.zombie_perks = [];
-	level.zombie_perks[level.zombie_perks.size] = "perk_quickrevive";
-	level.zombie_perks[level.zombie_perks.size] = "perk_tombstone";
-}
+	initZombiePerk("perk_quickrevive", "PERK_QUICKREVIVE");
+	initZombiePerk("perk_tombstone", "PERK_TOMBSTONE");
 
-initDefaultPerks()
-{
 	level.default_perks = [];
-	level.default_perks[level.default_perks.size] = "specialty_specialgrenade";
-	level.default_perks[level.default_perks.size] = "specialty_fraggrenade";
-	level.default_perks[level.default_perks.size] = "specialty_extraammo";
-	level.default_perks[level.default_perks.size] = "specialty_detectexplosive";
-	level.default_perks[level.default_perks.size] = "specialty_bulletdamage";
-	level.default_perks[level.default_perks.size] = "specialty_armorvest";
-	level.default_perks[level.default_perks.size] = "specialty_fastreload";
-	level.default_perks[level.default_perks.size] = "specialty_rof";
-	level.default_perks[level.default_perks.size] = "specialty_twoprimaries";
-	level.default_perks[level.default_perks.size] = "specialty_gpsjammer";
-	level.default_perks[level.default_perks.size] = "specialty_explosivedamage";
-	level.default_perks[level.default_perks.size] = "specialty_longersprint";
-	level.default_perks[level.default_perks.size] = "specialty_bulletaccuracy";
-	level.default_perks[level.default_perks.size] = "specialty_pistoldeath";
-	level.default_perks[level.default_perks.size] = "specialty_grenadepulldeath";
-	level.default_perks[level.default_perks.size] = "specialty_bulletpenetration";
-	level.default_perks[level.default_perks.size] = "specialty_holdbreath";
-	level.default_perks[level.default_perks.size] = "specialty_quieter";
-	level.default_perks[level.default_perks.size] = "specialty_parabolic";
+	initDefaultPerk("specialty_specialgrenade", "PERK_SPECIALGRENADE");
+	initDefaultPerk("specialty_fraggrenade", "PERK_FRAGGRENADE");
+	initDefaultPerk("specialty_extraammo", "PERK_EXTRAAMMO");
+	initDefaultPerk("specialty_detectexplosive", "PERK_DETECTEXPLOSIVE");
+	initDefaultPerk("specialty_bulletdamage", "PERK_BULLETDAMAGE");
+	initDefaultPerk("specialty_armorvest", "PERK_ARMORVEST");
+	initDefaultPerk("specialty_fastreload", "PERK_FASTRELOAD");
+	initDefaultPerk("specialty_rof", "PERK_ROF");
+	initDefaultPerk("specialty_twoprimaries", "PERK_TWOPRIMARIES");
+	initDefaultPerk("specialty_gpsjammer", "PERK_GPSJAMMER");
+	initDefaultPerk("specialty_explosivedamage", "PERK_EXPLOSIVEDAMAGE");
+	initDefaultPerk("specialty_longersprint", "PERK_LONGERSPRINT");
+	initDefaultPerk("specialty_bulletaccuracy", "PERK_BULLETACCURACY");
+	initDefaultPerk("specialty_pistoldeath", "PERK_PISTOLDEATH");
+	initDefaultPerk("specialty_grenadepulldeath", "PERK_GRENADEPULLDEATH");
+	initDefaultPerk("specialty_bulletpenetration", "PERK_BULLETPENETRATION");
+	initDefaultPerk("specialty_holdbreath", "PERK_HOLDBREATH");
+	initDefaultPerk("specialty_quieter", "PERK_QUIETER");
+	initDefaultPerk("specialty_parabolic", "PERK_PARABOLIC");
 	
 	//following perks are no perks per se (i can not check them)
 	//the game replaces them with weapons
-	//level.default_perks[level.default_perks.size] = "specialty_weapon_c4";
-	//level.default_perks[level.default_perks.size] = "specialty_weapon_rpg";
-	//level.default_perks[level.default_perks.size] = "specialty_weapon_claymore";
+	//initDefaultPerk("specialty_weapon_c4";
+	//initDefaultPerk("specialty_weapon_rpg";
+	//initDefaultPerk("specialty_weapon_claymore";
+}
+
+initZombiePerk(perkName, displayNameRef)
+{
+	curEntry = level.zombie_perks.size;
+	level.zombie_perks[curEntry] = spawnStruct();
+	level.zombie_perks[curEntry].name = perkName;
+	level.zombie_perks[curEntry].displayNameRef = displayNameRef;
+}
+
+initDefaultPerk(perkName, displayNameRef)
+{
+	curEntry = level.default_perks.size;
+	level.default_perks[curEntry] = spawnStruct();
+	level.default_perks[curEntry].name = perkName;
+	level.default_perks[curEntry].displayNameRef = displayNameRef;
+}
+
+getLocPerkName(perkName)
+{
+	for(i=0;i<level.zombie_perks.size;i++)
+	{
+		if(perkName == level.zombie_perks[i].name)
+			return self getLocTextString(level.zombie_perks[i].displayNameRef);
+	}
+	
+	for(i=0;i<level.default_perks.size;i++)
+	{
+		if(perkName == level.default_perks[i].name)
+			return self getLocTextString(level.default_perks[i].displayNameRef);
+	}
+
+	return "";
 }
 
 perkAllowedToAppearOnHud(perk)
@@ -99,7 +127,7 @@ isDefaultPerk(name)
 {
 	for(i=0;i<level.default_perks.size;i++)
 	{
-		if(name == level.default_perks[i])
+		if(name == level.default_perks[i].name)
 			return true;
 	}
 	
@@ -110,7 +138,7 @@ isZombiePerk(name)
 {
 	for(i=0;i<level.zombie_perks.size;i++)
 	{
-		if(name == level.zombie_perks[i])
+		if(name == level.zombie_perks[i].name)
 			return true;
 	}
 	
@@ -154,10 +182,13 @@ unsetZombiePerk(name, keepHud)
 {
 	self endon("disconnect");
 
+	name = getDefaultPerkOfZombiePerk(name);
+	
+	if(!self hasZombiePerk(name))
+		return;
+
 	if(!isDefined(keepHud))
 		keepHud = false;
-
-	name = getDefaultPerkOfZombiePerk(name);
 	
 	if(!keepHud)
 		self removePerkFromHud(name, true);
@@ -192,11 +223,11 @@ clearZombiePerks()
 	for(i=0;i<level.default_perks.size;i++)
 	{
 		//do not take this perk
-		if(level.default_perks[i] == "specialty_pistoldeath")
+		if(level.default_perks[i].name == "specialty_pistoldeath")
 			continue;
 	
-		if(self hasPerk(level.default_perks[i]))
-			self removePerkFromHud(level.default_perks[i], false);
+		if(self hasPerk(level.default_perks[i].name))
+			self removePerkFromHud(level.default_perks[i].name, false);
 	}
 
 	self clearPerks();
@@ -260,17 +291,62 @@ initVendingMachine()
 
 hidePerkMachineParts()
 {
+	hideStatus = "on";
+	visibleStatus = "off";
+	
+	if(self.power)
+	{
+		hideStatus = "off";
+		visibleStatus = "on";
+	}
+
 	if(self.content != "specialty_rof")
+	{
 		self hidePart("tag_doubletap", self.model);
+		self hidePart("tag_doubletap_sign_" + hideStatus, self.model);
+		self hidePart("tag_doubletap_sign_" + visibleStatus, self.model);
+	}
+	else
+	{
+		self hidePart("tag_doubletap_sign_" + hideStatus, self.model);
+		self showPart("tag_doubletap_sign_" + visibleStatus, self.model);
+	}
 
 	if(self.content != "specialty_armorvest")
+	{
 		self hidePart("tag_juggernaut", self.model);
-			
+		self hidePart("tag_juggernaut_sign_" + hideStatus, self.model);
+		self hidePart("tag_juggernaut_sign_" + visibleStatus, self.model);
+	}
+	else
+	{
+		self hidePart("tag_juggernaut_sign_" + hideStatus, self.model);
+		self showPart("tag_juggernaut_sign_" + visibleStatus, self.model);
+	}
+	
 	if(self.content != "perk_quickrevive")
+	{
 		self hidePart("tag_quickrevive", self.model);
+		self hidePart("tag_quickrevive_sign_" + hideStatus, self.model);
+		self hidePart("tag_quickrevive_sign_" + visibleStatus, self.model);
+	}
+	else
+	{
+		self hidePart("tag_quickrevive_sign_" + hideStatus, self.model);
+		self showPart("tag_quickrevive_sign_" + visibleStatus, self.model);
+	}
 
 	if(self.content != "specialty_fastreload")
+	{
 		self hidePart("tag_fastreload", self.model);
+		self hidePart("tag_fastreload_sign_" + hideStatus, self.model);
+		self hidePart("tag_fastreload_sign_" + visibleStatus, self.model);
+	}
+	else
+	{
+		self hidePart("tag_fastreload_sign_" + hideStatus, self.model);
+		self showPart("tag_fastreload_sign_" + visibleStatus, self.model);
+	}
 }
 
 activateVendingMachine(localPowerSupply, delay)
@@ -306,9 +382,11 @@ activateVendingMachine(localPowerSupply, delay)
 	{
 		fxData = getVendingEffectDataForPerk(self.content);
 	
-		self thread switchOnPowerLight(fxData["lightFX"], fxData["lightFXTag"]);
-		self thread PlayVendingSound(fxData["sound"], true, fxData["soundLength"]);
+		self thread switchOnPowerLight(fxData.lightFX);
+		self thread PlayVendingSound(fxData.sound, true, fxData.soundLength);
 	}
+
+	self hidePerkMachineParts();
 
 	while(self.power)
 	{
@@ -339,10 +417,14 @@ activateVendingMachine(localPowerSupply, delay)
 		}
 		else
 		{
+			if(player getStance() == "prone")
+				continue;
+		
 			if(player hasZombiePerk(self.content))
 				continue;
 			
-			player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("PERK_VENDING_BUY_SODA"), scripts\money::getPrice(self.content));
+			perkLocDisplayName = player getLocPerkName(self.content);
+			player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("PERK_VENDING_BUY_SODA"), undefined, perkLocDisplayName + "[^1" + scripts\money::getPrice(self.content) + "^7]");
 
 			if(!player scripts\money::hasEnoughMoney(self.content))
 				continue;
@@ -357,39 +439,37 @@ activateVendingMachine(localPowerSupply, delay)
 			}
 		}
 	}
+	
+	self hidePerkMachineParts();
 }
 
 getVendingEffectDataForPerk(perk)
 {
-	data = [];
+	data = spawnStruct();
 	switch(perk)
 	{
 		case "specialty_rof":
-			data["lightFX"] = level._effect["light_on_yellow"];
-			data["lightFXTag"] = "tag_doubletap_light";
-			data["sound"] = "jingle_doubletap";
-			data["soundLength"] = 5;
+			data.lightFX = level._effect["doubletap_light"];
+			data.sound = "jingle_doubletap";
+			data.soundLength = 5;
 			break;
 			
 		case "specialty_armorvest":
-			data["lightFX"] = level._effect["light_on_red"];
-			data["lightFXTag"] = "tag_juggernaut_light";
-			data["sound"] = "jingle_juggernaut";
-			data["soundLength"] = 4;
+			data.lightFX = level._effect["jugger_light"];
+			data.sound = "jingle_juggernaut";
+			data.soundLength = 4;
 			break;
 			
 		case "perk_quickrevive":
-			data["lightFX"] = level._effect["light_on_blue"];
-			data["lightFXTag"] = "tag_quickrevive_light";
-			data["sound"] = "jingle_quickrevive";
-			data["soundLength"] = 6;
+			data.lightFX = level._effect["revive_light"];
+			data.sound = "jingle_quickrevive";
+			data.soundLength = 6;
 			break;
 			
 		case "specialty_fastreload":
-			data["lightFX"] = level._effect["light_on_green"];
-			data["lightFXTag"] = "tag_fastreload_light";
-			data["sound"] = "jingle_fastreload";
-			data["soundLength"] = 4;
+			data.lightFX = level._effect["sleight_light"];
+			data.sound = "jingle_fastreload";
+			data.soundLength = 4;
 			break;
 	}
 	
@@ -407,24 +487,21 @@ randomPowerLightAndVendingSound()
 	{
 		fxData = getVendingEffectDataForPerk(perks[randomInt(perks.size)]);
 	
-		self thread switchOnPowerLight(fxData["lightFX"]);
-		self PlayVendingSound(fxData["sound"], false, fxData["soundLength"]);
+		self thread switchOnPowerLight(fxData.lightFX);
+		self PlayVendingSound(fxData.sound, false, fxData.soundLength);
 		
 		wait .1;
 	}
 }
 
-switchOnPowerLight(fx, tag)
+switchOnPowerLight(fx)
 {
 	self endon("death");
 
 	if(isDefined(self.fxEnt))
 		self.fxEnt delete();
 
-	if(isDefined(tag))
-		self.fxEnt = spawnFx(fx, self getTagOrigin(tag));
-	else
-		self.fxEnt = spawnFx(fx, self.origin + (0,0,45) + AnglesToForward(self.angles)*10);
+	self.fxEnt = spawnFx(fx, self.origin, AnglesToForward(self.angles), AnglesToUp(self.angles));
 
 	//delay 1 is important, else we need a wait before this
 	triggerFx(self.fxEnt, 1);
@@ -489,15 +566,20 @@ useVendingMachine(perk)
 
 	self thread [[level.onXPEvent]](perk);
 	self GetInventory();
+	self takeAllWeapons();
 	
 	self shoutOutPerk(perk);
 	
 	bottleWeapon = getWeaponFromCustomName("perksacola");
 	self giveWeapon(bottleWeapon);
 	self giveMaxAmmo(bottleWeapon);
-	self switchToNewWeapon(bottleWeapon, .05);
+	self SwitchToNewWeapon(bottleWeapon, .05);
 	
-	wait 2.2; //drink durating
+	//self freezeControls(true);	
+	wait 2.1; //drink durating (3rd person anim)
+	//self freezeControls(false);
+	
+	thread scripts\statistics::incStatisticValue("drunken_beers", 2412, 1);
 	
 	self setZombiePerk(perk);
 	self takeWeapon(bottleWeapon);

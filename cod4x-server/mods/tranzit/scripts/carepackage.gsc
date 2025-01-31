@@ -1,6 +1,7 @@
 #include maps\mp\_utility;
 #include common_scripts\utility;
 #include scripts\_include;
+#include scripts\debug\drawdebuggers;
 
 init()
 {
@@ -16,6 +17,7 @@ init()
 	level.totalcps = 0;
 	level.maximumcps = 6;
 	level.cp_content = [];
+	level.carepackageFlySpeed = 100;
 
 	AddToPackage("airstrike_mp", "Airstrike", 50);
 	
@@ -36,56 +38,101 @@ AddToPackage(weapon, hinttxt, chance)
 	level.cp_content[level.cp_content.size] = struct;
 }
 
-spawnSupplyHeli(targetLocation, skyPos, owner)
+useCarepackageHeli(supportType, targetLocation)
 {
-	flypath = Getflypath(skyPos);
+	thread spawnSupplyHeli(targetLocation, self);
+}
+
+spawnSupplyHeli(targetLocation, owner)
+{
+	direction = (0, randomfloat(360), 0);
+	planeHalfDistance = 8000;//24000;
+	planeFlyHeight = 850;
+
+	startPoint = targetLocation + (0,0,planeFlyHeight) + vector_scale(AnglesToForward(direction), planeHalfDistance *-1);
+	endPoint = targetLocation + (0,0,planeFlyHeight) + vector_scale(AnglesToForward(direction), planeHalfDistance);
+
+	//find the sky height of the map
+	skyCalc = getSkyHeight(targetLocation, true);
+	MapSkyPos = skyCalc[0];
+	targetLocation = skyCalc[1];
 	
-	if(!isDefined(flypath) || flypath.size < 2)
-		return;
+	/*if(!isDefined(MapSkyPos) || (targetLocation[2] + planeFlyHeight) >= MapSkyPos[2])
+	{
+		if(!isDefined(MapSkyPos)) iPrintLnBold("MapSkyPos undefined");
+		if((targetLocation[2] + planeFlyHeight) >= MapSkyPos[2])
+			iPrintLnBold("MapSkyPos out of skybox. Skypos[2]: " + MapSkyPos[2] + " TargetPos[2]:" + targetLocation[2]);
+	}*/
 	
-	level.CpChopper = spawnHelicopter(owner, flypath[0], vectortoangles(vectornormalize(flypath[1] - flypath[0])), "blackhawk_mp", "vehicle_blackhawk");
+	if(isDefined(MapSkyPos) && (targetLocation[2] + planeFlyHeight) < MapSkyPos[2])
+	{
+		//iPrintLnBold("found bottom of skybox at: " + MapSkyPos[2]); //backlot bottom = 2304
+	
+		//check if a higher planeFlyHeight is possible
+		//(CoD4 is at 850 which is not high enough but the sky in shipment is at 2400+ which is way to high)
+		clearPath = true;
+		testHeight = planeFlyHeight;
+		for(i=1;i<int((MapSkyPos[2]-planeFlyHeight-targetLocation[2])/100);i++)
+		{
+			startPoint = targetLocation + (0,0,testHeight) + vector_scale(AnglesToForward(direction), planeHalfDistance *-1);
+			endPoint = targetLocation + (0,0,testHeight) + vector_scale(AnglesToForward(direction), planeHalfDistance);
+		
+			trace = BulletTrace(startPoint, endPoint, false, undefined);
+			
+			//trace has hit anything
+			if(trace["fraction"] < 1)
+			{
+				//ignore anything that has no 'real' surface (like the sides of the skybox)
+				if(isDefined(trace["surfacetype"]) && trace["surfacetype"] != "default")
+					clearPath = false;
+			}
+			
+			//already outside the skybox
+			if((targetLocation[2] + testHeight) >= MapSkyPos[2])
+				clearPath = false;
+
+			if(!clearPath)
+				break;
+				
+			testHeight += 100;
+		}
+		
+		testHeight -= 100;
+		if(testHeight > planeFlyHeight)
+			planeFlyHeight = testHeight;
+		
+		//iPrintLnBold("planeFlyHeight: " + planeFlyHeight);
+		startPoint = targetLocation + (0,0,planeFlyHeight) - vector_scale(AnglesToForward(direction), planeHalfDistance);
+		endPoint = targetLocation + (0,0,planeFlyHeight) + vector_scale(AnglesToForward(direction), planeHalfDistance);
+	}
+	
+	dropInfo = spawnStruct();
+	dropInfo.planeStartPoint = startPoint;
+	dropInfo.planeEndPoint = endPoint;
+	dropInfo.planeFlyHeight = planeFlyHeight;
+	dropInfo.targetLocation = targetLocation;
+	dropInfo.cpUnderHelicopter = 130;
+
+	dropInfo.cpDir = VectorToAngles(VectorNormalize(dropInfo.planeEndPoint - dropInfo.planeStartPoint));
+	dropInfo.cpFlyHeight = (dropInfo.planeFlyHeight - dropInfo.cpUnderHelicopter);
+	dropInfo.cpFallTime = sqrt(2*dropInfo.cpFlyHeight/getDvarFloat("g_gravity"));	
+	dropInfo.cpFallDist = (level.carepackageFlySpeed*dropInfo.cpFallTime);
+	dropInfo.releaseLocation = dropInfo.targetLocation + (0,0,dropInfo.planeFlyHeight) - AnglesToForward(dropInfo.cpDir)*dropInfo.cpFallDist;
+	
+	//drawDebugLine(startPoint, dropInfo.releaseLocation, (0,1,0), 1, 600); //flypath from start to releaseLocation
+	//drawDebugLine(dropInfo.targetLocation, dropInfo.targetLocation + (0,0,dropInfo.planeFlyHeight), (1,0,0), 1, 600); //targetLocation up to the helicopter height
+	//drawDebugLine(dropInfo.releaseLocation, dropInfo.releaseLocation - (0,0,dropInfo.planeFlyHeight), (0,0,1), 1, 600); //releaseLocation down to the ground
+	//drawDebugLine(dropInfo.releaseLocation, dropInfo.targetLocation, (1,1,1), 1, 600); //releaseLocation down to the targetLocation
+	
+	level.CpChopper = spawnHelicopter(owner, startPoint, vectorToAngles(vectorNormalize(endPoint - startPoint)), "blackhawk_mp", "vehicle_blackhawk");
 	level.CpChopper playLoopSound("mp_cobra_helicopter");
 	level.CpChopper SetDamageStage(3);
 	level.CpChopper.owner = owner;
 
-	level.CpChopper thread CallSupplyHeli(skyPos, flypath[1], targetLocation);
+	level.CpChopper thread CallSupplyHeli(dropInfo);
 }
 
-getFlyPath(skyPos, direction)
-{
-	radius = 99999999999;
-	start = undefined;
-	end = undefined;
-	
-	if(isDefined(direction))
-	{
-		start = BulletTrace(skyPos, skyPos + AnglesToForward(direction)*radius, false, undefined);
-		end = BulletTrace(skyPos, skyPos - AnglesToForward(direction)*radius, false, undefined);
-	}
-	else
-	{
-		random = randomInt(360);
-		for(i=random;i<(random+360);i++)
-		{
-			start = BulletTrace(skyPos, skyPos + AnglesToForward((0,i,0))*radius, false, undefined);
-			end = BulletTrace(skyPos, skyPos - AnglesToForward((0,i,0))*radius, false, undefined);
-
-			if(BulletTracePassed(start["position"], end["position"], false, undefined))
-				break;
-		}
-	}
-	
-	path = [];
-	if(isDefined(start["position"]) && isDefined(end["position"]))
-	{
-		path[0] = start["position"];
-		path[1] = end["position"];
-	}
-	
-	return path;
-}
-
-CallSupplyHeli(flyPoint, leavePoint, dropPoint)
+CallSupplyHeli(dropInfo)
 {
 	self endon("death");
 	
@@ -95,14 +142,14 @@ CallSupplyHeli(flyPoint, leavePoint, dropPoint)
 	self setyawspeed(75, 45, 45);
 	self setmaxpitchroll(15, 15);
 	self setneargoalnotifydist(200);
-	self setturningability(0.9);
-	self setvehgoalpos(flyPoint, 0);
-
+	self setturningability(0.9);	
+	
+	self setvehgoalpos(dropInfo.releaseLocation, 0);
 	self waittillmatch("goal");
 	
-	self setvehgoalpos(leavePoint, 0);
-	self thread DropCarePackage(dropPoint);
+	self thread DropCarePackage(dropInfo);
 	
+	self setvehgoalpos(dropInfo.planeEndPoint, 0);
 	self waittillmatch("goal");
 	
 	self stopLoopSound();
@@ -111,48 +158,142 @@ CallSupplyHeli(flyPoint, leavePoint, dropPoint)
 	self delete();
 }
 
-getDropOrigin(dropPoint, carepackage)
+physicsLaunchZ(dropInfo)
 {
-	trace = BulletTrace(carepackage.origin, dropPoint, false, carepackage);
-/*	
-	//trace passed - nothing to collide with
-	if(trace["fraction"] >= 1)
-		return trace;
+	self endon("death");
+	
+	speed = level.carepackageFlySpeed;
+	dir = AnglesToForward(dropInfo.cpDir);
+	forward = dir * speed * 0.1;
+	downwards = -0.5 * getDvarFloat("g_gravity") * sqr(0.1);
+	nextPos = self.origin + forward + (0,0,downwards);
+	trace = BulletTrace(self.origin, nextPos, false, self);
+	
+	iPrintLnBold(self.origin + " -> " + nextPos);
+	
+	//started in or on solid
+	if(trace["fraction"] < 1)
+	{
+		iPrintLnBold("started in solid");
 		
-	//trace did not pass
-	
-	if(isDefined(trace["entity"]))
+		if(isDefined(trace["entity"]))
+			iPrintLnBold(trace["entity"].classname);
+		
+		return;
+	}
+
+	iPrintLnBold("starting bounce check");
+
+	helper = spawn("script_model", self.origin);
+	helper.angles = self.angles;
+	helper setModel(self.model);
+	helper moveGravity(dir * speed, dropInfo.cpFallTime);
+	self hide();
+
+	bounced = 0;
+	safetyBreak = 0;
+	prevorigin = helper.origin;
+	while(1)
 	{
-		//consolePrint("cp trace hit ent of class: " + trace["entity"].classname + "\n");
-		return trace;
+		prevorigin = helper.origin;
+		
+		wait .05;
+		
+		trace = BulletTrace(prevorigin, helper.origin, false, helper);
+		
+		drawDebugLine(prevorigin, helper.origin, (1,1,1), 1, 600); //show where it came from
+		iPrintLnBold(prevorigin + " -> " + helper.origin);
+		
+		//Bounce
+		if(trace["fraction"] < 1)
+		{
+			tempOrigin = trace["position"];
+			tempAngles = helper.angles;
+		
+			iPrintLnBold("do bounce - " + speed);
+			//reduce the velocity to prevent an endless bouncing
+			if(bounced == 0)
+				speed *= 2;
+			else if(bounced == 1)
+				speed /= 2;
+			else
+				speed *= 0.42;
+			
+			//reflect the velocity
+			//this will bounce up to where it came from
+			//dir = AnglesToForward(VectorToAngles(tempOrigin - prevorigin));
+			//forward = dir * (speed * -1); //bounce in opposite direction
+			dir = AnglesToUp(trace["normal"]);
+			forward = dir * speed;
+			
+			drawDebugLine(tempOrigin, tempOrigin + forward, (1,0,0), 1, 600); //show direction of dir
+			drawDebugLine(tempOrigin, tempOrigin + (0,0,250), (0,1,0), 1, 600); //show direction upwards
+			
+			helper delete();
+			helper = spawn("script_model", tempOrigin);
+			helper.angles = tempAngles;
+			helper setModel(self.model);
+			
+			if(bounced <= 2 && speed >= 60)
+				helper moveGravity(forward, 999);
+			else
+			{
+				iPrintLnBold("final bounce");
+			
+				fallTime = sqrt(2*length(forward)/getDvarFloat("g_gravity")); //not correct becuase the gravity is not recognized upwards? or?
+				helper moveGravity(forward, fallTime);
+				wait fallTime;
+				break;
+			}
+			
+			bounced++;
+		}
+		
+		if(helper.origin != prevorigin)
+		{
+			safetyBreak = 0;
+			continue;
+		}
+		
+		//for debugging - have to find a proper solution
+		safetyBreak++;
+		if(safetyBreak >= 10)
+		{
+			iPrintLnBold("safetyBreak");
+			break;
+		}
 	}
 	
-	if(isDefined(trace["surfacetype"]))
-	{
-		//consolePrint("cp trace hit surface of type " + trace["surfacetype"] + "\n");
-		return trace;
-	}
-*/	
-	return trace;
+	self show();
+	self.origin = helper.origin;
+	self.angles = helper.angles;
+	helper delete();
+	
+	iPrintLnBold("stopped bounce check");
 }
 
-DropCarePackage(dropPoint)
+DropCarePackage(dropInfo)
 {
 	level.totalcps++;
 
-	carepackage = spawn("script_model", (self.origin[0], self.origin[1], self.origin[2]-130));
-	carepackage SetModel("com_plasticcase_green_big");
+	wait 3; //can i remove/lower this later or will this make the trace hit the helicopter?
+
+	carepackage = spawn("script_model", dropInfo.releaseLocation - (0,0,dropInfo.cpUnderHelicopter));
+	carepackage.angles = (0,RandomInt(360),0);
+	carepackage.targetname = "trajectory_debug";
+	carepackage setModel("com_plasticcase_green_big");
 	
-	carepackage.angles = (0, randomInt(360), 0);
+	//use only one of them
+	carepackage moveGravity(AnglesToForward(dropInfo.cpDir)*level.carepackageFlySpeed, dropInfo.cpFallTime);
+	//carepackage physicsLaunchZ(dropInfo); //does not look really good
+	
 	carepackage.type = "carepackage";
 	carepackage.owner = self.owner;
 
-	dropPoint = getDropOrigin(dropPoint, carepackage);
-	
 	carepackage.blocker = [];
 	carepackage.blocker[0] = spawn("trigger_radius", carepackage.origin, 0, 32, 35);
-	carepackage.blocker[1] = spawn("trigger_radius", carepackage.origin + vectorscale(anglesToRight(self.angles), 32), 0, 32, 35);
-	carepackage.blocker[2] = spawn("trigger_radius", carepackage.origin + vectorscale(anglesToRight(self.angles), -32), 0, 32, 35);
+	carepackage.blocker[1] = spawn("trigger_radius", carepackage.origin + vectorscale(anglesToRight(carepackage.angles), 32), 0, 32, 35);
+	carepackage.blocker[2] = spawn("trigger_radius", carepackage.origin + vectorscale(anglesToRight(carepackage.angles), -32), 0, 32, 35);
 	
 	for(i=0;i<carepackage.blocker.size;i++)
 	{
@@ -169,11 +310,8 @@ DropCarePackage(dropPoint)
 	carepackage.fxEnt linkTo(carepackage);
 
 	wait .05;
-
 	playFxOnTag(level._effect["carepackage_light"], carepackage.fxEnt, "tag_origin");
-
-	carepackage MoveTo(dropPoint["position"], 0.1 + abs(Distance(dropPoint["position"], carepackage.origin)/800));
-	carepackage waittill("movedone");
+	wait (dropInfo.cpFallTime-0.05);
 
 	playFxOnTag(level._effect["carepackage_smoke"], carepackage.fxEnt, "tag_origin");
 
@@ -181,8 +319,6 @@ DropCarePackage(dropPoint)
 
 	for(i=0;i<carepackage.blocker.size;i++)
 		carepackage.blocker[i] setContents(1);
-	
-	carepackage Bounce(dropPoint);
 	
 	carepackage.trigger = spawn("trigger_radius", carepackage.origin - (0,0,40), 0, 100, 80);
 	carepackage.content = CalculateContent();
@@ -235,52 +371,7 @@ MakeDeadly(eInflictor)
 			continue;
 		}
 		
-		player finishPlayerDamage(eInflictor, eInflictor.owner, player.health, 0, "MOD_SUICIDE", "none", self.origin, VectorToAngles(player.origin - self.origin), "none", 0);
-	}
-}
-
-Bounce(dropPoint)
-{
-	self endon("death");
-	
-	/*BounceTargets[0][0] = 32;
-	BounceTargets[0][1] = 0.4;
-	BounceTargets[0][2] = 0;
-	BounceTargets[0][3] = 0.4;
-
-	BounceTargets[1][0] = -32;
-	BounceTargets[1][1] = 0.425;
-	BounceTargets[1][2] = 0.425;
-	BounceTargets[1][3] = 0;
-
-	BounceTargets[2][0] = 0.16;
-	BounceTargets[2][1] = 0.25;
-	BounceTargets[2][2] = 0;
-	BounceTargets[2][3] = 0.25;
-
-	BounceTargets[3][0] = -0.16;
-	BounceTargets[3][1] = 0.275;
-	BounceTargets[3][2] = 0.275;
-	BounceTargets[3][3] = 0;
-	
-	type = dropPoint["surfacetype"];
-	for(i=0;i<BounceTargets.size;i++)
-	{
-		self PlaySound("grenade_bounce_" + type);
-		self MoveZ(BounceTargets[i][0], BounceTargets[i][1], BounceTargets[i][2], BounceTargets[i][3]);
-		wait BounceTargets[i][1];
-	}*/
-	
-	for(i=1;i<=4;i++)
-	{
-		speed = 150;
-		offset = (0,0,0);
-		
-		if((i/2) != int(i/2))
-			offset = (0,0,32/i);
-	
-		time = fake_physicslaunch(dropPoint["position"] + offset, speed);
-		wait time;
+		player thread [[level.callbackPlayerDamage]](eInflictor, eInflictor.owner, player.health + 666, 0, "MOD_SUICIDE", "none", self.origin, VectorToAngles(player.origin - self.origin), "none", 0, "carepacked fell on you");
 	}
 }
 
@@ -340,8 +431,6 @@ crateUseThinkOwner()
 	{
 		self.trigger waittill("trigger", player);
 
-		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("CAREPACKAGE_OPEN_PRESS_BUTTON"), undefined, self.content.hinttxt);
-
 		if(!isDefined(self.owner))
 			break;
 		
@@ -356,6 +445,8 @@ crateUseThinkOwner()
 	
 		if(!player isReadyToUse())
 			continue;
+
+		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("CAREPACKAGE_OPEN_PRESS_BUTTON"), undefined, self.content.hinttxt);
 
 		result = self useHoldThink(player, level.crateOwnerUseTime);
 
@@ -396,6 +487,7 @@ useHoldThink(player, useTime)
 useHoldThinkLoop(player)
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	player.IsOpeningCrate = true;
 	

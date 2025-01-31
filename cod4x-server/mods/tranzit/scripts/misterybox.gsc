@@ -4,12 +4,15 @@
 init()
 {
 	level.misteryWeapons = [];
+	level.misteryBoxMoves = 0;
 	level.misteryBoxOpenings = 0;
+	level.misteryBoxOpeningsSinceMove = 0;
 
 	precacheModel("zombie_treasure_box");
 	precacheModel("com_teddy_bear");
 
 	add_effect("misterybox_location_light", "tranzit/misterybox/misterybox_location_light");
+	add_effect("misterybox_flies", "tranzit/misterybox/misterybox_flies");
 	
 	add_sound("open_chest", "lid_open");
 	add_sound("music_chest", "music_box");
@@ -17,16 +20,15 @@ init()
 	add_sound("box_poof", "whoosh");
 	add_sound("box_byebye", "magicbox_full");
 
-	add_weapon("flamethrower", "uzi_acog_mp");
-	add_weapon("chainsaw", "skorpion_acog_mp");
-	add_weapon("raygun", "briefcase_bomb_mp");
-	add_weapon("raygun_ug", "briefcase_bomb_defuse_mp");
-	add_weapon("minigun", "saw_grip_mp");
-	add_weapon("knife", "airstrike_mp");
-	add_weapon("wunderwaffe", "m1014_reflex_mp");
-	add_weapon("emp_grenade", "uzi_reflex_mp");
-
-	initMisteryWeapon("teddy");
+	add_weapon("flamethrower", "uzi_acog_mp", true);
+	add_weapon("chainsaw", "skorpion_acog_mp", true);
+	add_weapon("raygun", "briefcase_bomb_mp", true);
+	add_weapon("raygun_ug", "briefcase_bomb_defuse_mp", true);
+	add_weapon("minigun", "saw_grip_mp", true);
+	add_weapon("knife", "airstrike_mp", true);
+	add_weapon("katana", "helicopter_mp", true);
+	add_weapon("wunderwaffe", "m1014_reflex_mp", true);
+	add_weapon("emp_grenade", "uzi_reflex_mp", false);
 
 	initMisteryWeapon("ak47_mp");
 	initMisteryWeapon("ak74u_mp");
@@ -55,7 +57,7 @@ init()
 	initMisteryWeapon("usp_mp");
 	initMisteryWeapon("uzi_mp");
 	initMisteryWeapon("winchester1200_mp");
-
+	
 	initMisteryWeapon(getWeaponFromCustomName("chainsaw"));
 	initMisteryWeapon(getWeaponFromCustomName("emp_grenade"));
 	initMisteryWeapon(getWeaponFromCustomName("flamethrower"));
@@ -72,32 +74,114 @@ init()
 		level.misteryWeapons[i] = level.misteryWeapons[random];
 		level.misteryWeapons[random] = temp;	
 	}
-
-	level.misteryBoxes = getEntArray("misterybox", "targetname");
 	
-	//no misteryBoxes found - check for rotu map
-	if(!isDefined(level.misteryBoxes) || !level.misteryBoxes.size)
+	//copy the first entry to the end of the array and add the box destroying teddy
+	initMisteryWeapon(level.misteryWeapons[0].weaponName);
+	level.misteryWeapons[0].weaponName = "teddy";
+
+	if(game["tranzit"].mapType == "tranzit")
+		level.misteryBoxes = getEntArray("misterybox", "targetname");
+	else if(game["tranzit"].mapType == "rotu")
 	{
-		wait 2;
-		
 		if(isDefined(level.rotuMisteryBoxName))
 		{
 			level.misteryBoxIsRotu = true;
 			level.misteryBoxes = getEntArray(level.rotuMisteryBoxName, "targetname");
+			
+			//if there are multiple misteryboxes use the last one for packapunch
+			if(isDefined(level.misteryBoxes) && level.misteryBoxes.size > 1)
+			{
+				level.packapunchMachines = [];
+				
+				if(level.misteryBoxes[level.misteryBoxes.size -1].classname == "script_model")
+				{
+					level.packapunchMachines[level.packapunchMachines.size] = level.misteryBoxes[level.misteryBoxes.size -1];
+					
+					level.misteryBoxes[level.misteryBoxes.size -1] = undefined;
+				}
+				else
+				{
+					packapunchMachine = spawn("script_model", level.misteryBoxes[level.misteryBoxes.size -1].origin);
+					packapunchMachine.angles = level.misteryBoxes[level.misteryBoxes.size -1].angles;
+					packapunchMachine.targetname = "packapunch";
+					
+					ground = BulletTrace(packapunchMachine.origin, packapunchMachine.origin-(0,0,100000), false, packapunchMachine);
+					if(isDefined(ground["position"]))
+						packapunchMachine.origin = ground["position"];
+					
+					level.packapunchMachines[level.packapunchMachines.size] = packapunchMachine;
+					
+					level.misteryBoxes[level.misteryBoxes.size -1] delete();
+				}
+	
+				level.misteryBoxes = RemoveUndefinedEntriesFromArray(level.misteryBoxes);
+			}
+		}
+	}
+	else
+	{
+		hq_hardpoints = getEntArray("hq_hardpoint", "targetname");
+		
+		level.misteryBoxes = [];
+		for(i=0;i<hq_hardpoints.size;i++)
+		{
+			hq_hardpointsSubModels = getEntArray(hq_hardpoints[i].target, "targetname");
+		
+			level.misteryBoxes[level.misteryBoxes.size] = hq_hardpointsSubModels[0];
+			
+			for(j=1;j<hq_hardpointsSubModels.size;j++)
+				hq_hardpointsSubModels[j] delete(); //delete the additional visual hq models
+				
+			hq_hardpoints[i] delete(); //delete the visual hq model
+		}
+		
+		wait 1; //give the game some time to load the ammoboxes
+		
+		if(isDefined(level.misteryBoxes) && level.misteryBoxes.size > 0)
+		{
+			if(isDefined(level.ammoBoxes) && level.ammoBoxes.size > 0)
+			{
+				for(i=0;i<level.misteryBoxes.size;i++)
+				{
+					for(j=0;j<level.ammoBoxes.size;j++)
+					{
+						if(Distance(level.misteryBoxes[i].origin, level.ammoBoxes[j].origin) < 200)
+						{
+							level.misteryBoxes[i] delete();
+							break;
+						}
+					}
+				}
+			
+				level.misteryBoxes = RemoveUndefinedEntriesFromArray(level.misteryBoxes);
+			}
 		}
 	}
 
 	//nothing found - return
 	if(!isDefined(level.misteryBoxes) || !level.misteryBoxes.size)
+	{
+		consolePrint("^1Map has no spawnpoints for misteryBoxes\n");
 		return;
+	}
 	
 	for(i=0;i<level.misteryBoxes.size;i++)
 	{
 		if(level.misteryBoxes[i].model != "zombie_treasure_box")
 			level.misteryBoxes[i].origin = level.misteryBoxes[i].origin + (0, -12, 17.5);
 	
+		if(game["tranzit"].mapType == "rotu")
+			level.misteryBoxes[i].origin -= (0,0,20);
+		else if(game["tranzit"].mapType == "default")
+			level.misteryBoxes[i].angles = (0, level.misteryBoxes[i].angles[1] + 90, 0);
+	
 		level.misteryBoxes[i] setModel("zombie_treasure_box");
 		level.misteryBoxes[i] hide();
+		
+		//store the spawn position to respawn the box at the correct position when it was destroyed
+		level.misteryBoxes[i].spawnOrigin = level.misteryBoxes[i].origin;
+		
+		//consolePrint("misterybox " + i + " origin: " + level.misteryBoxes[i].origin + "\n");
 	}
 	
 	level.misteryBoxPrev = getMisteryBoxInSpawnArea();
@@ -160,6 +244,8 @@ spawnMisteryBox(box)
 			box.lid setModel("zombie_treasure_box");
 		}
 		
+		box.origin = box.spawnOrigin;
+		
 		box.lid.origin = box.origin;
 		box.lid.angles = box.angles;
 
@@ -204,9 +290,13 @@ spawnMisteryBox(box)
 doMisteryBox(box, player)
 {
 	level.misteryBoxOpenings++;
+	level.misteryBoxOpeningsSinceMove++;
+	thread scripts\statistics::setStatForAllPlayers("misteryboxes_used", 2413, level.misteryBoxOpenings);
 
 	if(!isDefined(level.misteryBoxIsRotu) || !level.misteryBoxIsRotu)
 		box boxLidOpen();
+
+	playfx(level._effect["misterybox_flies"], box getTagOrigin("tag_content") + (0,0,15));
 
 	weaponModel = spawn("script_model", box getTagOrigin("tag_content"));
 	weaponModel.angles = (0,(box.angles[1] + 90),0);
@@ -250,14 +340,14 @@ doMisteryBox(box, player)
 	}
 	else
 	{
+		thread scripts\statistics::incStatisticValue("misteryboxes_lost", 2414, 1);
+	
 		box playSoundRef("box_byebye");
 		box.trigger delete();
 		
 		wait 1;
 		weaponModel moveZ(-55, .8);	
 		wait .75;
-		
-		playfx(level._effect["entitiy_disappear"], box.origin);
 		
 		if(!isDefined(level.misteryBoxIsRotu) || !level.misteryBoxIsRotu)
 		{
@@ -293,6 +383,8 @@ doMisteryBox(box, player)
 		randomSurvivor = getRandomPlayer(game["defenders"]);
 		randomSurvivor playSoundRef("special_box_move");
 		
+		level.misteryBoxMoves++;
+		
 		//respawn at new pos
 		thread startMisteryBox(60);
 		return;
@@ -305,15 +397,43 @@ calculateRandomWeapon()
 	self endon("death");
 
 	random = randomInt(level.misteryWeapons.size);
-	weapon = level.misteryWeapons[random];
-	
-	while(self hasWeapon(weapon.weaponName) || (level.misteryBoxOpenings <= 4 && weapon.weaponName == "teddy"))
-	{
-		random = randomInt(level.misteryWeapons.size);
-		weapon = level.misteryWeapons[random];
-	}
+	//ignore teddy in weapon search (randomIntRange returned false results when used with range 1-2)
+	if(!random) random++;
 
-	return weapon;
+	//no teddy guaranteed for the first usages
+	if(level.misteryBoxOpenings > 4)
+	{
+		randomValue = randomInt(100);
+		teddyChance = level.misteryBoxOpeningsSinceMove + 20;
+		if(level.misteryBoxMoves == 0 && level.misteryBoxOpeningsSinceMove >= 8)
+			teddyChance = 100;
+		
+		if(level.misteryBoxMoves > 0)
+		{
+			teddyChance = 100;
+			if(level.misteryBoxOpeningsSinceMove >= 4 && level.misteryBoxOpeningsSinceMove < 8)
+			{
+				if(randomValue >= 15)
+					teddyChance = 0;
+			}
+			else if(level.misteryBoxOpeningsSinceMove >= 8 && level.misteryBoxOpeningsSinceMove < 13)
+			{
+				if(randomValue >= 30)
+					teddyChance = 0;
+			}
+			else
+			{
+				if(randomValue >= 50)
+					teddyChance = 0;
+			}
+		}
+
+		//oh no -> teddy -> destroy mistery box
+		if(teddyChance > random)
+			return level.misteryWeapons[0];
+	}
+	
+	return level.misteryWeapons[random];
 }
 
 makeMisteryWeaponGrabable(grabber, weaponModel)

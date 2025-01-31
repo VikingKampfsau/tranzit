@@ -145,6 +145,7 @@ watchWeaponChange()
 	self.tag_stowed_back = undefined;
 	self.leftWeaponWorldModel = undefined;
 	self.lastDroppableWeapon = self getCurrentWeapon();
+	self.lastUsedWeapon = self.lastDroppableWeapon;
 	
 	if(self hasAttached("zmb_shield_worldmodel"))
 		self detach("zmb_shield_worldmodel", "tag_weapon_left");
@@ -484,6 +485,17 @@ watchWeaponUsage()
 		self.hasDoneCombat = true;
 		self.firingWeapon = true;	
 		
+		//this does not work for non-auto weapons
+		//for auto weapons it does not work for the first or a single shots either
+		//but still better than nothing
+		/* not required anymore - dwarf attack now is a weapon and the new plugin checks for isMeleeing()
+		if(isDefined(self.dwarfOnShoulders) && isDefined(self.dwarfOnShoulders.damageTrigger))
+		{
+			self.dwarfOnShoulders.damageTrigger notSolid();
+			self.dwarfOnShoulders.damageTrigger hide();
+		}
+		*/
+		
 		curWeapon = self getCurrentWeapon();
 		
 		switch ( weaponClass( curWeapon ) )
@@ -500,6 +512,14 @@ watchWeaponUsage()
 		}
 		self waittill ( "end_firing" );
 		self.firingWeapon = false;
+		
+		/* not required anymore - dwarf attack now is a weapon and the new plugin checks for isMeleeing()
+		if(isDefined(self.dwarfOnShoulders) && isDefined(self.dwarfOnShoulders.damageTrigger))
+		{
+			self.dwarfOnShoulders.damageTrigger show();
+			self.dwarfOnShoulders.damageTrigger solid();
+		}
+		*/
 	}
 }
 
@@ -532,7 +552,19 @@ watchCurrentFiring( curWeapon )
 	if ( shotsFired <= 0 )
 		return;
 	
-	statTotal = self maps\mp\gametypes\_persistence::statGet( "total_shots" ) + shotsFired;		
+	/*
+	original:
+	2 Total Shots: 0 Hits and 2 Misses = 0% Accuracy
+	2 Total Shots: 1 Hits and 1 Misses = 50% Accuracy
+	2 Total Shots: 2 Hits and 0 Misses = 100% Accuracy
+	2 Total Shots: 4 Hits and 0 Misses = 200% Accuracy (2 bullets have hit 4 players)
+	*/
+	
+	// i don't like that the original can be above 100%
+	// force multiple hits to a single hit (means hit yes/no)
+	if(self.hits > 1) self.hits = 1;
+	
+	statTotal = self maps\mp\gametypes\_persistence::statGet( "total_shots" ) + shotsFired;	
 	statHits  = self maps\mp\gametypes\_persistence::statGet( "hits" ) + self.hits;
 	statMisses = self maps\mp\gametypes\_persistence::statGet( "misses" ) + shotsFired - self.hits;
 	
@@ -540,12 +572,16 @@ watchCurrentFiring( curWeapon )
 	self maps\mp\gametypes\_persistence::statSet( "hits", statHits );
 	self maps\mp\gametypes\_persistence::statSet( "misses", statMisses );
 	self maps\mp\gametypes\_persistence::statSet( "accuracy", int(statHits * 10000 / statTotal) );
-/*
-	printLn( "total:    " + statTotal );
-	printLn( "hits:     " + statHits );
-	printLn( "misses:   " + statMisses );
-	printLn( "accuracy: " + int(statHits * 10000 / statTotal) );
-*/
+
+	thread scripts\statistics::incStatisticValue("bullets_fired", 2419, shotsFired);
+
+	/*
+	iprintLn( "total:    " + statTotal );
+	iprintLn( "hits:     " + statHits );
+	iprintLn( "misses:   " + statMisses );
+	iprintLn( "accuracy: " + int(statHits * 10000 / statTotal) );
+	*/
+
 	self.hits = 0;
 }
 

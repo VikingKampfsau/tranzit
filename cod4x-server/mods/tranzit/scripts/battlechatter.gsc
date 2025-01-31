@@ -73,10 +73,34 @@ monitorPlayerAmmo()
 		if(!isDefined(weap) || weap == "none")
 			continue;
 		
-		if(weap == game["tranzit"].player_empty_hands)
+		if(weap == getWeaponFromCustomName("fists"))
 			continue;
 		
-		if(isSubStr("bottle", weap))
+		if(weap == getWeaponFromCustomName("perksacola"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("syrette"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("knucklecrack"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("knife"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("katana"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("player_death"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("weapondrop"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("player_dwarf_attacking"))
+			continue;
+			
+		if(weap == getWeaponFromCustomName("location_selector"))
 			continue;
 			
 		if(isDefined(self.actionSlotItem) && weap == self.actionSlotItem)

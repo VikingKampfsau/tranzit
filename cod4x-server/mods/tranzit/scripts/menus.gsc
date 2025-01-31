@@ -2,15 +2,23 @@
 
 init()
 {
-	initMenu("bankaccount");
-	initMenu("credits_tranzit");
-	initMenu("language");
-	initMenu("rotu_shop");
-	initMenu("popup_tutorial");
+	initMenu("bankaccount", true);
+	initMenu("language", true);
+	initMenu("rotu_shop", true);
+	initMenu("popup_tutorial_credits", true);
+	initMenu("clientcmd", true);
+	initMenu("weapondrop", false);
+	initMenu("facemask", false);
+	
+	// once there is a hook to hide the default scoreboard set this to 0
+	setDvar("ui_showStockScoreboard", 0); 
 }
 
-initMenu(name)
+initMenu(name, precache)
 {
+	if(!isDefined(precache))
+		precache = true;
+
 	game["menu_" + name] = name;
 	precacheMenu(game["menu_" + name]);
 }
@@ -22,19 +30,6 @@ onMenuResponse(menu, response)
 	if(level.gameEnded)
 		return;
 
-	if(menu == game["menu_popup_tutorial"])
-	{
-		if(response == "tutorial_noshow_change")
-		{
-			if(self getStat(2451) == 0)
-				self setStat(2451, 1);
-			else
-				self setStat(2451, 0);
-		}
-
-		return;
-	}
-	
 	if(menu == game["menu_bankaccount"])
 	{
 		switch(response)
@@ -69,9 +64,15 @@ onMenuResponse(menu, response)
 	{
 		if(response == "show_tranzit_scoreboard")
 		{
-			scores = [];
 			survivors = GetPlayersInTeam(game["defenders"]);
-			
+		
+			self setClientDvar("ui_showStockScoreboard", getDvarInt("ui_showStockScoreboard"));
+		
+			/* default scoreboard  -> no need to send additional data */
+			if(getDvarInt("ui_showStockScoreboard"))
+				return;
+		
+			/* type 1: looks like the scoreboard in waw			
 			//player is alone - clear the other scores
 			if(!isDefined(survivors) || survivors.size <= 1)
 			{
@@ -82,6 +83,7 @@ onMenuResponse(menu, response)
 			}
 			
 			//player is not alone - get the other scores
+			scores = [];
 			for(i=0;i<survivors.size;i++)
 			{
 				if(survivors[i] == self)
@@ -130,6 +132,103 @@ onMenuResponse(menu, response)
 								"tranzit_scoreboard_line_3_downs", scores[2]["downs"],
 								"tranzit_scoreboard_line_3_revives", scores[2]["revives"],
 								"tranzit_scoreboard_line_3_headshots", scores[2]["headshots"]);
+								
+			*/
+			
+			/* type 2: show detailed info about all survivors */
+			dvars = []; values = [];
+			dvars[dvars.size] = "playerinfo_total_players";
+			values[values.size] = survivors.size;
+
+			for(i=0;i<survivors.size;i++)
+			{
+				//primary weapon image
+				dvars[dvars.size] = "playerinfo_"+i+"_weapon_primary";				
+				if(!isDefined(survivors[i].pers["primaryWeapon"]) || survivors[i].pers["primaryWeapon"] == game["tranzit"].player_empty_hands)
+					values[values.size] = "";
+				else
+				{
+					if(getSubStr(survivors[i].pers["primaryWeapon"], survivors[i].pers["primaryWeapon"].size - 3, survivors[i].pers["primaryWeapon"].size) == "_mp")
+						values[values.size] = getSubStr(survivors[i].pers["primaryWeapon"], 0, survivors[i].pers["primaryWeapon"].size - 3);
+				}
+				
+				//secondary weapon image
+				dvars[dvars.size] = "playerinfo_"+i+"_weapon_secondary"; 
+				if(!isDefined(survivors[i].pers["secondaryWeapon"]) || survivors[i].pers["secondaryWeapon"] == game["tranzit"].player_empty_hands)
+					values[values.size] = "";
+				else
+				{
+					if(getSubStr(survivors[i].pers["secondaryWeapon"], survivors[i].pers["secondaryWeapon"].size - 3, survivors[i].pers["secondaryWeapon"].size) == "_mp")
+						values[values.size] = getSubStr(survivors[i].pers["secondaryWeapon"], 0, survivors[i].pers["secondaryWeapon"].size - 3);
+				}
+				
+				//third weapon image (usually crafted on a table)
+				dvars[dvars.size] = "playerinfo_"+i+"_weapon_equipment";
+				if(!isDefined(survivors[i].actionSlotWeapon) || survivors[i].actionSlotWeapon == game["tranzit"].player_empty_hands)
+					values[values.size] = "";
+				else
+				{
+					if(getSubStr(survivors[i].actionSlotWeapon, survivors[i].actionSlotWeapon.size - 3, survivors[i].actionSlotWeapon.size) == "_mp")
+						values[values.size] = getSubStr(survivors[i].actionSlotWeapon, 0, survivors[i].actionSlotWeapon.size - 3);
+				}
+
+				//perk  images
+				for(j=0;j<survivors[i].perk_hud.size;j++)
+				{
+					if(j > 4) break;
+
+					dvars[dvars.size] = "playerinfo_"+i+"_perk_"+int(j+1);
+					
+					if(!isDefined(survivors[i].perk_hud[j].perk))
+						values[values.size] = "";
+					else
+						values[values.size] = survivors[i].perk_hud[j].perk;
+				}
+				
+				//image of the player model
+				dvars[dvars.size] = "playerinfo_"+i+"_model";
+				switch(survivors[i].model)
+				{
+					case "body_complete_mp_russian_farmer": values[values.size] = "animated_player_preview_farmer_0" + randomIntRange(1, 3); break;
+					case "body_complete_mp_vip": values[values.size] = "animated_player_preview_vip_0" + randomIntRange(1, 3); break;
+					case "body_complete_mp_zakhaev": values[values.size] = "animated_player_preview_zakhaev_0" + randomIntRange(1, 3); break;
+					case "body_complete_mp_zakhaevs_son_coup": values[values.size] = "animated_player_preview_zakhaev_son_0" + randomIntRange(1, 3); break;
+					
+					case "body_mp_vip_pres":
+					default: values[values.size] = ""; break;
+				}
+				
+				if(survivors[i] != self)
+				{
+					//name
+					dvars[dvars.size] = "playerinfo_"+i+"_name";
+					values[values.size] = survivors[i].name;
+					// money
+					dvars[dvars.size] = "playerinfo_"+i+"_money";
+					values[values.size] = survivors[i] getStat(2400);
+					//rank
+					dvars[dvars.size] = "playerinfo_"+i+"_rank";
+					values[values.size] = survivors[i] getStat(2440);
+					// addicted
+					dvars[dvars.size] = "playerinfo_"+i+"_prestige";
+					values[values.size] = survivors[i] getStat(2326);
+					// kills
+					dvars[dvars.size] = "playerinfo_"+i+"_kills";
+					values[values.size] = survivors[i] getStat(2401);
+					// accuracy
+					dvars[dvars.size] = "playerinfo_"+i+"_accuracy";
+					values[values.size] = survivors[i] getStat(2325);
+					// activity
+					dvars[dvars.size] = "playerinfo_"+i+"_timeplayed";
+					values[values.size] = survivors[i] getStat(2311) + survivors[i] getStat(2312) + survivors[i] getStat(2313);
+				}
+			}
+			
+			self thread setClientDvarsDelayed(dvars, values, "scoreboardUpdate");
+			
+			//make sure smashing the scoreboard button does not
+			//reinvoke the scoreboard update for a bit
+			wait 1;
 		}
 		
 		return;
@@ -206,6 +305,20 @@ onMenuResponse(menu, response)
 		}
 		
 		self setPlayerLanguage();
+		return;
+	}
+	
+	//Weapondrop
+	if(menu == game["menu_weapondrop"] && response == "weapondrop")
+	{
+		self scripts\weapondrop::dropWeaponOnResponse();
+		return;
+	}
+	
+	//Facemask (nvg and gas)
+	if(menu == game["menu_facemask"] && response == "toggle_facemask")
+	{
+		self thread scripts\facemasks::toggleFacemask();
 		return;
 	}
 }

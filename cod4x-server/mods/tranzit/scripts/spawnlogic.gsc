@@ -335,12 +335,39 @@ addSpawnPoints(team)
 	{
 		consolePrint("^1No ^3'" + team + "'^1 spawns found - falling back to default spawn search!\n");
 	
-		if(team == game["attackers"])
-			spawnPointName = "mp_dm_spawn";
-		else
+		if(team == game["defenders"])
+		{
 			spawnPointName = "mp_tdm_spawn";
-	
-		level.teamSpawnPoints[team] = getEntArray(spawnPointName, "classname");
+		
+			level.teamSpawnPoints[team] = getEntArray(spawnPointName, "classname");
+		}
+		else
+		{
+			spawnPointName = "mp_dm_spawn";
+			
+			level.teamSpawnPoints[team] = getEntArray(spawnPointName, "classname");
+			
+			//tranzit and rotu use dm spawns only
+			//for 'normal' maps these spaws are not enough
+			if(game["tranzit"].mapType == "default")
+			{
+				for(i=0;i<2;i++)
+				{
+					switch(i)
+					{
+						case 1: spawnPointName = "mp_dom_spawn"; break;
+						case 0: 
+						default: spawnPointName = "mp_tdm_spawn"; break;
+					}
+						
+					additionalSpawnArray = getEntArray(spawnPointName, "classname");
+		
+					if(isDefined(additionalSpawnArray) && additionalSpawnArray.size > 0)
+						level.teamSpawnPoints[team] = addArrayToArray(level.teamSpawnPoints[team], additionalSpawnArray);
+					
+				}
+			}
+		}
 		
 		if(!isDefined(level.teamSpawnPoints[team]) || level.teamSpawnPoints[team].size <= 0)
 		{
@@ -365,7 +392,6 @@ addSpawnPoints(team)
 			level.teamSpawnPoints[team][i].angles = (0,0,0);
 			level.teamSpawnPoints[team][i].targetname = scriptedGroup;
 			level.teamSpawnPoints[team][i].area = maparea;
-			level.teamSpawnPoints[team][i].team = team;
 		}
 	}
 	
@@ -375,6 +401,7 @@ addSpawnPoints(team)
 	for(i=0;i<level.teamSpawnPoints[team].size;i++)
 	{
 		spawnpoint = level.teamSpawnPoints[team][i];
+		spawnpoint.team = team;
 		
 		if(!isDefined(spawnpoint.inited))
 		{
@@ -472,6 +499,8 @@ updateAvailableTeamSpawns()
 				survivorSpawns[survivorSpawns.size] = level.spawnpoints[i];
 		}
 	}
+
+	//consolePrint("^1Updated " + game["defenders"] + " spawns! " + level.teamSpawnPoints[game["defenders"]].size + " --> " + survivorSpawns.size + "\n");
 
 	level.teamSpawnPoints[game["attackers"]] = zombieSpawns;
 	level.teamSpawnPoints[game["defenders"]] = survivorSpawns;
@@ -890,7 +919,6 @@ spawnPlayer(zombieType, zomTarget)
 	self.friendlydamage = undefined;
 	self.hasSpawned = true;
 	self.spawnTime = getTime();
-	self.afk = false;
 	self.lastStand = undefined;
 
 	if(self.pers["lives"])
@@ -951,14 +979,47 @@ spawnPlayer(zombieType, zomTarget)
 
 doPlayerSpawning(zombieType, zomTarget)
 {
+	spawnPoint = undefined;
 	spawnPoints = level.teamSpawnPoints[self.pers["team"]];
-	assert(spawnPoints.size);
+	
+	AssertEx(spawnPoints.size, "No spawnpoints for '" + self.pers["team"] + "' found!");
 	
 	if(self.pers["team"] == game["attackers"])
 	{
-		if(isDefined(zomTarget))
-			spawnPoint = getSpawnpoint_NearPos(spawnPoints, zomTarget.origin);
+		if(isDefined(zombieType) && zombieType == "dwarf")
+		{
+			//we need some distance randomness here - the closest waypoint to the player is way to close
+			//waypoint = getNearestWp(zomTarget.origin, zomTarget.myAreaLocation);
+			//well, let's start easy, maybe a simple angle check combined with PlayerPhysicsTrace is enough? :D
+			distToPlayer = 130;
+			waypoint = undefined;
+			randomStartAngle = randomInt(360);
+			start = zomTarget.origin + (0,0,5);
+			for(i=randomStartAngle;i<randomStartAngle+360;i+=15)
+			{
+				end = start + anglesToForward((0,i,0))*distToPlayer;
+				
+				if(PlayerPhysicsTrace(start, end) == end)
+				{
+					waypoint = getNearestWp(end, 0);
+					break;
+				}
+			}
+			
+			if(isDefined(waypoint))
+			{
+				spawnpoint = spawnStruct();
+				spawnpoint.origin = getWpOrigin(waypoint);
+				spawnpoint.angles = VectorToAngles(zomTarget.origin - spawnpoint.origin);
+			}
+		}
 		else
+		{
+			if(isDefined(zomTarget))
+				spawnPoint = getSpawnpoint_NearPos(spawnPoints, zomTarget.origin);
+		}
+		
+		if(!isDefined(spawnPoint))
 			spawnPoint = getSpawnpoint_Zombies(spawnPoints);
 	}
 	else
@@ -990,9 +1051,9 @@ spawnClient(timeAlreadyPassed)
 	
 	if(self isASurvivor())
 	{
-		currentorigin =	self.origin;
 		currentangles =	self.angles;
-		
+		currentorigin =	self.origin;
+	
 		setLowerHintMessage(game["strings"]["spawn_next_round"], 60);
 		self thread	[[level.spawnSpectator]]( currentorigin	+ (0, 0, 60), currentangles	);
 	}

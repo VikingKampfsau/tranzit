@@ -29,7 +29,7 @@ initWeaponFridge()
 		
 		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("FRIDGE_GRAB_WEAPON"));
 		
-		if(player UseButtonPressed() && (!isDefined(player.fridging) || !player.fridging))
+		if(player UseButtonPressed())
 		{
 			player thread openWeaponFridge();
 			
@@ -47,15 +47,19 @@ openWeaponFridge()
 	self endon("death");
 	
 	self.fridging = true;
-	self.fridgedWeapon = self checkFridgedWeapon();
+	self getFridgedWeapon();
 	self swapWeapons();
-	self.fridging = false;
+	self.fridging = undefined;
 }
 
-checkFridgedWeapon()
+getFridgedWeapon()
 {
+	if(!isDefined(self.fridgedWeapon))
+		self.fridgedWeapon = spawnStruct();
+
+	self.fridgedWeapon.weapon = undefined;
+
 	fridge = "player_storages/fridge/" + self.guid + ".csv";
-	weapon = undefined;
 	
 	if(fs_testFile(fridge))
 	{
@@ -63,18 +67,53 @@ checkFridgedWeapon()
 		
 		if(file > 0)
 		{
-			weapon = fReadLn(file);
+			self.inFridge = [];
+			while(1)
+			{
+				line = fReadLn(file);
+					
+				if(!isDefined(line) || isEmptyString(line))
+					break;
+					
+				line = CaesarShiftCipher(line, "decrypt");
+				line = strToK(line, ",");
+
+				curEntry = self.inFridge.size;
+				self.inFridge[curEntry] = spawnStruct();
+				self.inFridge[curEntry].weapon = undefined;
+				self.inFridge[curEntry].weaponAmmoClip = 0;
+				self.inFridge[curEntry].weaponAmmoStock = 0;
+				self.inFridge[curEntry].map = "";
+
+				if(isDefined(line[0]))
+					self.inFridge[curEntry].weapon = line[0];
+			
+				if(isDefined(line[1]))
+					self.inFridge[curEntry].weaponAmmoClip = int(line[1]);
+			
+				if(isDefined(line[2]))
+					self.inFridge[curEntry].weaponAmmoStock = int(line[2]);
 				
-			if(!isDefined(weapon) || weapon == "" || weapon == " ")
-				weapon = undefined;
-			else
-				weapon = CaesarShiftCipher(weapon, "decrypt");
+				//if the weapon was stored in this map set the var
+				if(isDefined(line[3]))
+				{
+					self.inFridge[curEntry].map = line[3];
+				
+					if(line[3] == level.script)
+					{
+						if(isDefined(self.inFridge[curEntry].weapon))
+						{
+							self.fridgedWeapon.weapon = self.inFridge[curEntry].weapon;
+							self.fridgedWeapon.weaponAmmoClip = self.inFridge[curEntry].weaponAmmoClip;
+							self.fridgedWeapon.weaponAmmoStock = self.inFridge[curEntry].weaponAmmoStock;
+						}
+					}
+				}
+			}
 		
 			closeFile(file);
 		}
 	}
-	
-	return weapon;
 }
 
 swapWeapons()
@@ -85,18 +124,28 @@ swapWeapons()
 	fridge = "player_storages/fridge/" + self.guid + ".csv";
 	file = openFile(fridge, "write");
 	
-	toFridge = self getCurrentWeapon();
-	if(toFridge == "none")
+	toFridge = spawnStruct();
+	toFridge.map = level.script;
+	toFridge.weapon = self getCurrentWeapon();
+	if(toFridge.weapon == "none")
 		return;
 	
 	if(file > 0)
 	{
+		toFridge.weaponAmmoClip = self getWeaponAmmoClip(toFridge.weapon);
+		if(!isDefined(toFridge.weaponAmmoClip))
+			toFridge.weaponAmmoClip = 0;
+			
+		toFridge.weaponAmmoStock = self getWeaponAmmoStock(toFridge.weapon);
+		if(!isDefined(toFridge.weaponAmmoStock))
+			toFridge.weaponAmmoStock = 0;
+			
 		self takeCurrentWeapon();
 	
 		//if this is defined then there is a weapon inside
-		if(isDefined(self.fridgedWeapon))
+		if(isDefined(self.fridgedWeapon.weapon))
 		{
-			self giveNewWeapon(self.fridgedWeapon);
+			self giveNewWeapon(self.fridgedWeapon.weapon, false, false, self.fridgedWeapon.weaponAmmoClip, self.fridgedWeapon.weaponAmmoStock);
 			
 			if(isDefined(self getEmptyWeaponSlot()) && !self hasWeapon(game["tranzit"].player_empty_hands))
 				self giveNewWeapon(game["tranzit"].player_empty_hands, true);
@@ -107,19 +156,24 @@ swapWeapons()
 				self giveNewWeapon(game["tranzit"].player_empty_hands);
 		}
 
-		if(toFridge == game["tranzit"].player_empty_hands)
-			toFridge = undefined;
+		if(toFridge.weapon == game["tranzit"].player_empty_hands)
+			toFridge.weapon = undefined;
 
-		if(isDefined(toFridge))
+		for(i=0;i<self.inFridge.size;i++)
 		{
-			fPrintLn(file, CaesarShiftCipher(toFridge, "encrypt"));
-			closeFile(file);
+			if(self.inFridge[i].map == toFridge.map)
+				continue;
+		
+			string = self.inFridge[i].weapon + "," + self.inFridge[i].weaponAmmoClip + "," + self.inFridge[i].weaponAmmoStock + "," + self.inFridge[i].map;
+			fPrintLn(file, CaesarShiftCipher(string, "encrypt"));
 		}
-		else
+		
+		if(isDefined(toFridge.weapon))
 		{
-			closeFile(file);
-			if(fs_testFile(fridge))
-				fs_remove(fridge);
+			string = toFridge.weapon + "," + toFridge.weaponAmmoClip + "," + toFridge.weaponAmmoStock + "," + toFridge.map;
+			fPrintLn(file, CaesarShiftCipher(string, "encrypt"));
 		}
+		
+		closeFile(file);
 	}
 }

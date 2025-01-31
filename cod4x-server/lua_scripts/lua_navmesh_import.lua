@@ -121,7 +121,7 @@ function collectVertexNeighbourInfo(index)
 		end
 	end
 
-	result = "," .. temp
+	result = "," .. vertices[index].nghbrCount .. "," .. temp
 
 	return result
 end

@@ -374,9 +374,9 @@ ShootTarget(target)
 		if(self.currenttarget AffectingSentry(self, true))
 		{
 			if(isDefined(self.owner) && isPlayer(self.owner))
-				self.currenttarget finishPlayerDamage(self, self.owner, 35, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("sentrygun"), self GetTagOrigin("tag_flash"), VectorToAngles(self.currenttarget.origin - self GetTagOrigin("tag_flash")), "none", 0 );
+				self.currenttarget [[level.callbackPlayerDamage]](self, self.owner, 35, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("sentrygun"), self GetTagOrigin("tag_flash"), VectorToAngles(self.currenttarget.origin - self GetTagOrigin("tag_flash")), "none", 0, "sentry gun with owner killed");
 			else
-				self.currenttarget finishPlayerDamage(self, self.currenttarget, 35, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("sentrygun"), self GetTagOrigin("tag_flash"), VectorToAngles(self.currenttarget.origin - self GetTagOrigin("tag_flash")), "none", 0 );
+				self.currenttarget [[level.callbackPlayerDamage]](self, self.currenttarget, 35, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("sentrygun"), self GetTagOrigin("tag_flash"), VectorToAngles(self.currenttarget.origin - self GetTagOrigin("tag_flash")), "none", 0, "sentry gun without owner killed");
 
 			PlayFx(level._effect["sentry_blood"], self.currenttarget GetTagOrigin("j_spine4"));
 		}

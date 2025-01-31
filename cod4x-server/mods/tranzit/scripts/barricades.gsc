@@ -8,9 +8,14 @@ init()
 	
 	add_sound("debris_move", "whoosh");
 
+	//to connect the path waypoints are required
+	while(!isDefined(level.wpAmount) || level.wpAmount <= 0)
+		wait .05;
+
 	thread loadDoors();
 	thread loadBlockers();
 	thread loadBarricades();
+	thread loadMantleTriggers();
 }
 
 loadDoors()
@@ -28,6 +33,12 @@ loadDoors()
 initDoor()
 {
 	self endon("death");
+	
+	if(game["debug"]["status"] && game["debug"]["barricades_noDoors"])
+	{
+		self thread openDoor();
+		return;
+	}
 	
 	if(isDefined(self.radius) && isDefined(self.height))
 		self.trigger = spawn("trigger_radius", self.origin - (0,0,25), 0, self.radius, self.height);
@@ -54,9 +65,11 @@ initDoor()
 			continue;
 		
 		if(player UseButtonPressed())
-		{		
+		{
+			hasPerk = player scripts\perks::hasZombiePerk("specialty_fastreload");
 			player thread [[level.onXPEvent]]("barricade_open_door");
-			self thread openDoor();
+		
+			self thread openDoor(hasPerk);
 			break;
 		}
 	}
@@ -64,12 +77,8 @@ initDoor()
 	self.trigger delete();
 }
 
-openDoor()
+openDoor(hasPerk)
 {
-	//show disappear fx and sound
-	playfx(level._effect["entitiy_disappear"], self.origin);
-	playsoundatposition("debris_move", self.origin);
-
 	self vibrate((randomIntRange(5,10), randomIntRange(5,10), 0), 10, 0.5, 3);
 
 	//connect the waypoints to allow zombies to move through the doorway
@@ -86,7 +95,14 @@ openDoor()
 		thread scripts\spawnlogic::toggleSpawnGroup(self.groupname, true);
 	
 	//wait until the end of the vibration
-	wait 3;
+	if(!isDefined(hasPerk) || !hasPerk)
+		wait 3;
+	else
+		wait 2.25;
+	
+	//show disappear fx and sound
+	playfx(level._effect["entitiy_disappear"], self.origin);
+	playsoundatposition("debris_move", self.origin);
 	
 	self delete();
 }
@@ -120,6 +136,12 @@ initBlocker()
 {
 	self endon("death");
 	
+	if(game["debug"]["status"] && game["debug"]["barricades_noBlockers"])
+	{
+		self thread removeBlocker();
+		return;
+	}
+	
 	self.trigger = spawn("trigger_radius", self.origin - (0,0,25), 0, 180, 262);
 
 	while(1)
@@ -136,8 +158,10 @@ initBlocker()
 		
 		if(player UseButtonPressed())
 		{
+			hasPerk = player scripts\perks::hasZombiePerk("specialty_fastreload");
 			player thread [[level.onXPEvent]]("barricade_open_door");
-			self thread removeBlocker();
+			
+			self thread removeBlocker(hasPerk);
 			break;
 		}
 	}
@@ -145,17 +169,17 @@ initBlocker()
 	self.trigger delete();
 }
 
-removeBlocker()
+removeBlocker(hasPerk)
 {
+	//move it into the sky
+	for(i=0;i<self.parts.size;i++)
+		self.parts[i] thread removeBlockerParts(self, hasPerk);
+	
+	self waittill("blocker_removed");
+
 	//show disappear fx and sound
 	playfx(level._effect["entitiy_disappear"], self.origin);
 	playsoundatposition("debris_move", self.origin);
-
-	//move it into the sky
-	for(i=0;i<self.parts.size;i++)
-		self.parts[i] thread removeBlockerParts(self);
-	
-	self waittill("blocker_removed");
 
 	//connect the waypoints to allow zombies to move the new free way
 	waypoints = [];
@@ -180,7 +204,7 @@ removeBlocker()
 	self delete();
 }
 
-removeBlockerParts(mother)
+removeBlockerParts(mother, hasPerk)
 {
 	self endon("death");
 
@@ -188,7 +212,13 @@ removeBlockerParts(mother)
 	wait .5;
 
 	self vibrate((randomIntRange(25,50), randomIntRange(25,50), 0), 15, 0.5, 3);
-	wait 3;
+	
+	//wait until the end of the vibration
+	if(!isDefined(hasPerk) || !hasPerk)
+		wait 3;
+	else
+		wait 2.25;
+	
 	self moveTo(self.targetPos, abs(self.targetPos[2] - self.startPos[2])/1000);
 	wait .1; //wait (abs(self.targetPos[2] - self.startPos[2])/1000);
 	
@@ -222,13 +252,14 @@ loadBarricades()
 		{
 			for(j=0;j<parts.size;j++)
 			{
-				parts[j] solid(); 
+				parts[j] solid();
 				parts[j].startPos = parts[j].origin;
 				parts[j].startAngle = parts[j].angles;
 				
 				if(Distance(parts[j].origin, level.barricades[i].origin) <= 35)
 				{
-					parts[j].repairPos = level.barricades[i].origin + (0, 60, 25);
+					//not save because it does not include a direction
+					//parts[j].repairPos = level.barricades[i].origin + (0, 60, 25);
 					level.barricades[i].parts[level.barricades[i].parts.size] = parts[j];
 				}
 			}
@@ -244,10 +275,11 @@ loadBarricades()
 				if(!isDefined(parts[j]))
 					break;
 					
-				parts[j] solid(); 
+				parts[j] solid();			
 				parts[j].startPos = parts[j].origin;
 				parts[j].startAngle = parts[j].angles;
-				parts[j].repairPos = level.barricades[i].origin + (0, 60, 25);
+				//not save because it does not include a direction
+				//parts[j].repairPos = level.barricades[i].origin + (0, 60, 25);
 				
 				level.barricades[i].parts[level.barricades[i].parts.size] = parts[j];
 			}
@@ -255,14 +287,33 @@ loadBarricades()
 		
 		level.barricades[i] thread initBarricade();
 	}
+	
+	if(game["debug"]["status"] && game["debug"]["barricades_noPlanks"])
+	{
+		for(i=0;i<level.barricades.size;i++)
+			level.barricades[i] thread removeAllParts();
+		
+		return;
+	}
 }
 
 initBarricade()
 {
-	wait 10;
-
 	self endon("death");
 
+	//the difference between a barricade and a door/blocker is that zombies can destroy it to pass
+	//to make them move to the barricade the waypoints have to be connected BEFORE the barricade removal
+	waypoints = getEntArray(self.target, "targetname");
+	//connect the waypoints to allow zombies to move the new free way
+	addWpNeighbour(getNearestWp(waypoints[0].origin, 0), getNearestWp(waypoints[1].origin, 0));
+	addWpNeighbour(getNearestWp(waypoints[1].origin, 0), getNearestWp(waypoints[0].origin, 0));
+	
+	//the waypoints are not used anymore - delete them to free entities
+	for(i=0;i<waypoints.size;i++)
+		waypoints[i] delete();
+
+	//wait 10; //cannot remember why this is here
+	
 	self.isUseable = false;
 	self.curPart = 0;
 	
@@ -281,6 +332,10 @@ initBarricade()
 		if(!attacker isAZombie())
 			continue;
 		
+		//zombie grabbing player through the window - not damaging the barricade
+		if(attacker getStance() == "crouch")
+			continue;
+		
 		damage = 100;
 		self.barricadeHealth -= damage;
 		
@@ -291,7 +346,7 @@ initBarricade()
 
 		if(activePart != self.curPart)
 		{
-			self.parts[self.curPart] removePart();
+			self.parts[self.curPart] removePart(attacker);
 			self.curPart = activePart;
 			
 			self.isUseable = true;
@@ -315,18 +370,22 @@ initBarricadeTrigger()
 		if(!self.isUseable)
 			continue;
 		
+		if(self barricadeHasPlayerInside())
+			continue;
+		
 		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("BARRICADES_PLANK_REPAIR"));
 		
 		if(player UseButtonPressed())
 		{
 			self.isUseable = false;
-			self restorePart(player);
-			self.isUseable = true;
+			
+			hasPerk = player scripts\perks::hasZombiePerk("specialty_fastreload");
+			self thread restorePart(player, hasPerk);
 		}
 	}
 }
 
-removePart()
+removePart(attacker)
 {
 	self endon("death");
 
@@ -336,16 +395,31 @@ removePart()
 	self playSoundRef("break_barrier_piece");
 	self notSolid(); 
 	
-	dist = 100 + RandomInt( 100 );
-	dest = self.origin + (AnglesToForward(self.angles) * dist);
-	trace = BulletTrace(dest + (0, 0, 16), dest + (0, 0, -200), false, undefined);
+	dist = RandomIntRange(100, 200);
+	
+	if(isDefined(attacker))
+	{
+		if(!isDefined(self.repairPos))
+			self.repairPos = self.origin - (AnglesToForward((0,attacker.angles[1],0)) * 60);
+	
+		dest = self.origin - (AnglesToForward((0,attacker.angles[1],0)) * dist);
+	}
+	else
+	{
+		if(!isDefined(self.repairPos))
+			self.repairPos = self.origin - (AnglesToForward(self.angles) * 60);
+	
+		dest = self.origin - (AnglesToForward(self.angles) * dist);
+	}
+	
+	trace = BulletTrace(dest + (0, 0, 16), dest + (0, 0, -500), false, undefined);
 
 	if(trace["fraction"] == 1)
-		dest = dest + (0, 0, -200);
+		dest = dest + (0, 0, -500);
 	else
 		dest = trace["position"];
 	
-	time = self fake_physicslaunch(dest, 200 + RandomInt(100));
+	time = self fake_physicslaunch(dest, RandomIntRange(200, 300));
 	
 	if(RandomInt(100) > 40)
 		self RotatePitch(180, time * 0.5);
@@ -355,7 +429,17 @@ removePart()
 	wait time;
 }
 
-restorePart(player)
+removeAllParts()
+{
+	self endon("death");
+	
+	self.trigger.origin = self.origin;
+	
+	for(i=0;i<self.parts.size;i++)
+		self.parts[i] removePart();
+}
+
+restorePart(player, hasPerk)
 {
 	self endon("death");
 
@@ -366,10 +450,30 @@ restorePart(player)
 		curPart = self.curPart;
 		
 		self.parts[curPart] rotateTo(self.parts[curPart].startAngle, .05);
-		self.parts[curPart] moveTo(self.parts[curPart].repairPos, .5, 0, 0);
-		wait .6;
+		
+		if(!isDefined(hasPerk) || !hasPerk)
+		{
+			self.parts[curPart] moveTo(self.parts[curPart].repairPos, .5, 0, 0);
+			wait .6;
+		}
+		else
+		{
+			self.parts[curPart] moveTo(self.parts[curPart].repairPos, .375, 0, 0);
+			wait .45;
+		}
+		
 		self.parts[curPart] moveTo(self.parts[curPart].startPos, .1, 0, 0);
 		self playSoundRef("barrier_rebuild_slam");
+		wait .1;
+		
+		
+		/*i think this is not necessary anymore - barricades do not repair when a player is inside
+		for(i=0;i<level.players.size;i++)
+		{
+			if(level.players[i] isTouching(self.parts[curPart]) || Distance2d(level.players[i].origin, self.parts[curPart].startPos) <= 6)
+				level.players[i] pushPlayer2D(self, self, true, "back", 400);
+		}*/
+
 		wait .1;
 		self.parts[curPart] solid();
 		
@@ -387,6 +491,8 @@ restorePart(player)
 		}
 	}
 	
+	self.isUseable = true;
+	
 	if(self.barricadeHealth == self.maxhealth)
 	{
 		self.isUseable = false;
@@ -399,7 +505,7 @@ restoreAllParts()
 	self endon("death");
 	
 	while(self.curPart > 0)
-		self restorePart(undefined);
+		self restorePart(undefined, false);
 }
 
 zombieCloseToBarricade()
@@ -413,4 +519,53 @@ zombieCloseToBarricade()
 	}
 	
 	return undefined;
+}
+
+barricadeHasPlayerInside()
+{
+	self endon("death");
+	
+	for(i=0;i<level.players.size;i++)
+	{
+		if(level.players[i] isTouching(self))
+			return true;
+	}
+	
+	return false;
+}
+
+loadMantleTriggers()
+{
+	level.mantleTriggers = getEntArray("trigger_mantle", "targetname");
+	
+	//for(i=0;i<level.mantleTriggers.size;i++)
+	//	level.mantleTriggers[i] thread initMantleTrigger();
+}
+
+initMantleTrigger()
+{
+	self endon("death");
+	
+	self.inUse = false;
+
+	while(1)
+	{
+		for(i=0;i<level.players.size;i++)
+		{
+			if(level.players[i] isTouching(self) && level.players[i] isAZombie())
+			{
+				if(!self.inUse && level.players[i] isMantling())
+				{
+					self.inUse = true;
+					
+					while(level.players[i] isMantling())
+						wait .05;
+					
+					self.inUse = false;
+				}
+			}
+		}
+		
+		wait .05;
+	}
 }

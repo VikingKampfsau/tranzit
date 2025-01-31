@@ -2,11 +2,15 @@
 
 init()
 {
-	add_weapon("zombie_dog", "ak47_gl_mp");
-	add_weapon("zombie_dwarf", "g36c_gl_mp");
-	add_weapon("zombie_human", "g3_gl_mp");
-	add_weapon("zombie_quad", "m14_gl_mp");
-	add_weapon("zombie_avagadro", "m16_gl_mp");
+	//precacheModel("fake_hitbox_player_stand");
+
+	add_weapon("zombie_dog", "ak47_gl_mp", false);
+	add_weapon("zombie_dwarf", "g36c_gl_mp", false);
+	add_weapon("zombie_human", "g3_gl_mp", false);
+	add_weapon("zombie_quad", "m14_gl_mp", false);
+	add_weapon("zombie_avagadro", "m16_gl_mp", false);
+	
+	add_weapon("player_dwarf_attacking", "m4_gl_mp", false);
 
 	initZombieModel("quad", "bo_quad", "", "", "", "");
 	initZombieModel("human", "body_zombie_01", "head_zombie_a", "body_zombie_01_upclean", "body_zombie_01_nolegs", "head_zombie_gib");
@@ -32,7 +36,7 @@ init()
 	add_effect("avagadro_bolt", "tranzit/gore/electric_bolt");
 	add_effect("avagadro_moving", "tranzit/zombie/avagadro_moving");
 
-	//to add to script
+	add_effect("screecher_appear", "tranzit/zombie/screecher_disappear");
 	add_effect("screecher_disappear", "tranzit/zombie/screecher_disappear");
 	
 	add_sound("spawn_dirt", "spawn_dirt");
@@ -73,10 +77,8 @@ init()
 	level.botMeleeDist = 64;
 	level.botRangeAttackDist["avagadro"] = 512;
 	
-	level.mantleTriggers = getEntArray("trigger_mantle", "targetname");
-	
 	//add other maps separated by comma - the teleport causes problems on navmeshed maps and should only be used for rotu maps
-	disabledClipTeleportMaps = "mp_forsaken_world,mp_forsaken_world_debug";
+	disabledClipTeleportMaps = "mp_forsaken_world";
 	disabledClipTeleportMaps = strToK(disabledClipTeleportMaps, ",");
 	
 	level.clipTeleport = true;
@@ -168,7 +170,12 @@ spawnZombie(zombieType, target)
 {
 	self endon("disconnect");
 	self endon("death");
+
+	//stay hidden until fully initialized
+	//this will fix the bad crawl anim
+	self hide();
 	
+	self.zombieType = "human";
 	if(isDefined(zombieType))
 		self.zombieType = zombieType;
 	else
@@ -177,8 +184,6 @@ spawnZombie(zombieType, target)
 			self.zombieType = "dog";
 		else if(game["tranzit"].specialWaveType == "quads")
 			self.zombieType = "quad";
-		else
-			self.zombieType = "human";
 	}
 
 	self.linkedToPlayer = false;
@@ -188,7 +193,10 @@ spawnZombie(zombieType, target)
 	self.isElectrified = false;
 	self.doJump = false;
 	
+	self.mantleInVehicle = false;
+	
 	self.godmode = false;
+	self.isNapalmBurning = false;
 		
 	self.zombieTypeNo = randomInt(level.zombieModels[self.zombieType].size);
 	self.zombieSkill = randomFloatRange(0.3, 0.9);
@@ -196,11 +204,9 @@ spawnZombie(zombieType, target)
 	self setZombieModel();
 	self setZombieVars();
 	self giveLoadout();
-	
-	self playSpawnFx();
 	self freezeControls(true);
-
 	self setMovespeedScale(self.moveSpeedScale);
+	self playSpawnFx();
 
 	if(isDefined(self.damageTrigger))
 		self.damageTrigger delete();
@@ -212,22 +218,11 @@ spawnZombie(zombieType, target)
 		self.glowFxEnt delete();
 
 	if(isDefined(self.pers["isBot"]) && self.pers["isBot"])
-	{
-		self thread scripts\maparea::monitorMovementInMap();
 		self thread botBehavior(target);
-	}
 }
 
 setZombieModel()
 {
-	//debug to fix invisible avagadro
-	if(self.zombieType == "avagadro")
-	{
-		consolePrint("1. " + self.zombieType + "\n");
-		consolePrint("2. " + self.zombieTypeNo + "\n");
-		consolePrint("3. " + level.zombieModels[self.zombieType][self.zombieTypeNo].body + "\n");
-	}
-
 	self detachAll();
 	self setModel(level.zombieModels[self.zombieType][self.zombieTypeNo].body);
 	
@@ -265,9 +260,9 @@ setZombieGlowFx()
 			break;
 		
 		case "human":
-			if(isDefined(self GetTagOrigin("j_eyeball_le")))
+			if(self playermodelHasTag("j_eyeball_le"))
 				PlayFXOnTag(level._effect["human_eye_glow"], self, "j_eyeball_le");	
-			if(isDefined(self GetTagOrigin("j_eyeball_ri")))
+			if(self playermodelHasTag("j_eyeball_ri"))
 				PlayFXOnTag(level._effect["human_eye_glow"], self, "j_eyeball_ri");
 			break;
 		
@@ -307,6 +302,9 @@ playSpawnFx()
 			break;
 		
 		case "dwarf":
+			PlayFx(level._effect["screecher_appear"], self.origin);
+			break;
+
 		case "quad":
 		default:
 			break;
@@ -325,10 +323,11 @@ setZombieVars()
 			self.moveSpeedScale = 1.0;			// move speed multiplier
 			self.meleeSpeed = 2;			// timeout between melee attacks
 			self.fireSpeed = 4;			// timeout between range attacks
-			self.damagePoints = 200;			// damage dealt per attack
+			self.damagePoints = 66;			// damage dealt per attack
 			self.runChance = 0;				// chance this bot starts as a runner
 			self.sprintChance = 0;			// chance this bot starts as a sprinter
 			self.moveType = "walk";
+			self.maxhealth = 666;
 			self.health = 666;
 			break;
 	
@@ -342,14 +341,14 @@ setZombieVars()
 			break;
 			
 		case "dwarf":
-			self.maxhealth = 90;
 			self.moveSpeedScale = 1.4;				// move speed multiplier
 			self.meleeSpeed = 1;			// timeout between melee attacks
-			self.damagePoints = 22;				// damage dealt per attack
+			self.damagePoints = 16;				// damage dealt per attack
 			self.runChance = 1;				// chance this bot starts as a runner
 			self.sprintChance = 0;			// chance this bot starts as a sprinter
 			self.moveType = "run";
-			self.health = 666;
+			self.maxhealth = 520;
+			self.health = 520;
 			break;
 		
 		case "quad":
@@ -365,9 +364,9 @@ setZombieVars()
 		default:
 			self.moveSpeedScale = 0.8;			// move speed multiplier
 			self.meleeSpeed = 1.8;			// timeout between melee attacks
-			self.damagePoints = 30;				// damage dealt per attack
+			self.damagePoints = 20;				// damage dealt per attack
 			self.runChance = 0.4;			// chance this bot starts as a runner
-			self.sprintChance = 0.6;		// chance this bot starts as a sprinter	
+			self.sprintChance = 0.3;		// chance this bot starts as a sprinter	
 			self.moveType = "walk";
 			break;
 	}
@@ -376,7 +375,7 @@ setZombieVars()
 	{
 		if(randomFloat(1) < self.runChance)
 			self.moveType = "run";
-		else if( randomFloat(1) < self.sprintChance)
+		else if(randomFloat(1) < self.sprintChance)
 			self.moveType = "sprint";
 	}
 	else if(game["tranzit"].wave > 3)
@@ -389,11 +388,12 @@ setZombieVars()
 giveLoadout()
 {
 	//clear the actionSlots
-	self SetActionSlot(1, "");
-	self SetActionSlot(3, "");
-	self SetActionSlot(4, "");
+	/*craftables (cod4: nightvision slot)*/	self SetActionSlot(1, ""); self.actionSlotItem = undefined;
+	/*facemasks  (cod4: unused slot)*/		self SetActionSlot(2, ""); self.actionSlotMask = undefined;
+	/*explosives (cod4: c4/clay/rpg slot)*/	self SetActionSlot(3, ""); self.actionSlotWeapon = undefined;
+	/*hardpoints (cod4: hardpoints slot)*/	self SetActionSlot(4, ""); self.actionSlotHardpoint = undefined;
 
-	self TakeAllWeapons();
+	self takeAllWeapons();
 	self scripts\perks::clearZombiePerks();
 
 	self.zombieWeapon = getWeaponFromCustomName("zombie_" + self.zombieType);
@@ -412,6 +412,7 @@ botBehavior(forcedTarget)
 	self endon("death");
 
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	self notify("bot_start_thinking");
 	self endon("bot_start_thinking");
@@ -436,7 +437,12 @@ botBehavior(forcedTarget)
 	}
 	
 	if(self.zombieType == "dwarf")
+	{
 		level.dwarfsLeft++;
+		
+		//zombie initialized - make him visible
+		self show();
+	}
 	else
 	{
 		level.zombiesSpawned++;
@@ -445,16 +451,20 @@ botBehavior(forcedTarget)
 		{
 			level.zombiesSpawned--;
 		
+			//zombie initialized - make him visible
+			self show();
+		
 			self thread avagadroBehavior(forcedTarget);
 			return;
 		}
 	
-		//a short delay before the zombie starts to move
-		//this is because of the spawnFX to make it look like he crawls out of the ground
-		//the crawl anim has 168 frames = 5.6 seconds
-		wait .05; //sadly required else the shellShock kicks in to early
-		self shellShock("frag_grenade_mp", 5.4);
-		wait 5.6;
+		//start the anim to make it look like he crawls out of the ground
+		self setAnim("both", "ai_zombie_climbout_ground");
+		//a short delay before making the zombie visible to make sure the anim is playing
+		wait .2;
+		self show();
+		//wait for the crawl anim to finish
+		wait 5.4;
 
 		self thread botCheckMantle();
 	}
@@ -466,14 +476,22 @@ botBehavior(forcedTarget)
 	{
 		wait .1;
 	
-		self.myTarget = undefined;
-		if(isDefined(forcedTarget))
-			self.myTarget = forcedTarget;
-	
 		if(self.zombieType == "dwarf")
 		{
+			if(isDefined(forcedTarget))
+				self.myTarget = forcedTarget;
+
 			if(isDefined(self.myTarget))
+			{
+				if(!isAlive(self.myTarget) || self.myTarget isInLastStand() || (isDefined(self.myTarget.isOnTruck) && self.myTarget.isOnTruck))
+				{
+					//consolePrint("dwarf " + self getEntityNumber() + " target died or is on vehicle - suicide\n");
+					self [[level.callbackPlayerDamage]](self, self, self.health + 666, 0, "MOD_RIFLE_BULLET", "none", self.origin, (0,0,0), "head", 0, "target died or is on vehicle");
+				}
+			
+				//consolePrint("dwarf " + self getEntityNumber() + " has target: " + self.myTarget.name + " " + self.myTarget getEntityNumber() + "\n");
 				self botAttackTarget("player");
+			}
 
 			if(!self.isAttacking)
 			{
@@ -490,6 +508,10 @@ botBehavior(forcedTarget)
 		}
 		else
 		{
+			self.myTarget = undefined;
+			if(isDefined(forcedTarget))
+				self.myTarget = forcedTarget;
+		
 			//music attracts him so first check for a monkeybomb around
 			if(!isDefined(self.myTarget))
 			{
@@ -545,7 +567,38 @@ botBehavior(forcedTarget)
 				self.myMoveTarget = self.myTarget;
 			
 			if(isDefined(self.myMoveTarget))
-				self botCalculateNextStepTowards();
+			{
+				//before moving the zombie check if has has to climb on the vehicle
+				if(self.zombieType == "human" && isPlayer(self.myMoveTarget))
+				{
+					if(isDefined(self.myMoveTarget.isOnTruck) && self.myMoveTarget.isOnTruck)
+					{
+						self.isOnTruck = scripts\vehicle::playerOnLoadingArea();
+			
+						if(self.isOnTruck)
+						{
+							//iPrintLnBold(self.name + " is on truck.");
+						}
+						else
+						{
+							closestVehicleMantleSpot = self scripts\vehicle::getClosestMantleSpot();
+							if(isDefined(closestVehicleMantleSpot))
+							{
+								self.myMoveTarget = getEnt(closestVehicleMantleSpot, "targetname");
+								
+								if(self scripts\vehicle::canMantleInVehicle(self.myMoveTarget))
+								{
+									self scripts\vehicle::doMantleInVehicle(self.myMoveTarget);
+									continue;
+								}
+							}
+						}
+					}
+				}
+				
+				if(isDefined(self.myMoveTarget))
+					self botCalculateNextStepTowards();
+			}
 		}
 	}
 }
@@ -556,6 +609,7 @@ avagadroBehavior(forcedTarget)
 	self endon("death");
 
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	self notify("avagadro_start_thinking");
 	self endon("avagadro_start_thinking");
@@ -569,16 +623,7 @@ avagadroBehavior(forcedTarget)
 	while(1)
 	{
 		wait .1;
-	
-		if(self.atTarget || self.isAttacking)
-		{
-			if(self.model == "")
-			{
-				consolePrint("Avagadro without model - calling setZombieModel \n");
-				self setZombieModel();
-			}
-		}
-	
+
 		self.myTarget = undefined;
 		if(isDefined(forcedTarget) && isPlayer(forcedTarget) && isAlive(forcedTarget))
 			self.myTarget = forcedTarget;
@@ -619,7 +664,7 @@ botCalculateNextStepTowards()
 	self notify("botCalculateNextStep");
 	self endon("botCalculateNextStep");
 	
-	if(self isMantling())
+	if(self isMantling() || (isDefined(self.mantleInVehicle) && self.mantleInVehicle))
 		return;
 	
 	//if(!isDefined(self.myWaypoint)) uncomment this line when the lags return
@@ -650,18 +695,37 @@ botCalculateNextStepTowards()
 		self.underway = false;
 	
 	//the bot can move to the target freely
-	if(PlayerPhysicsTrace(self.origin + (0,0,5), target.origin + (0,0,5)) == target.origin + (0,0,5))
+	freePath = false;
+	if(isPlayer(target) && target.isOnTruck && isDefined(self.isOnTruck) && self.isOnTruck)
+		freePath = true;
+	if(isDefined(target.targetname) && isSubStr(target.targetname, "tag_mantlespot_"))
+		freePath = true;
+	else if(PlayerPhysicsTrace(self.origin + (0,0,5), target.origin + (0,0,5)) == target.origin + (0,0,5))
+		freePath = true;
+	
+	if(freePath)
+	{
+		//the bot can move to the target freely when there is no hole (like roof at loading area)
+		loops = int(Distance2d(self.origin + (0,0,5), target.origin + (0,0,5)) / 20);
+		for(j=1;j<=loops;j++)
+		{
+			forward = VectorNormalize(target.origin - self.origin);
+			if(BulletTracePassed(self.origin + (0,0,5) + anglesToForward(forward)*20*j, self.origin + (0,0,5) - (0,0,50) + anglesToForward(forward)*20*j, false, self))
+			{
+				freePath = false;
+				break;
+			}
+		}
+	}
+	
+	if(freePath)
 		self.moveDirect = true;
 	else
 	{
 		if(self.underway)
 		{
-			self printZomMovementDebugMsg("underway true");
-		
 			if(self.targetWp == self.myWaypoint)
 			{
-				self printZomMovementDebugMsg("is at target 1");
-			
 				self.moveDirect = true;
 				self.underway = false;
 				self.atTarget = true;
@@ -670,22 +734,16 @@ botCalculateNextStepTowards()
 			}
 			else
 			{
-				self printZomMovementDebugMsg("is not at target 1");
-			
 				if(!isDefined(self.nextWp) || self.nextWp < 0)
 				{
-					self printZomMovementDebugMsg("is not at target 1 - return");
-					return;
+					//iPrintLnBold("return 1");
+						return;
 				}
 				
 				if(self.targetWp == self.nextWp)
 				{
-					self printZomMovementDebugMsg("is not at target 1 - target is next wp");
-				
 					if(Distance2d(target.origin, self.origin) <= Distance2d(getWpOrigin(self.nextWp), self.origin))
 					{
-						self printZomMovementDebugMsg("is not at target 1 - bot close to target");
-					
 						self.moveDirect = true;
 						self.underway = false;
 						//self.myWaypoint = undefined;
@@ -711,12 +769,8 @@ botCalculateNextStepTowards()
 		}
 		else
 		{
-			self printZomMovementDebugMsg("underway false");
-		
 			if(self.targetWp == self.myWaypoint)
 			{
-				self printZomMovementDebugMsg("is at target 2");
-			
 				self.moveDirect = true;
 				self.underway = false;
 				self.atTarget = true;
@@ -725,8 +779,6 @@ botCalculateNextStepTowards()
 			}
 			else
 			{
-				self printZomMovementDebugMsg("is not at target 2 - called a star");
-			
 				astar_path = self scripts\navmesh::PathfindingAlgorithm(self.myWaypoint, self.targetWp);
 				
 				if(!isDefined(astar_path))
@@ -739,7 +791,19 @@ botCalculateNextStepTowards()
 				if(!isDefined(self.nextWp))
 				{
 					self.underway = false;
-					//wait .5; //astar failed - wait a bit before next movement check
+					
+					//astar failed - don't try again unless the target player changes his position
+					curTargetWp = self.targetWp;
+					while(curTargetWp == self.targetWp)
+					{
+						wait .1;
+						
+						if(!isDefined(target) || !isPlayer(target) || !isAlive(target))
+							break;
+						
+						self.targetWp = getNearestWp(target.origin, target.myAreaLocation);
+					}
+					
 					return;
 				}
 			}
@@ -748,16 +812,10 @@ botCalculateNextStepTowards()
 	
 	if(self.moveDirect)
 	{
-		self printZomMovementDebugMsg("move direct is true");
-	
 		if(!isDefined(self.isAttacking) || !self.isAttacking)
 		{
-			self printZomMovementDebugMsg("move direct - not attacking");
-		
 			if(isDefined(target))
 			{
-				self printZomMovementDebugMsg("move direct - target defined");
-			
 				if(isPlayer(target))
 					self.lookAt = target getTagOrigin("j_spine4");
 				if(!isDefined(self.lookAt))
@@ -772,21 +830,13 @@ botCalculateNextStepTowards()
 	}
 	else
 	{
-		self printZomMovementDebugMsg("move direct is false");
-	
 		if(isDefined(self.nextWp) && self.nextWp >= 0)
 		{
-			self printZomMovementDebugMsg("dont move direct - next wp defined");
-		
 			moveTo = getWpOrigin(self.nextWp);
 			if(!isDefined(self.isAttacking) || !self.isAttacking)
 			{
-				self printZomMovementDebugMsg("dont move direct - not attacking");
-			
 				/*if(isDefined(target))
 				{
-					self printZomMovementDebugMsg("dont move direct - target defined");
-				
 					if(isPlayer(target))
 						self.lookAt = target getTagOrigin("j_spine4");
 					if(!isDefined(self.lookAt))
@@ -796,8 +846,6 @@ botCalculateNextStepTowards()
 					self botDoAim(self.lookAt, time);
 				}*/
 				
-				self printZomMovementDebugMsg("dont move direct - target (moveto) defined");
-		
 				self.lookAt = moveTo + (0,0,50);
 				time = self botCalculateAimTime(self.lookAt, "movement");
 				self botDoAim(self.lookAt, time);
@@ -805,22 +853,20 @@ botCalculateNextStepTowards()
 			
 			self botDoMove(moveTo);
 			
-			self printZomMovementDebugMsg(Distance2d(moveTo, self.origin));
 			if(Distance2d(moveTo, self.origin) <=  19.68)
 			{
 				self.underway = false;
 				self.myWaypoint = self.nextWp;
 			}
 		}
-		else
-		{
-			self printZomMovementDebugMsg("dont move direct - next wp not defined - can not move");
-		}
 	}
 }
 
 botCheckCombatDistance()
 {
+	level endon("game_ended");
+	level endon("game_will_end");
+
 	self endon("disconnect");
 	self endon("death");
 
@@ -852,7 +898,14 @@ botCheckCombatDistance()
 		
 		if(killme)
 		{
-			self FinishPlayerDamage(self, self, self.health, 0, "MOD_RIFLE_BULLET", "none", self.origin, VectorToAngles(self.origin - self.origin), "head", 0);
+			//is this save?
+			//zombies should respawn in new area instead of simple death (or stupid slow walk to new area)
+			if(self.zombieType != "dwarf")
+				level.zombiesSpawned--;
+			
+			//zombie is outside the player range/view so no need for damage (and head pop effect) - just suicide
+			//self [[level.callbackPlayerDamage]](self, self, self.health + 666, 0, "MOD_RIFLE_BULLET", "ak47_mp", self.origin, (0,0,0), "head", 0, "outside the player range/view");
+			self suicide();
 			break;
 		}
 		
@@ -879,16 +932,10 @@ botCheckMantle()
 		wait .5;
 	
 		if(self isOnLadder() || self isMantling())
-		{
-			self printZomMovementDebugMsg("already mantling/climbing");
 			continue;
-		}
 
 		if(isDefined(self.isAttacking) && self.isAttacking)
-		{
-			self printZomMovementDebugMsg("attacking - no mantling/climbing");
 			continue;
-		}
 	
 		doMantle = false;
 		isInMantleTrigger = false;
@@ -897,34 +944,29 @@ botCheckMantle()
 		{
 			for(i=0;i<level.mantleTriggers.size;i++)
 			{
-				if(self isTouching(level.mantleTriggers[i]))
+				if(self isTouching(level.mantleTriggers[i]) /*&& !level.mantleTriggers[i].inUse*/)
 				{
 					isInMantleTrigger = true;
 					targetEnts = getEntArray(level.mantleTriggers[i].target, "targetname");
 					
 					if(!isDefined(targetEnts) || targetEnts.size <= 0)
-					{
-						self printZomMovementDebugMsg("no targetEnt - no mantling/climbing");
 						continue;
-					}
 				
 					targetEnt = getFarestEnt(self.origin, targetEnts);
 					
 					if(isDefined(targetEnt))
 					{
-						if(self isLookingAt(targetEnt))
+						if(self isLookingAt(targetEnt) && self.origin[2] <= targetEnt.origin[2])
 						{
 							doMantle = true;
 							break;
-						}
-						
-						self printZomMovementDebugMsg("not looking at targetEnt 1 - no mantling/climbing");
+						}	
 					}
 					else
 					{
 						for(j=0;j<targetEnts.size;j++)
 						{
-							if(self isLookingAt(targetEnts[j]))
+							if(self isLookingAt(targetEnts[j]) && self.origin[2] <= targetEnts[j].origin[2])
 							{
 								doMantle = true;
 								break;
@@ -933,8 +975,6 @@ botCheckMantle()
 						
 						if(doMantle)
 							break;
-						
-						self printZomMovementDebugMsg("not looking at targetEnt 2 - no mantling/climbing");
 					}
 				}
 			}
@@ -942,13 +982,11 @@ botCheckMantle()
 		
 		if(doMantle)
 		{
-			self botJump();
+			self botMantle();
 			continue;
 		}
 		else
 		{
-			//self printZomMovementDebugMsg("eof loop - no mantling/climbing");
-			
 			if(!isInMantleTrigger && isDefined(self.nextWp))
 			{
 				if(isDefined(level.clipTeleport) && level.clipTeleport)
@@ -999,13 +1037,101 @@ botCheckLadderAndMantleWeapon()
 	self thread botCheckLadderAndMantleWeapon();
 }
 
+botMelee(iDamage, damageDelay)
+{
+	self endon("disconnect");
+	self endon("death");
+
+	//zombies melee each other when moving in group and won't damage the player
+	//instead of executing "+melee" it's better to play the anim and damage the player directly
+
+	wait damageDelay; //melee anim time before damage is inflicted
+
+	velocity = self getVelocity();
+	moveSpeed = length(velocity);
+
+	switch(self.zombieType)
+	{
+		case "human":
+			//crawler = prone
+			if(/*self getStance() == "prone"*/self.isCrawler)
+			{
+				//idle
+				if(moveSpeed == 0)
+					self setAnim("torso", "ai_zombie_attack_crawl_lunge");
+				else
+					self setAnim("torso", "ai_zombie_attack_crawl");
+			}
+			//grabbing through barricade = crouch
+			else if(self getStance() == "crouch")
+			{
+				self setAnim("both", "ai_zombie_window_attack_arm_L_out");
+				//self setAnim("both", "ai_zombie_window_attack_arm_r_out");
+			}
+			else
+			{
+				//idle
+				if(moveSpeed == 0)
+				{
+					random = randomInt(3);
+					if(random == 0) self setAnim("both", "ai_zombie_attack_v1");
+					else if(random == 1) self setAnim("both", "ai_zombie_attack_v3");
+					else if(random == 2) self setAnim("both", "ai_zombie_attack_v4");
+				}
+				else
+				{
+					self setAnim("torso", "ai_pt_zombie_attack_v1");
+				}
+			}
+			break;
+	
+		case "dog":
+			self setAnim("both", "zombie_dog_run_attack");
+			break;
+		
+		case "dwarf":
+			self setAnim("both", "ai_zombie_screecher_headpull");
+			break;
+		
+		case "quad":
+			random = randomInt(3);
+			if(random == 0) self setAnim("both", "ai_zombie_quad_attack");
+			else if(random == 1) self setAnim("both", "ai_zombie_quad_attack_2");
+			else if(random == 2) self setAnim("both", "ai_zombie_quad_attack_3");
+			break;
+
+		case "avagadro":
+			self setAnim("both", "ai_zombie_avogadro_melee_attack_v1");
+			break;
+
+		default: break;
+	}
+
+	if(isPlayer(self.myTarget))
+	{
+		if(!isAlive(self.myTarget))
+			return;
+	
+		self.myTarget thread [[level.callbackPlayerDamage]](self, self, iDamage, 0, "MOD_MELEE", self.zombieWeapon, self.origin, VectorToAngles(self.myTarget.origin - self.origin), "torso", 0, "attacked by zombie through barricade");
+	}
+	else
+	{
+		self.myTarget notify("damage", iDamage, self, VectorToAngles(self.myTarget.origin - self.origin), self.origin, "MOD_MELEE");
+	}
+}
+
+botMantle()
+{
+	self botJump();
+}
+
 botJump()
 {
 	self endon("disconnect");
 	self endon("death");
 
-	self printZomMovementDebugMsg("go stand");
-	
+	self botStop();
+
 	self.doJump = true;
 	while(self GetStance() != "stand")
 	{
@@ -1016,8 +1142,6 @@ botJump()
 		//with setStance -gostand could be removed
 		//self botAction("-gostand");
 	}
-	
-	self printZomMovementDebugMsg("jump");
 	
 	self botAction("+gostand");
 	wait .05;
@@ -1318,43 +1442,66 @@ botLinkToPlayer()
 	}
 }
 
+/* old - with the tranzit_extrafunctions plugin i added isMeleeing(), a trigger/model to detect damage is not required anymore
 monitorKnifeDamage()
 {
 	self endon("disconnect");
 		
-	self.damageTrigger = spawn("trigger_radius", self.myTarget.origin, 0, 32, 80);
+	//trigger_radius does not detect damage so it's not possible to spawn a trigger and check for knife impact
+	//what about an invisible model infront of the player?
+	self.damageTrigger = spawn("script_model", self.myTarget.origin);
+	self.damageTrigger.angles = self.myTarget getPlayerAngles();
 	self.damageTrigger endon("death");
+	self.damageTrigger setModel("fake_hitbox_player_stand");
+	self.damageTrigger setCanDamage(true);
+	self.damageTrigger.health = 999999;
 	
-	self.damageTrigger thread ForceOrigin(undefined, self.myTarget);
+	//model allows linkto, trigger requires a loop that sets the new origin
+	self.damageTrigger linkTo(self.myTarget);
+	
+	weapon = getWeaponFromCustomName("player_dwarf_attacking");
+	self.myTarget GetInventory();
+	self.myTarget takeAllWeapons();
+	self.myTarget giveWeapon(weapon);
+	self.myTarget switchToWeapon(weapon);
 	
 	while(1)
 	{
-		if(!isDefined(self) || !isAlive(self))
-			break;
-	
 		self.damageTrigger waittill("damage", amount, attacker, vDir, vPoint, sMeansOfDeath);
+
+		self.damageTrigger.health += amount;
 
 		if(!isDefined(self) || !isAlive(self))
 			break;
-		
+
+		if(!isDefined(self.myTarget) || !isAlive(self.myTarget))
+			break;
+			
 		if(!isDefined(sMeansOfDeath) || sMeansOfDeath != "MOD_MELEE")
 			continue;
-			
+
 		if(!isDefined(attacker) || attacker != self.myTarget)
 			continue;
-			
-		self thread [[level.callbackPlayerDamage]](self.myTarget, self.myTarget, 30, 0, "MOD_MELEE", "none", self.myTarget.origin, self.origin - self.myTarget.origin, "none", 0);
 		
-		wait .05;
+		self [[level.callbackPlayerDamage]](self.damageTrigger, attacker, amount, 0, "MOD_MELEE", "none", self.myTarget.origin, self.origin - self.myTarget.origin, "none", 0, "player knifed dwarf");
+		
+		if(self.health <= 0)
+			break;
 	}
 	
 	if(isDefined(self))
 	{
-		if(isDefined(self.myTarget))
-			self.myTarget.dwarfOnShoulders = undefined;
-		
 		if(isDefined(self.damageTrigger))
 			self.damageTrigger delete();
+			
+		if(isDefined(self.myTarget))
+		{
+			self.myTarget.dwarfOnShoulders = undefined;
+			
+			self.myTarget GiveInventory();
+			wait .1;
+			self.myTarget SwitchToPreviousWeapon();
+		}
 	}
 }
 
@@ -1370,6 +1517,64 @@ ForceOrigin(prevorigin, entity)
 			self.origin = entity.origin;
 		
 		wait .05;
+	}
+}*/
+
+monitorKnifeDamage()
+{
+	player = self.myTarget;
+	weapon = getWeaponFromCustomName("player_dwarf_attacking");
+
+	player GetInventory();
+	player takeAllWeapons();
+	player giveWeapon(weapon);
+	player switchToWeapon(weapon);
+	
+	while(1)
+	{
+		if(!isDefined(self) || !isAlive(self))
+			break;
+
+		if(!isDefined(player) || !isAlive(player))
+			break;
+			
+		if(!player isMeleeing())
+		{
+			wait 0.05;
+			continue;
+		}
+
+		//the damage will kill it - no need to wait until the melee attack is over
+		if(self.health <= 130)
+		{
+			if(isDefined(player))
+			{
+				player takeWeapon(weapon);
+				player GiveInventory();
+			}
+		}
+		
+		self [[level.callbackPlayerDamage]](player, player, 130, 0, "MOD_MELEE", "none", player.origin, VectorToAngles(player.origin - self.origin), "none", 0, "player knifed dwarf - new");
+
+		//the damage killed it - no need to wait until the melee attack is over
+		if(!isDefined(self) || !isAlive(self))
+			break;
+
+		while(player isMeleeing())
+			wait 0.05;
+	}
+	
+	if(isDefined(player))
+	{
+		if(player hasWeapon(weapon))
+		{
+			player takeWeapon(weapon);
+			player GiveInventory();
+		}
+		
+		wait .1;
+		player SwitchToPreviousWeapon();
+		player.dwarfOnShoulders = undefined;
 	}
 }
 
@@ -1425,6 +1630,7 @@ botAttackTarget(type)
 			continue;
 
 		attackTimeOut = 0;
+		windowAttack = false;
 
 		if(isDefined(self.myTarget))
 		{
@@ -1433,10 +1639,47 @@ botAttackTarget(type)
 		
 			if(self botCanMeleeAttackTarget(self.myTarget) || (type == "barricade" && self.myTarget.barricadeHealth > 0) || (type == "entity" && self botEntityIsAttackable(self.myTarget)))
 			{
-				self botAction("+melee");
-				self PlayAttackSound();
+				if(self.zombieType == "avagadro" && self.model == "") self setZombieModel();
+			
+				//make the bot attack player behind the window every now and then
+				if(type == "barricade")
+				{
+					for(i=0;i<level.players.size;i++)
+					{
+						if(level.players[i] isASurvivor() && Distance2d(self.origin, level.players[i].origin) <= 64)
+						{
+							windowAttack = true;
+							break;
+						}
+					}
+				}
 				
-				wait 0.82; //melee anim time 
+				//in waw it is a chance of 50% that they try to grab players through window
+				if(windowAttack && randomInt(100) >= 50 && self.myTarget.barricadeHealth < self.myTarget.maxhealth)
+				{
+					iDamage = 20;
+					meleeAnimTime = 1.91;
+					damageDelay = meleeAnimTime*2/3;
+				}
+				else
+				{
+					iDamage = self.damagePoints;
+					meleeAnimTime = 0.82;
+					damageDelay = meleeAnimTime*2/3;
+				
+					if(self.zombieType == "dwarf")
+					{
+						self.myTarget scripts\survivors::updateClawDmgHud();
+				
+						//reduce the damage when wearing a mask because the dwarf will not scratch the face directly
+						if(isDefined(self.myTarget.facemask.active) && self.myTarget.facemask.active)
+							iDamage = int(iDamage/2);
+					}
+				}
+				
+				self PlayAttackSound();
+				self botMelee(iDamage, damageDelay);
+				wait (meleeAnimTime-damageDelay); //remaining melee anim time after damage
 				
 				if(isDefined(self.meleeSpeed) && self.meleeSpeed > 0.05)
 					attackTimeOut += self.meleeSpeed;
@@ -1446,13 +1689,15 @@ botAttackTarget(type)
 			
 			if(self.zombieType == "avagadro")
 			{
+				if(self.model == "") self setZombieModel();
+			
 				if(self botCanRangeAttackTarget(self.myTarget))
 				{
 					self GiveMaxAmmo(self.zombieWeapon);
 					self botAction("+fire");
 					self PlayAttackSound();
 
-					wait 1.76; //fire anim time
+					wait 1.80; //fire anim time is 1.74
 	
 					if(isDefined(self.fireSpeed) && self.fireSpeed > 0)
 						attackTimeOut += self.fireSpeed;
@@ -1468,7 +1713,9 @@ botAttackTarget(type)
 	
 	wait .05;
 	
-	self.myTarget = undefined;
+	if(self.zombieType != "dwarf")
+		self.myTarget = undefined;
+	
 	self.isAttacking = false;
 }
 
@@ -1489,8 +1736,6 @@ PlayAttackSound()
 		
 		case "dwarf":
 			self playSoundRef("screecher_attack");
-			self shellShock("frag_grenade_mp", 0.3);
-			self.myTarget scripts\survivors::updateClawDmgHud();
 			break;
 			
 		case "quad":					
@@ -1504,13 +1749,10 @@ botDoMove(destination)
 	{
 		self setModel("");
 		self moveThroughClip(destination, game["tranzit"].avagadroTeleportSpeed, true);
+		self setZombieModel();
 	}
 	else
 	{
-		//for debugging overwrite the moveType
-		if(getDvar("debug_bot_moveType") != "")
-			self.moveType = getDvar("debug_bot_moveType");
-
 		//set the new movement type (ads = walk)
 		if(self.moveType == "walk")
 		{
@@ -1656,10 +1898,4 @@ moveThroughClip(targetPos, speed, ignorePlayerPhysics)
 	
 	self unlink();
 	self.mover delete();
-}
-
-printZomMovementDebugMsg(message)
-{
-	if(isDefined(self.debugMyPath) && self.debugMyPath)
-		consolePrint(message + "\n");
 }

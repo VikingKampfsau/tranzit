@@ -6,21 +6,32 @@ init()
 	precacheHeadIcon("head_icon_revive");
 	precacheModel("zombie_tombstone");
 
-	add_weapon("syrette", "concussion_grenade_mp");
+	add_weapon("syrette", "concussion_grenade_mp", false);
 
-	level.lastStandReviveTime = 4;
+	level.lastStandReviveTime = 3.5;
 	level.lastStandReviveDist = 50;
 	level.lastStandBleedOutTime = 30;
+	
+	if(level.lastStandBleedOutTime < 5)
+		level.lastStandBleedOutTime = 5;
 }
 
 putInLastStand(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration)
 {
-	if(level.playerCount["allies"] <= 1)
+	//last player died - no laststand
+	if(level.aliveCount["allies"] <= 1)
+	{
+		self.lastStand = true;
+		
+		self thread [[level.onXPEvent]]("laststand");
+		
+		level thread maps\mp\gametypes\_globallogic::updateTeamStatus();
 		return;
+	}
 
 	if(self.zombieRankCounts > 0)
 	{
-		//self iPrintLnBOld("might reset zombieRankCounts");
+		//self iPrintLnBold("might reset zombieRankCounts");
 	
 		self.possibleZombieRankCountReset = true;
 	}
@@ -65,7 +76,7 @@ putInLastStand(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHit
 	}
 
 	self GetInventory();
-	self takeallweapons();
+	self takeAllWeapons();
 	self giveWeapon(newWeapon);
 	self giveMaxAmmo(newWeapon);
 	self switchToWeapon(newWeapon);
@@ -75,31 +86,73 @@ putInLastStand(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHit
 	
 	self scripts\perks::clearZombiePerks();
 	
-	self thread [[level.onXPEvent]]("laststand");
+	self.lastStand = true;
 	
-	self thread lastStandTimer(level.lastStandBleedOutTime);
+	self thread [[level.onXPEvent]]("laststand");
+	self thread lastStandTimer();
+	
+	thread scripts\messagefeed::writeToMessagefeed(&"^1&&1 needs a medic!", undefined, undefined, undefined, self);
+	
+	level thread maps\mp\gametypes\_globallogic::updateTeamStatus();
 }
 
-lastStandTimer(delay)
+lastStandTimer()
 {
 	level endon("game_ended");
+	level endon("game_will_end");
+	
 	self endon("death" );
 	self endon("disconnect");
 	self endon("game_ended");
 	self endon("revived");
 
+	delay = level.lastStandBleedOutTime;
+
 	self thread createReviveObject();
-	
-	self.lastStand = true;
-	self thread showUseHintMessage(self getLocTextString("REVIVE_LAST_STAND"), "revive", undefined, undefined, delay);
+	self thread showUseHintMessage(self getLocTextString("REVIVE_LAST_STAND"), "revive", true, undefined, undefined, delay);
 	
 	self saveHeadIcon();		
 	self.headiconteam = self.pers["team"];
-	self.headicon = "head_icon_revive";	
+	self.headicon = "head_icon_revive";
 	
 	self thread createBleedOutHud();
 
-	wait delay;
+	//wait delay;
+	//use a loop to change cvar for players to draw who is in lastStand
+	for(i=0;i<delay;i+=0.5)
+	{
+		wait .5;
+		
+		if(isDefined(level.gameEnded) && level.gameEnded)
+			break;
+		
+		for(j=0;j<level.players.size;j++)
+		{
+			if(Distance(level.players[j].origin, self.origin) <= 1500)
+			{
+				if(int(level.players[j] GetUserinfo("cg_drawThroughWalls")) != 1)
+					level.players[j] setClientDvar("cg_drawThroughWalls", 1);
+			}
+			else
+			{
+				if(int(level.players[j] GetUserinfo("cg_drawThroughWalls")) != 0)
+					level.players[j] setClientDvar("cg_drawThroughWalls", 0);
+			}
+		}
+	}
+	
+	for(j=0;j<level.players.size;j++)
+	{
+		if(int(level.players[j] GetUserinfo("cg_drawThroughWalls")) != 0)
+			level.players[j] setClientDvar("cg_drawThroughWalls", 0);
+	}
+	//end loop solution
+	
+	if(!isDefined(level.gameEnded) || !level.gameEnded)
+	{
+		self GiveInventory();
+		self scripts\weapondrop::dropWeaponOnDeath();
+	}
 	
 	self thread LastStandBleedOut();
 }
@@ -177,6 +230,8 @@ createReviveObject()
 MoveReviveObj(player)
 {
 	level endon("game_ended");
+	level endon("game_will_end");
+	
 	self endon("death");
 
 	if(!isDefined(player))
@@ -245,6 +300,9 @@ monitorReviveAttempts()
 		{
 			if(!isDefined(self.victim) || !isAlive(self.victim))
 				break;
+				
+			if(!isDefined(level.players[i]) || !isAlive(level.players[i]))
+				continue;
 
 			if(Distance(level.players[i].origin, self.origin) > level.lastStandReviveDist)
 				continue;
@@ -403,8 +461,8 @@ giveSyrette()
 
 	medicine = getWeaponFromCustomName("syrette");
 
-	self TakeAllWeapons();
-	self GiveWeapon(medicine);
+	self takeAllWeapons();
+	self giveWeapon(medicine);
 	self SwitchToNewWeapon(medicine, .05);
 	self freezeControls(true);
 }

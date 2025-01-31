@@ -3,7 +3,10 @@ local astar = require ( "lua_scripts.astar" )
 Plugin_ScrAddFunction ( "loadWaypoints_Internal" )
 Plugin_ScrAddFunction ( "getNearestWp" )
 Plugin_ScrAddFunction ( "getWpOrigin" )
+Plugin_ScrAddFunction ( "getWpArea" )
 Plugin_ScrAddFunction ( "addWpNeighbour" )
+Plugin_ScrAddFunction ( "getWpNeighbours" )
+Plugin_ScrAddFunction ( "getWpNeighbourCount" )
 Plugin_ScrAddFunction ( "AStarSearch" )
 Plugin_ScrAddFunction ( "importTeamSpawns" )
 Plugin_ScrAddFunction ( "consolePrint" )
@@ -103,6 +106,38 @@ function getWpOrigin ()
 	--nodeID = nodeID - 1
 	
 	Plugin_Scr_AddVector ( nodes[nodeID].origin )
+end
+
+function getWpArea ()
+	local nodeID = Plugin_Scr_GetInt ( 0 )
+		
+	-- for gsc stored waypoints:
+	--nodeID = nodeID - 1
+	
+	Plugin_Scr_AddInt ( nodes[nodeID].area )
+end
+
+function getWpNeighbourCount ()
+	local nodeID = Plugin_Scr_GetInt ( 0 )
+		
+	-- for gsc stored waypoints:
+	--nodeID = nodeID - 1
+		
+	Plugin_Scr_AddInt ( nodes[nodeID].linkedChildAmount )
+end
+
+function getWpNeighbours ()
+	local nodeID = Plugin_Scr_GetInt ( 0 )
+		
+	-- for gsc stored waypoints:
+	--nodeID = nodeID - 1
+		
+	local string = ""
+	for i=1, #nodes[nodeID].children, 1 do
+		string = string .. " " .. nodes[nodeID].children[i]
+	end
+		
+	Plugin_Scr_AddString ( string )
 end
 
 function addWpNeighbour ()

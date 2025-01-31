@@ -119,9 +119,10 @@ onPlayerConnect()
 		player.pers["participation"] = 0;
 		player.rankUpdateTotal = 0;
 
+		/* tranzit has it's own score update hud
 		player thread onPlayerSpawned();
 		player thread onJoinedTeam();
-		player thread onJoinedSpectators();
+		player thread onJoinedSpectators();*/
 	}
 }
 

@@ -26,8 +26,10 @@ Callback_StartGameType()
 	if ( !isDefined( game["gamestarted"] ) )
 	{
 		// defaults if not defined in level script
-		game["allies"] = "marines";
-		game["axis"] = "russian";
+		if ( !isDefined( game["allies"] ) )
+			game["allies"] = "marines";
+		if ( !isDefined( game["axis"] ) )
+			game["axis"] = "opfor";
 		
 		game["attackers"] = "axis";
 		game["defenders"] = "allies";
@@ -247,6 +249,13 @@ Callback_StartGameType()
 	if( getdvar( "r_reflectionProbeGenerate" ) == "1" )
 		level waittill( "eternity" );
 
+	//close any file that was previously FS_opened
+	FS_FCloseAll();
+
+	//init global tranzit variable
+	game["tranzit"] = spawnStruct();
+	game["tranzit"].mapType = getMapType(level.script);
+
 	//zombie map development stuff
 	//before we load any scripts and waste variables and memory
 	//we should make sure that the host does not just want to
@@ -327,10 +336,9 @@ Callback_StartGameType()
 	
 	//zombie stuff
 	//--->
-	game["tranzit"] = spawnStruct();
-
 	thread scripts\debug\random_tests::init();
 	thread scripts\debug\testclients::init();
+	
 	thread scripts\navmesh::init();
 
 	thread scripts\weapons::init();
@@ -342,10 +350,12 @@ Callback_StartGameType()
 	thread scripts\battlechatter::init();
 	thread scripts\carepackage::init();
 	thread scripts\craftables::init();
+	thread scripts\facemasks::init();
 	thread scripts\generator::init();
 	thread scripts\gore::init();
 	thread scripts\introscreen::init();
 	thread scripts\misterybox::init();
+	thread scripts\messagefeed::init();
 	thread scripts\money::init();
 	thread scripts\menus::init();
 	thread scripts\monkeybomb::init();
@@ -359,15 +369,19 @@ Callback_StartGameType()
 	thread scripts\scriptcommands::init();
 	thread scripts\scoreboard::init();
 	thread scripts\sentrygun::init();
+	thread scripts\statistics::init();
 	thread scripts\survivors::init();
 	thread scripts\teleporter::init();
+	thread scripts\tombstone::init();
 	thread scripts\vehicle::init();
 	thread scripts\wallweapons::init();
 	thread scripts\waves::init();
+	thread scripts\weather::init();
+	thread scripts\weapondrop::init();
 	thread scripts\weaponfridge::init();
 	thread scripts\zombie_drops::init();
 	thread scripts\zombies::init();
-
+	
 	level.killcam = false;
 	level.teamBalance = 0;
 	level.endGameOnTimeLimit = false;
@@ -409,7 +423,8 @@ Callback_PlayerConnect()
 	
 	logPrint("J;" + self.guid + ";" + lpselfnum + ";" + self.name + "\n");
 
-	self setClientDvars( "toggle_tranzit_scoreboard", "0",
+	self setClientDvars( "loc_perk_quickrevive", self getLocTextString("PERK_QUICKREVIVE"), //display correct text in rotu shop
+						 "password", game["tranzit"].randomGameID,
 						 "cg_drawSpectatorMessages", 1,
 						 "ui_hud_hardcore", getDvar( "ui_hud_hardcore" ),
 						 "player_sprintTime", getDvar( "scr_player_sprinttime" ),
@@ -476,6 +491,8 @@ Callback_PlayerConnect()
 	self setStat(2403, 0); //self.pers["revives"]
 	self setStat(2404, 0); //self.pers["headshots"]
 	
+	self thread scripts\statistics::receiveStatistics();
+	
 	self.hasSpawned = false;
 	self.waitingToSpawn = false;
 	self.deathCount = 0;
@@ -488,23 +505,18 @@ Callback_PlayerConnect()
 	self.wasAliveAtMatchStart = false;
 	
 	self thread scripts\scriptcommands::resetPlayerSettings();
-	
-	self setClientDvars("r_filmTweakInvert", 0,
-						"r_filmTweakBrightness", 0,
-						"r_filmtweakLighttint", "0.8 0.8 1",
-						"r_filmTweakContrast", 1.2,
-						"r_filmTweakDesaturation", 0,
-						"r_filmTweakDarkTint", "1.8 1.8 2",
-						"r_filmTweakenable", 1,
-						"r_filmusetweaks", 1);
+	self thread scripts\facemasks::resetPlayerVision();
 	
 	self thread maps\mp\_flashgrenades::monitorFlash();
 	
-	self setClientDvars("cg_deadChatWithDead", 0,
-							"cg_deadChatWithTeam", 1,
-							"cg_deadHearTeamLiving", 1,
-							"cg_deadHearAllLiving", 0,
-							"cg_everyoneHearsEveryone", 0 );
+	self setClientDvars(
+		"cg_deadChatWithDead", 0,
+		"cg_deadChatWithTeam", 1,
+		"cg_deadHearTeamLiving", 1,
+		"cg_deadHearAllLiving", 0,
+		"cg_everyoneHearsEveryone", 0 );
+	
+	self thread scripts\weather::overwriteMapSunlight();
 	
 	level.players[level.players.size] = self;
 	
@@ -517,8 +529,9 @@ Callback_PlayerConnect()
 		self.pers["team"] = "spectator";
 		self.team = "spectator";
 
-		self setClientDvars( "ui_hud_hardcore", 1,
-							   "cg_drawSpectatorMessages", 0 );
+		self setClientDvars("ui_hud_hardcore", 1,
+							"cg_drawSpectatorMessages", 0,
+							"ui_showStockScoreboard", 1);
 		
 		[[level.spawnIntermission]]();
 		self closeMenu();
@@ -588,6 +601,9 @@ Callback_PlayerConnect()
 		
 	self.pers["language"] = getPlayerLanguage();
 		
+	if(isEmptyString(self.name) || self.name.size < 3)
+		exec("kick " + self getEntityNumber() + " your name must contain minimum 3 chars!\nIt can not begin with //");
+		
 	for( i=0; i<5; i++ )
 	{
 		if( !level.onlinegame )
@@ -606,21 +622,47 @@ onPlayerDisconnect()
 	if(isDefined(self.actionSlotItem))
 		thread scripts\craftables::reactivateCraftedWeaponPickup(self.actionSlotItem);
 		
+	if(isDefined(self.myLocArrow))
+		self.myLocArrow destroy();
+		
 	level thread maps\mp\gametypes\_globallogic::updateTeamStatus();
 }
 
 //basically a copy from _globallogic - but removed all the crap we don't need
-onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime)
+onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime, sDebugPrint, forceDmg, noPainSound)
 {
+	if(game["debug"]["status"] && game["debug"]["playerDamaged"])
+	{
+		if(isDefined(sMeansOfDeath)) self iPrintLnBold(sMeansOfDeath);
+		if(isDefined(sWeapon)) self iPrintLnBold(sWeapon);
+		if(isDefined(sHitLoc)) self iPrintLnBold(sHitLoc);
+		if(isDefined(sDebugPrint)) self iPrintLnBold(sDebugPrint);
+		if(isDefined(iDamage)) self iPrintLnBold(iDamage);
+	}
+
+	if(!isDefined(noPainSound))
+		noPainSound = false;
+
 	// create a class specialty checks; CAC:bulletdamage, CAC:armorvest
-	iDamage = maps\mp\gametypes\_class::cac_modified_damage(self, eAttacker, iDamage, sMeansOfDeath);
+	// moved to the place the damage is finally called: finishPlayerDamageWrapper 
+	//iDamage = maps\mp\gametypes\_class::cac_modified_damage(self, eAttacker, iDamage, sMeansOfDeath);
 	self.iDFlags = iDFlags;
 	self.iDFlagsTime = getTime();
+
+	//don't do damage when the eInflictor is a blocker/door
+	if(isDefined(eInflictor))
+	{
+		if(eInflictor.classname == "script_brushmodel")
+		{
+			if(isDefined(eInflictor.targetname) && (eInflictor.targetname == "door" || eInflictor.targetname == "blocker"))
+				return;
+		}
+	}
 	
 	if(isDefined(self.godmode) && self.godmode)
 		return;
 		
-	if(game["tranzit"].wave == 0)
+	if(game["tranzit"].wave < 1)
 		return;
 	
 	if(game["state"] == "postgame")
@@ -631,14 +673,19 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 	
 	if(isDefined(self.canDoCombat) && !self.canDoCombat)
 	{
-		if(game["tranzit"].wave >= 1)
-			self.canDoCombat = true;
-		else
+		if(game["tranzit"].wave < 1)
 			return;
+		
+		self.canDoCombat = true;
 	}
 	
 	if(isDefined(eAttacker) && isPlayer(eAttacker) && isDefined(eAttacker.canDoCombat) && !eAttacker.canDoCombat)
-		return;
+	{
+		if(game["tranzit"].wave < 1)
+			return;
+			
+		self.canDoCombat = true;
+	}
 	
 	usingRiotShield = false;
 	if(isPlayer(eAttacker))
@@ -652,7 +699,7 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 			{
 				if(self.riotShieldHealth <= 0)
 					return;
-			
+				
 				self.riotShieldHealth -= int(iDamage / 3);
 					
 				if(self.riotShieldHealth > 0)
@@ -668,28 +715,48 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 	if(self isAZombie())
 	{
 		//doubled damage for breast shots with a bolt sniper
-		if(isSubStr(sHitLoc, "torso") && scripts\weapons::isSniper(sWeapon))
+		if(isSubStr(sHitLoc, "torso") && isSniper(sWeapon))
 			iDamage *= 2;
+
+		if(isDefined(self.zombieType))
+		{
+			//allow melee attacks against avagadro only
+			if(self.zombieType == "avagadro")
+			{
+				if(!isDefined(sMeansOfDeath) || sMeansOfDeath != "MOD_MELEE")
+					return;
+			}
+			
+			//dwarf - when the attacker is the player he is on shoulder allow melee attacks only 
+			if(self.zombieType == "dwarf")
+			{
+				if(isDefined(self.myTarget) && eAttacker == self.myTarget)
+				{
+					if(!isDefined(sMeansOfDeath) || sMeansOfDeath != "MOD_MELEE")
+						return;
+				}
+			}
+		}
 
 		if(isDefined(sMeansOfDeath))
 		{
 			if(sMeansOfDeath == "MOD_MELEE")
 			{
-				switch(self.zombieType)
+				if(self.zombieType == "avagadro")
 				{
-					case "avagadro":
-					case "dwarf":
-						break;
-					
-					default:
-					{
-						if(game["tranzit"].wave <= 1)
-							iDamage = self.health;
-						else
-							iDamage = int(self.maxhealth / game["tranzit"].wave) + 1;
-
-						break;
-					}
+				
+				}
+				else if(self.zombieType == "dwarf")
+				{
+					//if(!isDefined(eInflictor) || !isDefined(self.damageTrigger) || eInflictor != self.damageTrigger)
+					//	return;
+				}
+				else
+				{
+					if(game["tranzit"].wave <= 1)
+						iDamage = self.health;
+					else
+						iDamage = int(self.maxhealth / game["tranzit"].wave) + 1;
 				}
 
 				if(sWeapon == getWeaponFromCustomName("knife"))
@@ -790,7 +857,13 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 			prof_begin("Callback_PlayerDamage world");
 			
 			if(isdefined(eAttacker) && isPlayer(eAttacker) && eAttacker == self)
-				return;
+			{
+				if(eAttacker isASurvivor())
+				{
+					if(!isDefined(forceDmg) || !forceDmg)
+						return;
+				}
+			}
 			
 			// Make sure at least one point of damage is done
 			if(iDamage < 1)
@@ -799,7 +872,18 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 			if(isDefined(eAttacker) && isPlayer(eAttacker) && eAttacker != self)
 			{
 				if(eAttacker isAZombie())
-					iDamage = eAttacker.damagePoints;
+				{
+					if(isDefined(sMeansOfDeath) && sMeansOfDeath == "MOD_MELEE")
+					{
+						//zombies don't inflict damage when in group - they melee each other instead of the player outside the group
+						//moved the damage call to the actual +melee event instead of increasing the damage here
+						//iDamage = eAttacker.damagePoints;
+						
+						//return when this is just the one point damge defined in the weaponfile and NOT eAttacker.damagePoints
+						if(iDamage == 1 /*!= eAttacker.damagePoints*/)
+							return;
+					}
+				}
 				else
 				{
 					eAttacker thread [[level.onXPEvent]]("damage");
@@ -834,12 +918,15 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 			if(issubstr(sMeansOfDeath, "MOD_GRENADE") && isDefined(eInflictor.isCooked))
 				self.wasCooked = getTime();
 			
-			self maps\mp\gametypes\_globallogic::finishPlayerDamageWrapper(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime);
+			// create a class specialty checks; CAC:bulletdamage, CAC:armorvest
+			iDamage = maps\mp\gametypes\_class::cac_modified_damage(self, eAttacker, iDamage, sMeansOfDeath);
+
+			self finishPlayerDamageWrapper(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime);
 
 			if(self isAZombie())
 				self thread scripts\gore::onZombieDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor);
 			else if(self isASurvivor())
-				self thread scripts\gore::onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor);
+				self thread scripts\gore::onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor, noPainSound);
 
 			prof_end("Callback_PlayerDamage world");
 		}
@@ -891,6 +978,62 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 	prof_end("Callback_PlayerDamage log");
 }
 
+finishPlayerDamageWrapper(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime	)
+{
+	//if the damage will kill him
+	if(iDamage >= self.health)
+	{
+		if(self isASurvivor())
+		{
+			//last alive survivor takes damage
+			if(level.aliveCount["allies"] <= 1)	
+			{
+				//kill the dwarf in case the player has one on his shoulders
+				if(isDefined(self.dwarfOnShoulders))
+					self.dwarfOnShoulders suicide();
+			
+				//apply godmode to avoid further damage calls
+				self.godmode = true;
+			
+				//kill all the others in laststand to make sure they spectate him
+				killAllSurvivorsInLastStand();
+				
+				//play the dying hands anim and then apply the damage to end the game
+				self scripts\survivors::playViewDeathAnim();
+
+				if(isDefined(self))
+				{
+					if(self getStance() == "prone")
+					{
+						self ShellShock("frag_grenade_mp", 5);
+					
+						//wait until anim finished
+						//raise: frames = 19 -> time = 0.64
+						//idle total: frames = 193 -> time = 6.44
+						//idle animated: frames = 80 -> time = 2.67
+						wait 4;
+					}
+					
+					if(isDefined(self))
+						self suicide();
+				}
+				
+				return;
+			}
+			
+			if(self scripts\perks::hasZombiePerk("perk_tombstone"))
+				self scripts\tombstone::initTombstone();
+		}
+	}
+
+	if(isDefined(self))
+	{
+		self finishPlayerDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime );
+	
+		self maps\mp\gametypes\_globallogic::damageShellshockAndRumble( eInflictor, sWeapon, sMeansOfDeath, iDamage );
+	}
+}
+
 onPlayerLastStand(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration)
 {
 	self thread scripts\revive::putInLastStand(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration);
@@ -935,27 +1078,8 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 		self.lastStandParams = undefined;
 	}
 
-	sMeansOfDeathOld = "";
 	if(isHeadShot(sWeapon, sHitLoc, sMeansOfDeath))
-	{
 		sMeansOfDeath = "MOD_HEAD_SHOT";
-		
-		if(isDefined(sWeapon))
-		{
-			switch(WeaponClass(sWeapon))
-			{
-				case "mg":
-				case "rifle":
-				case "spread":
-					sMeansOfDeathOld = "MOD_RIFLE_BULLET";
-					break;
-			
-				case "pistol":
-				case "smg":
-				default: break;
-			}
-		}
-	}
 	
 	if(attacker.classname == "script_vehicle" && isDefined(attacker.owner))
 		attacker = attacker.owner;
@@ -1030,7 +1154,7 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 			if(!isDefined(self.switching_teams))
 			{
 				self maps\mp\gametypes\_globallogic::incPersStat("suicides", 1);
-				self.suicides = self .pers["suicides"];
+				self.suicides = self.pers["suicides"];
 				self thread [[level.onXPEvent]]("suicide");
 
 				if(sMeansOfDeath == "MOD_SUICIDE" && sHitLoc == "none" && self.throwingGrenade)
@@ -1080,8 +1204,8 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 			if(level.teamBased && attacker.pers["team"] != "spectator")
 				maps\mp\gametypes\_globallogic::giveTeamScore("kill", attacker.pers["team"],  attacker, self);
 
-			//no idea what this is doing - can't remember the game is playing a sound when i killed someone
-			level thread maps\mp\gametypes\_battlechatter_mp::sayLocalSoundDelayed(attacker, "kill", 0.75);
+			//attacker shouts out 'enemy down'
+			//level thread maps\mp\gametypes\_battlechatter_mp::sayLocalSoundDelayed(attacker, "kill", 0.75);
 
 			prof_end("pks1");
 			
@@ -1152,8 +1276,8 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 	self.joining_team = undefined;
 	self.leaving_team = undefined;
 
-	self thread [[level.onPlayerKilled]](eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration);
-	self thread scripts\gore::spawnCorpse(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration);
+	self thread [[level.onPlayerKilled]](attacker, sMeansOfDeath, sWeapon);
+	self thread scripts\gore::spawnCorpse(eInflictor, sMeansOfDeath, sWeapon, vDir, sHitLoc, deathAnimDuration);
 	
 	self.deathTime = getTime();
 	
@@ -1162,10 +1286,12 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 	self.cancelKillcam = true;
 	self notify("death_delay_finished");
 	
-	if(game["state"] != "playing")
+	if(game["state"] != "playing")	
 		return;
 	
 	respawnTimerStartTime = gettime();
+	
+	//killcam removed
 	
 	prof_end("PlayerKilled post constants");
 	
@@ -1184,15 +1310,20 @@ Callback_PlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sWeapon, vDi
 }
 
 //this is used to do some extra stuff
-onPlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration)
+onPlayerKilled(attacker, sMeansOfDeath, sWeapon)
 {
 	if(self isASurvivor())
 	{
+		self thread scripts\gore::onSurvivorKilled(attacker, sMeansOfDeath, sWeapon);
+	
 		if(isDefined(self.actionSlotItem))
 			thread scripts\craftables::reactivateCraftedWeaponPickup(self.actionSlotItem);
 			
 		if(isDefined(self.minigun_huds))
 			self thread scripts\weapons::removeMinigunHud();
+			
+		if(isDefined(self.mantleHintHud))
+			self.mantleHintHud destroy();
 			
 		self scripts\perks::clearZombiePerks();
 		return;
@@ -1200,25 +1331,29 @@ onPlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, s
 
 	if(self isAZombie())
 	{
+		self thread scripts\gore::onZombieKilled(attacker, sMeansOfDeath, sWeapon);
+	
 		if(self.zombieType == "dwarf")
+		{
 			level.dwarfsLeft--;
+			
+			victim = self.myTarget;
+			if(isDefined(victim))
+			{
+				victim.dwarfOnShoulders = undefined;
+			
+				wait 5;
+				
+				if(isDefined(victim))
+					victim.underDwarfAttack = false;
+			}
+		}
 		else
 		{
 			level.zombiesLeftInWave--;
 			
 			if(self.zombieType == "human")
 				self thread scripts\zombie_drops::dropZombiePowerUp();
-		}
-	
-		self thread scripts\gore::onZombieKilled(attacker, sMeansOfDeath, sMeansOfDeathOld);
-
-		wait 4;
-		if(isDefined(self.myTarget))
-		{
-			if(isDefined(self.myTarget.underDwarfAttack) && self.myTarget.underDwarfAttack)
-			{
-				self.myTarget.underDwarfAttack = false;
-			}
 		}
 
 		return;
@@ -1227,6 +1362,7 @@ onPlayerKilled(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, s
 
 onOneLeftEvent(team)
 {
+	/*old
 	if(team == game["attackers"])
 	{
 		if(level.zombiesSpawned < level.zombiesTotalForWave)
@@ -1259,6 +1395,20 @@ onOneLeftEvent(team)
 			return;
 		
 		level.players[i] thread scripts\announcer::warnLastPlayer();
+	}*/
+	
+	//new
+	if(team == game["attackers"])
+	{
+		if(level.zombiesSpawned < level.zombiesTotalForWave)
+			return;
+
+		if(level.alivePlayers[team][0].zombieType == "avagadro" || level.alivePlayers[team][0].zombieType == "dwarf")
+			thread scripts\waves::endWave();
+	}
+	else
+	{
+		level.alivePlayers[team][0] thread scripts\announcer::warnLastPlayer();
 	}
 }
 
@@ -1266,14 +1416,14 @@ onDeadEvent(team)
 {
 	if(game["tranzit"].wave <= 0)
 		return;
-	
+
 	if(team == game["attackers"])
 	{
 		thread scripts\waves::endWave();
 		return;
 	}
 
-	logPrint("\ngame end callback - all dead\n");
+	//consolePrint("\ngame end callback - all dead\n");
 	thread scripts\waves::endGame();
 }
 
@@ -1308,6 +1458,6 @@ onForfeit(team)
 	
 	logString("forfeit, win: " + winner + ", allies: " + game["teamScores"]["allies"] + ", opfor: " + game["teamScores"]["axis"]);
 	
-	logPrint("\ngame end callback - human forfeit\n");
+	//consolePrint("\ngame end callback - human forfeit\n");
 	thread scripts\waves::endGame();
 }

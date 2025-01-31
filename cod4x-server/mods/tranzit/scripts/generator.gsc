@@ -334,6 +334,8 @@ enableAffectedPowerEnts()
 			entities[i] thread scripts\perks::activateVendingMachine(true);
 		else if(isInArray(level.packapunchMachines, entities[i]))
 			entities[i] thread scripts\packapunch::activatePackAPunchMachine(true);
+		else if(isInArray(level.scriptableLight, entities[i]))
+			entities[i] thread scripts\power::lightUpScriptableLight(true);
 	}
 }
 
@@ -347,16 +349,11 @@ disableAffectedPowerEnts()
 
 	for(i=0;i<self.affectedPowerEnts.size;i++)
 	{
+		if(game["tranzit"].powerEnabled)
+			break;
+	
 		if(isDefined(self.affectedPowerEnts[i]))
-		{
-			if(isInArray(level.vendingMachines, self.affectedPowerEnts[i]))
-			{
-				if(isDefined(game["tranzit"].powerEnabled) && game["tranzit"].powerEnabled)
-					continue;
-			}
-		
 			self.affectedPowerEnts[i].power = false;
-		}
 	}
 }
 

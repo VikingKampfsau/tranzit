@@ -10,8 +10,10 @@ init()
 	add_sound("amb_spooky", "amb_spooky");
 	add_sound("amb_spooky_2d", "amb_spooky_2d");
 	
-	//how far the players can see before the map is dark
-	SetExpFog(250, 400, 0, 0, 0, 2);
+	level.ambient_modifier = "";
+	
+	if(game["debug"]["status"] && game["debug"]["noFog"])
+		return;
 	
 	wait 5; //should be enough time to build the fx array in map gsc
 	
@@ -26,6 +28,26 @@ setAmbient(sound, fadeIn, fadeOut)
 	
 	if(!isDefined(fadeIn))
 		fadeIn = 5;
+
+	//if there is an ambient change (e.g. weather) use this instead
+	if(isDefined(level.ambient_modifier) && level.ambient_modifier != "")
+	{
+		if(!isDefined(sound) || sound != level.ambient_modifier)
+			sound = getZombieSoundalias(level.ambient_modifier);
+	}
+
+	if(!isDefined(sound))
+	{
+		//play a random ambient sound
+		random = randomInt(3);
+			
+		if(random == 3)
+			sound = getZombieSoundalias("whisper");
+		else if(random == 2)
+			sound = getZombieSoundalias("amb_spooky");
+		else
+			sound = getZombieSoundalias("amb_spooky_2d");
+	}
 		
 	ambientStop(fadeOut);
 	ambientPlay(sound, fadeIn);
@@ -39,12 +61,17 @@ stopAmbient(fadeOut)
 	ambientStop(fadeOut);
 }
 
-prepareFxEntry(origin)
+prepareFxEntry(origin, fxAlias, hideWhenNoPlayerInRange)
 {
+	if(!isDefined(hideWhenNoPlayerInRange))
+		hideWhenNoPlayerInRange = true;
+
 	struct = spawnStruct();
 	struct.origin = origin;
 	struct.active = false;
+	struct.fxAlias = fxAlias;
 	struct.fxEnt = undefined;
+	struct.hide = hideWhenNoPlayerInRange;
 	
 	return struct;
 }
@@ -55,15 +82,20 @@ monitorAmbientFX()
 	{
 		for(i=0;i<level.fxOrigins.size;i++)
 		{
-			shouldStartFx = false;
-			for(j=0;j<level.alivePlayers[game["defenders"]].size;j++)
+			if(!level.fxOrigins[i].hide)
+				shouldStartFx = true;
+			else
 			{
-				if(isDefined(level.alivePlayers[game["defenders"]][j]))
+				shouldStartFx = false;
+				for(j=0;j<level.alivePlayers[game["defenders"]].size;j++)
 				{
-					if(Distance(level.fxOrigins[i].origin, level.alivePlayers[game["defenders"]][j].origin) <= 3000)
+					if(isDefined(level.alivePlayers[game["defenders"]][j]))
 					{
-						shouldStartFx = true;
-						break;
+						if(Distance(level.fxOrigins[i].origin, level.alivePlayers[game["defenders"]][j].origin) <= 3000)
+						{
+							shouldStartFx = true;
+							break;
+						}
 					}
 				}
 			}
@@ -84,7 +116,7 @@ startAmbientFX()
 		return;
 
 	self.active = true;
-	self.fxEnt = spawnFx(level._effect["fog_outter_area"], self.origin);
+	self.fxEnt = spawnFx(self.fxAlias, self.origin);
 
 	//delay 1 is important, else we need a wait before this
 	triggerFx(self.fxEnt, 1);

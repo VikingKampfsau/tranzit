@@ -494,6 +494,13 @@ updateGameEvents()
 			return;
 		}
 
+		// if multiple axis (zombies) left but they are all dwarfs
+		if ( level.dwarfsLeft > 0 && level.aliveCount["axis"] == level.dwarfsLeft && level.playerLives["axis"] == level.dwarfsLeft )
+		{
+			[[level.onDeadEvent]]( "axis" );
+			return;
+		}
+
 		// one ally left
 		if ( level.lastAliveCount["allies"] > 1 && level.aliveCount["allies"] == 1 && level.playerLives["allies"] == 1 )
 		{
@@ -602,7 +609,6 @@ spawnPlayer()
 	self.friendlydamage = undefined;
 	self.hasSpawned = true;
 	self.spawnTime = getTime();
-	self.afk = false;
 	if ( self.pers["lives"] )
 		self.pers["lives"]--;
 	self.lastStand = undefined;
@@ -2460,7 +2466,6 @@ updateTeamStatus()
 	prof_end( "updateTeamStatus" );
 	
 	level updateGameEvents();
-	thread scripts\zombie_drops::updatePowerupScoreIncrement();
 }
 
 isValidClass( class )
@@ -4409,9 +4414,11 @@ Callback_PlayerDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, s
 
 finishPlayerDamageWrapper( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime )
 {
-	self finishPlayerDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime );
+	/*self finishPlayerDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime );
 	
-	self damageShellshockAndRumble( eInflictor, sWeapon, sMeansOfDeath, iDamage );
+	self damageShellshockAndRumble( eInflictor, sWeapon, sMeansOfDeath, iDamage );*/
+	
+	self scripts\callbacks::finishPlayerDamageWrapper(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime);
 }
 
 damageShellshockAndRumble( eInflictor, sWeapon, sMeansOfDeath, iDamage )

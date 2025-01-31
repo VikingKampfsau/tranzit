@@ -23,6 +23,9 @@ initMapAreas()
 		else
 			level.mapAreas[i].spawner_id = int(level.mapAreas[i].spawner_id);
 	}
+	
+	if(getDvarInt("create_spawnfile") <= 0 && getDvarInt("create_navmesh") <= 0)
+		thread monitorMovementInMap();
 }
 
 getClosestMapArea(origin)
@@ -62,54 +65,63 @@ getAreaNameFromID(areaID)
 
 monitorMovementInMap()
 {
-	level endon( "game_ended" );
+	level endon("game_ended");
+	level endon("game_will_end");
 
-	self endon("disconnect");
-	self endon("death");
-	
-	if(isDefined(level.tranzitVehicle))
-		self thread createLocationHud();
-	
 	while(1)
 	{
 		wait .5;
-		
-		if(self isInLastStand())
-			continue;
-		
-		if(!self isInPlayArea())
+
+		for(i=0;i<level.players.size;i++)
 		{
-			if(self isAZombie())
+			if(level.players[i] isASpectator() || !isAlive(level.players[i]))
+				continue;
+		
+			if(!level.players[i] isInPlayArea())
 			{
-				if(game["tranzit"].wave < 11)
-					continue;
+				if(level.players[i] isAZombie())
+				{
+					if(game["tranzit"].wave < 11)
+						continue;
+					
+					if(level.players[i].zombieType == "dwarf")
+						continue;
 				
-				if(self.zombieType == "dwarf")
-					continue;
-			
-				self thread scripts\gore::torchPlayer();
+					level.players[i] thread scripts\gore::torchPlayer();
+				}
+				else
+				{
+					if(level.players[i] isInLastStand())
+						continue;
+				
+					if(level.players[i].moveSpeedScale != 0.8)
+					{
+						level.players[i].moveSpeedScale = 0.8;
+						level.players[i] SetMoveSpeedScale(level.players[i].moveSpeedScale);
+					}
+				
+					if(!level.players[i].underDwarfAttack && (!isDefined(level.players[i].isOnTruck) || !level.players[i].isOnTruck))
+					{
+						if(level.dwarfsLeft < game["tranzit"].zombie_max_dwarfs)
+						{
+							//level.players[i] iPrintLnBold("spawn dwarf to attack you!");
+						
+							level.players[i].underDwarfAttack = true;
+							thread scripts\zombies::spawnWastelandDwarf(level.players[i]);
+						}
+					}
+				}
 			}
 			else
 			{
-				if(self.moveSpeedScale != 0.8)
+				if(level.players[i] isASurvivor())
 				{
-					self.moveSpeedScale = 0.8;
-					self SetMoveSpeedScale(self.moveSpeedScale);
+					if(level.players[i].moveSpeedScale != 1)
+					{
+						level.players[i].moveSpeedScale = 1.0;
+						level.players[i] SetMoveSpeedScale(level.players[i].moveSpeedScale);
+					}
 				}
-			
-				if(!self.underDwarfAttack && !self.isOnTruck)
-				{
-					self.underDwarfAttack = true;
-					thread scripts\zombies::spawnWastelandDwarf(self);
-				}
-			}
-		}
-		else
-		{
-			if(self.moveSpeedScale != 1)
-			{
-				self.moveSpeedScale = 1.0;
-				self SetMoveSpeedScale(self.moveSpeedScale);
 			}
 		}
 	}
@@ -166,72 +178,4 @@ combatInArea(areaID)
 	}
 	
 	return false;
-}
-
-createLocationHud()
-{
-	level endon( "game_ended" );
-
-	self endon("disconnect");
-	self endon("death");
-	
-	if(isDefined(self.locationTextHud))
-		self.locationTextHud destroy();
-
-	self.locationTextHud = NewClientHudElem(self);
-	self.locationTextHud.font = "default";
-	self.locationTextHud.fontScale = 1.4;
-	self.locationTextHud.alignX = "left";
-	self.locationTextHud.alignY = "top";
-	self.locationTextHud.horzAlign = "left";
-	self.locationTextHud.vertAlign = "top";
-	self.locationTextHud.alpha = 0.75;
-	self.locationTextHud.sort = 1;
-	self.locationTextHud.x = 6;
-	self.locationTextHud.y = 8;
-	self.locationTextHud.archived = false;
-	self.locationTextHud.foreground = true;
-	self.locationTextHud.hidewheninmenu = true;
-	self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
-
-	locationName = undefined;
-	if(isDefined(self.myAreaLocation))
-	{
-		locationName = getAreaNameFromID(self.myAreaLocation);
-		if(isDefined(locationName))
-		{
-			self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS");
-			self.locationTextHud setText(locationName);
-		}
-	}
-
-	while(1)
-	{
-		prevLocation = self.myAreaLocation;
-
-		wait 1;
-	
-		if(!isDefined(self.myAreaLocation))
-		{
-			self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
-			self.locationTextHud setText("");
-		}
-		else
-		{
-			if(isDefined(prevLocation) && prevLocation == self.myAreaLocation)
-				continue;
-		
-			locationName = getAreaNameFromID(self.myAreaLocation);
-			if(isDefined(locationName))
-			{
-				self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS");
-				self.locationTextHud setText(locationName);
-			}
-			else
-			{
-				self.locationTextHud.label = self getLocTextString("LOCATION_HUD_POS_UNKNOWN");
-				self.locationTextHud setText("");
-			}
-		}
-	}
 }

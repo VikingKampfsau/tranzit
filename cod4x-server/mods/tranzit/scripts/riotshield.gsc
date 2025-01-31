@@ -112,7 +112,10 @@ attackerIsDamagingRiotShield(eInflictor, eAttacker, vPoint, vDir, sMeansOfDeath)
 	//t in die Koordinatenformen der Gerade einsetzen um die Koordinaten des Durchstosspunkts zu bekommen
 	SP = vPoint + vDir * t;	
 	
-	//self thread DebugRiotShield(A, B, C, D, vPoint, SP, eAttacker, eInflictor, 1, 5);
+	if(game["debug"]["status"] && game["debug"]["riotshield_damageArea"])
+	{
+		self thread DebugRiotShield(A, B, C, D, vPoint, SP, eAttacker, eInflictor, 1, 5);
+	}
 	
 	//Hier noch prüfen, ob der Durchstosspunkt innerhalb der Rechtecks liegt
 	//Dazu die Richtungsvektoren des Rechtecks aufspannen

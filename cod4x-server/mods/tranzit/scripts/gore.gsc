@@ -4,8 +4,8 @@ init()
 {
 	precacheShellshock("electrified");
 
-	add_weapon("zombie_death_electric", "m14_reflex_mp");
-	add_weapon("zombie_death_gravity", "m14_silencer_mp");
+	add_weapon("zombie_death_electric", "m14_reflex_mp", false);
+	add_weapon("zombie_death_gravity", "m14_silencer_mp", false);
 
 	add_effect("blood_headexplosion", "tranzit/gore/headexplode");
 	add_effect("blood_legexplosion", "tranzit/gore/headexplode");
@@ -53,25 +53,14 @@ init()
 	level.wavegunRadiusGravity = 666;
 }
 
-zombiePainSound()
+/*--------------------------|
+|  Damage & death behavior  |
+|			(player)		|
+|--------------------------*/
+onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor, noPainSound)
 {
-	self endon("disconnect");
-	self endon("death");
-
-	switch(self.zombieType)
-	{
-		case "avagadro": self playSoundRef("avagadro_pain"); break;
-		case "human":
-		case "dog":
-		case "dwarf":
-		case "quad":
-		default: break;
-	}
-}
-
-onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor)
-{
-	self playSoundRef("gen_pain");
+	if(!isDefined(noPainSound) || !noPainSound)
+		self playSoundRef("gen_pain");
 
 	if(!isDefined(eAttacker) || !eAttacker isAZombie())
 		return;
@@ -92,11 +81,62 @@ onSurvivorDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor
 		{
 			if(sMeansOfDeath == "MOD_MELEE")
 				self thread electrifyPlayer(eAttacker, eInflictor, 0); //Melee Dmg is defined in weapon file
-			else
+			else if(sMeansOfDeath == "MOD_PROJECTILE")
 				self thread electrifyPlayer(eAttacker, eInflictor, game["tranzit"].avagadroRangeDamage);
 		}
 		
 		return;
+	}
+}
+
+onSurvivorKilled(attacker, sMeansOfDeath, sWeapon)
+{
+	self endon("disconnect");
+
+	//last player died (in prone because of the hand anims)
+	//the anim call is in playViewDeathAnim() in survivors.gsc
+	if(level.aliveCount["allies"] <= 1)
+	{
+		//the game forces the player into thirdperson
+		//to let them watch themselves die
+		//cg_thirdperson_range is already set for
+		//all players in killAllSurvivorsInLastStand()
+		//self setClientDvar("cg_thirdpersonRange", 10);
+		
+		self.camera = spawn("script_model", self.origin);
+		self.camera.angles = self.angles; //self getPlayerAngles();
+		self linkTo(self.camera);
+		
+		self.camera.speed = 5; //tweak me
+		self.camera.endPos = PlayerPhysicsTrace(self.camera.origin, self.camera.origin - AnglesToForward(self.camera.angles)*100);
+		time = Distance(self.camera.origin, self.camera.endPos) / self.camera.speed;
+		
+		if(time < 0.05)
+			time = 0.05;
+		
+		self.camera moveTo(self.camera.endPos, time);
+		
+		return;
+	}
+}
+
+/*--------------------------|
+|  Damage & death behavior  |
+|			(zombie)		|
+|--------------------------*/
+zombiePainSound()
+{
+	self endon("disconnect");
+	self endon("death");
+
+	switch(self.zombieType)
+	{
+		case "avagadro": self playSoundRef("avagadro_pain"); break;
+		case "human":
+		case "dog":
+		case "dwarf":
+		case "quad":
+		default: break;
 	}
 }
 
@@ -116,7 +156,7 @@ onZombieDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor)
 	if(self.zombieType != "human")
 	{
 		if(sWeapon == getWeaponFromCustomName("wunderwaffe") || sWeapon == getWeaponFromCustomName("wavegun") || sWeapon == getWeaponFromCustomName("wavegun_ug"))
-			self FinishPlayerDamage(eAttacker, eAttacker, self.health + 666, 0, "MOD_RIFLE_BULLET", sWeapon, self.origin, (0,0,0), "head", 0);
+			self [[level.callbackPlayerDamage]](eAttacker, eAttacker, self.health + 666, 0, "MOD_RIFLE_BULLET", sWeapon, self.origin, (0,0,0), "head", 0, "waveguned");
 	
 		//iPrintLnBold("not human zombie");
 		return;
@@ -201,10 +241,15 @@ onZombieDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor)
 	}
 }
 
-onZombieKilled(attacker, sMeansOfDeath, sMeansOfDeathOld)
+onZombieKilled(attacker, sMeansOfDeath, sWeapon)
 {
+	thread scripts\statistics::incStatisticValue("zombies_killed", 2417, 1);
+
 	if(isDefined(self.eyeGlowFx))
 		self.eyeGlowFx delete();
+
+	//if(isDefined(self.damageTrigger))
+	//	self.damageTrigger delete();
 
 	if(self.zombieType == "avagadro")
 	{
@@ -229,7 +274,9 @@ onZombieKilled(attacker, sMeansOfDeath, sMeansOfDeathOld)
 	}
 	else if(self.zombieType == "dwarf")
 	{
-		//PlayFx(level._effect["screecher_disappear"], self.origin);
+		thread scripts\statistics::incStatisticValue("screechers_killed", 2418, 1);
+	
+		PlayFx(level._effect["screecher_disappear"], self.origin);
 		self playSoundRef("screecher_death");
 		wait 1;	
 		playSoundAtPosition("screecher_disappear", self.origin);
@@ -243,7 +290,7 @@ onZombieKilled(attacker, sMeansOfDeath, sMeansOfDeathOld)
 		}
 	
 		attackerShouting = randomInt(10);
-	
+		
 		if(sMeansOfDeath != "MOD_HEAD_SHOT")
 		{
 			self playSoundRef("zom_death");
@@ -270,27 +317,42 @@ onZombieKilled(attacker, sMeansOfDeath, sMeansOfDeathOld)
 		}
 		else
 		{
-			if(!isDefined(sMeansOfDeathOld) || sMeansOfDeathOld != "MOD_RIFLE_BULLET")
-				return;
-		
 			if(level.zombieModels[self.zombieType][self.zombieTypeNo].gibhead == "")
 				return;
-		
-			if(!attackerShouting)
-				attacker playSoundRef("feedback_kill_headd");
-		
-			self playSoundRef("zombie_head_gib");
-			PlayFxOnTag(level._effect["bloodspurt"], self, "j_head");
-			PlayFx(level._effect["blood_headexplosion"], self getTagOrigin("j_head"));
-		
-			self detachAll();		
-			self setModel(level.zombieModels[self.zombieType][self.zombieTypeNo].body);
-			self attach(level.zombieModels[self.zombieType][self.zombieTypeNo].gibhead);
+
+			if(!isDefined(sWeapon))
+				return;
+				
+			switch(WeaponClass(sWeapon))
+			{
+				case "mg":
+				case "rifle":
+				case "smg":
+				case "spread":
+					if(!attackerShouting)
+						attacker playSoundRef("feedback_kill_headd");
+				
+					self playSoundRef("zombie_head_gib");
+					PlayFxOnTag(level._effect["bloodspurt"], self, "j_head");
+					PlayFx(level._effect["blood_headexplosion"], self getTagOrigin("j_head"));
+				
+					self detachAll();		
+					self setModel(level.zombieModels[self.zombieType][self.zombieTypeNo].body);
+					self attach(level.zombieModels[self.zombieType][self.zombieTypeNo].gibhead);
+					break;
+			
+				case "pistol":
+				default: break;
+			}
 		}
 	}
 }
 
-spawnCorpse(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, sWeapon, vDir, sHitLoc, psOffsetTime, deathAnimDuration)
+/*--------------------------|
+|  Damage & death behavior  |
+|	(player & zombie)		|
+|--------------------------*/
+spawnCorpse(eInflictor, sMeansOfDeath, sWeapon, vDir, sHitLoc, deathAnimDuration)
 {
 	if(self isAZombie())
 	{
@@ -351,6 +413,12 @@ spawnCorpse(eInflictor, attacker, iDamage, sMeansOfDeath, sMeansOfDeathOld, sWea
 		thread maps\mp\gametypes\_globallogic::delayStartRagdoll(body, sHitLoc, vDir, sWeapon, eInflictor, sMeansOfDeath);
 	}
 }
+/*--------------------------|
+|		Damage behavior		|
+|			(player)		|
+|---------------------------|
+|		Poision Gas			|
+|--------------------------*/
 
 spawnPoisonCloud(origin)
 {
@@ -381,7 +449,10 @@ spawnPoisonCloud(origin)
 		
 			if(Distance(level.players[i].origin, origin) > radius)
 				continue;
-				
+		
+			if(	isDefined(level.players[i].facemask.active) && level.players[i].facemask.active &&
+				isDefined(level.players[i].facemask.type) && level.players[i].facemask.type == "gas")
+		
 			level.players[i] thread inhalePoison(origin, maxradius);
 		}
 		
@@ -396,6 +467,8 @@ spawnPoisonCloud(origin)
 inhalePoison(origin, maxradius)
 {
 	level endon("game_ended");
+	level endon("game_will_end");
+	
 	self endon("disconnect");
 	self endon("death");
 
@@ -406,13 +479,12 @@ inhalePoison(origin, maxradius)
 poisonPainSound(origin, maxradius)
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	self endon("death");
 	self endon("disconnect");
 
-	if(!isDefined(self.HasCalledBefore) || !self.HasCalledBefore)
-		self.HasCalledBefore = true;
-	else
+	if(isDefined(self.AlreadyInhaled) && self.AlreadyInhaled)
 		return;
 
 	soundPlaying = false;
@@ -421,7 +493,12 @@ poisonPainSound(origin, maxradius)
 	{
 		wait .1;
 		
-		insideGas = (Distance(self.origin, origin) <= maxradius);
+		//no damage when wearing the gas mask
+		if(	isDefined(self.facemask.active) && self.facemask.active &&
+			isDefined(self.facemask.type) && self.facemask.type == "gas")
+			insideGas = false;
+		else
+			insideGas = (Distance(self.origin, origin) <= maxradius);
 		
 		if(!isDefined(insideGas))
 			break;
@@ -435,7 +512,7 @@ poisonPainSound(origin, maxradius)
 		{
 			self StopLocalSound("tabun_shock");
 			self PlayLocalSound("tabun_shock_end");
-			self.HasCalledBefore = false;
+			self.AlreadyInhaled = false;
 			break;
 		}
 	}
@@ -467,7 +544,7 @@ electrifyPlayer(eAttacker, eInflictor, iDamage)
 	self shellshock("electrified", 1.5);
 	
 	if(isDefined(iDamage) && iDamage > 0)
-		self FinishPlayerDamage(eInflictor, eAttacker, iDamage, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wunderwaffe"), self.origin, (0,0,0), "head", 0);
+		self thread [[level.callbackPlayerDamage]](eInflictor, eAttacker, iDamage, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wunderwaffe"), self.origin, (0,0,0), "head", 0, "wunderwaffe");
 }
 
 /*--------------------------|
@@ -485,7 +562,7 @@ torchPlayer()
 	if(self.isOnFire)
 		return;
 	
-	if(!isDefined(self GetTagOrigin("j_mainroot")))
+	if(!self playermodelHasTag("j_mainroot"))
 		return;
 	
 	PlayFxOnTag(level._effect["player_torched"], self, "j_mainroot");
@@ -503,7 +580,7 @@ torchPlayer()
 				)
 			{
 				if(level.players[i].myAreaLocation > 0 && level.players[i].myAreaLocation < 900)
-					level.players[i] FinishPlayerDamage(level.players[i], level.players[i], 1, 0, "MOD_SUICIDE", "none", level.players[i].origin, (0,0,0), "head", 0);
+					level.players[i] thread [[level.callbackPlayerDamage]](level.players[i], level.players[i], 1, 0, "MOD_SUICIDE", "none", level.players[i].origin, (0,0,0), "head", 0, "torched");
 			}
 		}
 	}
@@ -697,8 +774,8 @@ electricDamageShock(source_enemy, attacker, arc_num)
 
 	deathAnimWeapon = getWeaponFromCustomName("zombie_death_electric");
 
-	self TakeAllWeapons();
-	self GiveWeapon(deathAnimWeapon);
+	self takeAllWeapons();
+	self giveWeapon(deathAnimWeapon);
 	self setSpawnWeapon(deathAnimWeapon);
 	
 	//get the origin the arc comes from
@@ -712,7 +789,7 @@ electricDamageShock(source_enemy, attacker, arc_num)
 	if(!isDefined(self) || !isAlive(self))
 		return;
 	
-	self FinishPlayerDamage(attacker, attacker, self.health + 666, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wunderwaffe"), origin, (0,0,0), "head", 0);
+	self [[level.callbackPlayerDamage]](attacker, attacker, self.health + 666, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wunderwaffe"), origin, (0,0,0), "head", 0, "electric bolt");
 }
 
 playElectricArcFx(target)
@@ -898,8 +975,8 @@ microwaveDamage(attacker)
 
 	deathAnimWeapon = getWeaponFromCustomName("zombie_death_gravity");
 
-	self TakeAllWeapons();
-	self GiveWeapon(deathAnimWeapon);
+	self takeAllWeapons();
+	self giveWeapon(deathAnimWeapon);
 	self setSpawnWeapon(deathAnimWeapon);
 	
 	//get the origin the damage came from
@@ -913,5 +990,5 @@ microwaveDamage(attacker)
 	if(!isDefined(self) || !isAlive(self))
 		return;
 	
-	self FinishPlayerDamage(attacker, attacker, self.health + 666, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wavegun"), origin, (0,0,0), "head", 0);
+	self [[level.callbackPlayerDamage]](attacker, attacker, self.health + 666, 0, "MOD_RIFLE_BULLET", getWeaponFromCustomName("wavegun"), origin, (0,0,0), "head", 0, "microwaved");
 }

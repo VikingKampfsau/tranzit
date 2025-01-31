@@ -146,7 +146,9 @@ local function buildNodes ( tokens )
 		table.insert ( protonode.origin, tonumber ( org ) )
 	end
 	
-	for _, child in ipairs ( tokens [ 3 ] ) do
+	protonode.linkedChildAmount = tonumber ( tokens[ 3 ] [ 1 ] )
+	
+	for _, child in ipairs ( tokens [ 4 ] ) do
 		local realchild = tonumber ( child )
 		
 		-- for gsc stored waypoints:
@@ -157,10 +159,10 @@ local function buildNodes ( tokens )
 		end
 	end
 	
-	if tokens[ 4 ] == nil then
+	if tokens[ 5 ] == nil then
 		protonode.area = 999
 	else
-		protonode.area = tonumber ( tokens[ 4 ] [ 1 ] )
+		protonode.area = tonumber ( tokens[ 5 ] [ 1 ] )
 	end
 	
 	table.insert ( nodes, protonode )

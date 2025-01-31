@@ -5,7 +5,7 @@ init()
 {
 	precacheModel("zombie_vending_packapunch");
 	
-	add_weapon("at4", "at4_mp");
+	add_weapon("at4", "at4_mp", true);
 	
 	add_sound("packa_loop", "packa_loop");
 	add_sound("packa_sting", "packa_sting");
@@ -14,10 +14,24 @@ init()
 	
 	add_effect("pap_working_fx", "tranzit/packapunch/pap_working_fx");
 		
-	level.packapunchMachines = getEntArray("packapunch", "targetname");
+	if(game["tranzit"].mapType == "tranzit")
+		level.packapunchMachines = getEntArray("packapunch", "targetname");
+	else if(game["tranzit"].mapType == "rotu")
+	{
+		//rotu has only two additional entities in map
+		//so when there are multiple shops/misteryBoxes we use the last one for packapunch
+		wait 2; //give the misteryBox script some time to grab the misteryBoxes and define packapunch
+	}
+	else
+	{
+		level.packapunchMachines = getEntArray("sd_bomb", "targetname");
+	}
 	
 	if(!isDefined(level.packapunchMachines) || !level.packapunchMachines.size)
+	{
+		consolePrint("^1Map has no spawnpoints for packapunchMachines\n");
 		return;
+	}
 	
 	for(i=0;i<level.packapunchMachines.size;i++)
 		level.packapunchMachines[i] thread initPackapunchMachine();
@@ -25,6 +39,12 @@ init()
 
 initPackapunchMachine()
 {
+	if(self.model != "zombie_vending_packapunch")
+		self setModel("zombie_vending_packapunch");
+
+	if(game["tranzit"].mapType == "default")
+		self.angles += (0,180,0);
+
 	if(!isDefined(self.roller))
 	{
 		self.roller = spawn("script_model", self.origin);
@@ -79,7 +99,7 @@ activatePackAPunchMachine(localPowerSupply, delay)
 	self.isInUse = false;
 	self.trigger = spawn("trigger_radius", self.origin, 0, 50, 50);
 	
-	self thread switchOnPowerLight(level._effect["light_on_yellow"], "tag_light");
+	self thread switchOnPowerLight(level._effect["revive_light"]);
 	self thread PlayLoopVendingSound("packa_sting", 8);
 	
 	while(self.power)
@@ -110,11 +130,11 @@ activatePackAPunchMachine(localPowerSupply, delay)
 	self notify("stop_vending_sound");
 }
 
-switchOnPowerLight(fx, tag)
+switchOnPowerLight(fx)
 {
 	self endon("death");
 
-	self.fxEnt = spawnFx(fx, self getTagOrigin(tag));
+	self.fxEnt = spawnFx(fx, self.origin, AnglesToForward(self.angles), AnglesToUp(self.angles));
 
 	//delay 1 is important, else we need a wait before this
 	triggerFx(self.fxEnt, 1);

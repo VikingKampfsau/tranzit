@@ -3,7 +3,7 @@
 init()
 {
 	level.intro_linefeed_delay = 10;
-	level.intro_linefeed_lines = 2;
+	level.intro_linefeed_lines = 3;
 }
 
 createIntroLines()
@@ -13,7 +13,7 @@ createIntroLines()
 	if(level.intro_linefeed_lines <= 0)
 		return;
 
-	for(i=0;i<=level.intro_linefeed_lines;i++)
+	for(i=0;i<level.intro_linefeed_lines;i++)
 	{
 		delay = (i + 1) + 2;
 
@@ -62,9 +62,37 @@ introscreenCornerLine(curLine, delay)
 	}
 	else
 	{
-		intro_hudelem.label = self getLocTextString("INTRO_LINE" + curLine);
+		if(curLine == 1)
+			intro_hudelem.label = self getLocTextString("INTRO_LINE" + curLine);
+		else
+		{
+			intro_hudelem.label = &"&&1";
+			intro_hudelem setText(getMapDisplayname(level.script));
+		}
+		
 		wait level.intro_linefeed_delay;
 	}
 	
 	intro_hudelem destroy();
+}
+
+getMapDisplayname(map)
+{
+	map = StrRepl(map, "_", " ");
+	tokens = strToK(map, " ");
+
+	mapname = "";
+	for(i=0;i<tokens.size;i++)
+	{
+		if(isDefined(tokens[i]) && tokens[i] != "")
+		{
+			if(tokens[i] != "mp" && tokens[i] != "surv")
+			{
+				tokens[i] = toUpper(getSubStr(tokens[i], 0, 1)) + getSubStr(tokens[i], 1, tokens[i].size);
+				mapname = mapname + tokens[i] + " ";
+			}
+		}
+	}
+
+	return mapname;
 }

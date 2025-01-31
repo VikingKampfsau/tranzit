@@ -51,3 +51,6 @@ Uzi Upgrade		uzi_silencer_mp
 Winchester1200 Upgrade	winchester1200_grip_mp
 Zombie Death Electric	m14_reflex_mp
 Zombie Death Gravity	m14_silencer_mp
+Player Death		skorpion_reflex_mp
+Player Dwarf Attack	m4_gl_mp
+EMP Grenade		uzi_reflex_mp

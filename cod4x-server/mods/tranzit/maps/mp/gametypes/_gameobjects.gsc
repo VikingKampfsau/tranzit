@@ -477,10 +477,20 @@ giveObject( object )
 		{
 			self.carryIcon = createIcon( object.carryIcon, 35, 35 ); //size was 50x50
 			
-			if ( !object.allowWeapons )
-				self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -100 ); //self.carryIcon setPoint( "CENTER", "CENTER", 0, 60 );
+			if(int(self GetUserinfo("cg_drawLagometer")) == 0)
+			{
+				if ( !object.allowWeapons )
+					self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -100 ); //self.carryIcon setPoint( "CENTER", "CENTER", 0, 60 );
+				else
+					self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -100 ); //self.carryIcon setPoint( "CENTER", "CENTER", 220, 140 );
+			}
 			else
-				self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -100 ); //self.carryIcon setPoint( "CENTER", "CENTER", 220, 140 );
+			{
+				if ( !object.allowWeapons )
+					self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -150 ); //self.carryIcon setPoint( "CENTER", "CENTER", 0, 60 );
+				else
+					self.carryIcon setPoint( "BOTTOM RIGHT", "BOTTOM RIGHT", -3 - int(self.carryIcon.width/2), -150 ); //self.carryIcon setPoint( "CENTER", "CENTER", 220, 140 );
+			}
 		}
 	}
 }

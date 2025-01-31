@@ -2,12 +2,14 @@
 
 init()
 {
-	add_weapon("riotshield", "flash_grenade_mp");
-	add_weapon("sentrygun", "artillery_mp");
-	add_weapon("monkeybomb", "frag_grenade_short_mp");
-	add_weapon("generator", "radar_mp");
-	add_weapon("wavegun", "ak74u_reflex_mp");
-	add_weapon("wavegun_ug", "ak74u_acog_mp");
+	add_weapon("knucklecrack", "saw_reflex_mp", false);
+
+	add_weapon("riotshield", "flash_grenade_mp", false);
+	add_weapon("sentrygun", "artillery_mp", false);
+	add_weapon("monkeybomb", "frag_grenade_short_mp", false);
+	add_weapon("generator", "radar_mp", false);
+	add_weapon("wavegun", "ak74u_reflex_mp", true);
+	add_weapon("wavegun_ug", "ak74u_acog_mp", true);
 
 	precacheShader("hud_icon_buildable_ammobox");
 	precacheShader("hud_icon_buildable_mower");
@@ -185,6 +187,8 @@ createBuildablePickups()
 		
 		for(j=0;j<possibleBuildables[curType[i]].size;j++)
 		{
+			//consolePrint(curType[i] + " part " + j + " (" + possibleBuildables[curType[i]][j].visuals[0].model + ") at " + possibleBuildables[curType[i]][j].visuals[0].origin + "\n");
+		
 			if(j >= buildablePickupModels.size)
 				possibleBuildables[curType[i]][j].visuals[0] setModel(buildablePickupModels[0]);
 			else
@@ -241,7 +245,7 @@ createBuildableCraftingTables()
 		level.craftingTables[i].onBeginUse = ::onBeginUseCraftingtable;
 		level.craftingTables[i].onUse = ::onUsedCraftingtable;
 		
-		level.craftingTables[i].useWeapon = undefined;
+		level.craftingTables[i].useWeapon = getWeaponFromCustomName("knucklecrack"); //undefined;
 		level.craftingTables[i].crafted_parts = 0;
 		level.craftingTables[i].partType = visuals[0].target;
 		
@@ -263,12 +267,22 @@ onCantUseCraftingtable(player)
 onBeginUseCraftingtable(player)
 {
 	player playSound("mp_bomb_plant");
+	
+	/*knucklecrackWeapon = getWeaponFromCustomName("knucklecrack");
+	self giveWeapon(knucklecrackWeapon);
+	self giveMaxAmmo(knucklecrackWeapon);
+	self SwitchToNewWeapon(knucklecrackWeapon, .05);
+	wait 2.1; //raise anim time
+	player takeWeapon(knucklecrackWeapon);
+	player SwitchToPreviousWeapon();*/
 }
 
 onUsedCraftingtable(player)
 {
 	//finished crafting
 	self.crafted_parts++;
+	
+	thread scripts\statistics::incStatisticValue("parts_found", 2410, 1);
 	
 	//spawn full model on the table
 	if(!isDefined(self.craftedPartModel))
@@ -305,6 +319,8 @@ onUsedCraftingtable(player)
 
 createCraftedWeaponPickup()
 {
+	thread scripts\statistics::incStatisticValue("items_crafted", 2411, 1);
+
 	self maps\mp\gametypes\_gameobjects::disableObject();
 
 	wait .1;

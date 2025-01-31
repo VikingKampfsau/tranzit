@@ -4,11 +4,19 @@
 
 init()
 {
-	//ready-up
 	precacheStatusIcon("compassping_enemy");
 	precacheStatusIcon("compassping_friendlyfiring_mp");
 	
-	level.afkdelay = 60;
+	game["tranzit"].privateServer = getDvarInt("g_password");
+	game["tranzit"].lockGameInProgress = getDvarInt("server_lockGameInProgress");
+	game["tranzit"].randomGameID = "";
+	
+	//server is not public - no need to lock a game in progress
+	if(game["tranzit"].privateServer)
+		return;
+	
+	if(game["tranzit"].lockGameInProgress)
+		game["tranzit"].randomGameID = "" + randomIntRange(1000, 9999); //game id aka. password
 }
 
 waitForPlayerStartPermission()
@@ -19,7 +27,8 @@ waitForPlayerStartPermission()
 	thread createReadyupTextHud();
 
 	readyCount = 0;
-	remainingTime = level.afkdelay;
+	maxAfkTime = 60;
+	remainingTime = maxAfkTime;
 	
 	matchStartTimer = createReadyupTimer();
 	matchStartTimer setTimer(remainingTime);
@@ -35,7 +44,7 @@ waitForPlayerStartPermission()
 		
 		if(!level.playerCount["allies"])
 		{
-			remainingTime = level.afkdelay;
+			remainingTime = maxAfkTime;
 			matchStartTimer setTimer(remainingTime);
 		}
 
@@ -44,8 +53,13 @@ waitForPlayerStartPermission()
 		for(i=0;i<level.players.size;i++)
 		{
 			level.players[i] ShowScoreBoard();
-			level.players[i] disableWeapons();
-			level.players[i] freezeControls(true);
+			
+			//wakeup anim finished but we are still in ready up period
+			if(isDefined(level.players[i].isAwake) && level.players[i].isAwake)
+			{
+				//level.players[i] disableWeapons();
+				level.players[i] freezeControls(true);
+			}
 			
 			//new player that just connected
 			if(!isDefined(level.players[i].isReady))
@@ -61,8 +75,11 @@ waitForPlayerStartPermission()
 				}
 				else
 				{
-					level.players[i] thread waitForReadyupStatusChange();
-					level.players[i] thread showUseHintMessage(level.players[i] getLocTextString("READYUP_PRESS_BUTTON"), "use");
+					if(isDefined(level.players[i].isAwake) && level.players[i].isAwake)
+					{
+						level.players[i] thread waitForReadyupStatusChange();
+						level.players[i] thread showUseHintMessage(level.players[i] getLocTextString("READYUP_PRESS_BUTTON"), "use");
+					}
 				}
 				
 				continue;
@@ -92,8 +109,11 @@ waitForPlayerStartPermission()
 				{
 					level.players[i].statusicon = "compassping_enemy";
 				
-					level.players[i] thread waitForReadyupStatusChange();
-					level.players[i] thread showUseHintMessage(level.players[i] getLocTextString("READYUP_PRESS_BUTTON"), "use");
+					if(isDefined(level.players[i].isAwake) && level.players[i].isAwake)
+					{
+						level.players[i] thread waitForReadyupStatusChange();
+						level.players[i] thread showUseHintMessage(level.players[i] getLocTextString("READYUP_PRESS_BUTTON"), "use");
+					}
 					
 					if(remainingTime <= 0)
 						level.players[i] thread [[level.spectator]]();
@@ -117,9 +137,16 @@ waitForPlayerStartPermission()
 		level.players[i] freezeControls(false);
 		level.players[i] clearLowerHintMessage();
 		level.players[i] deleteUseHintMessages();
+		
+		if(isDefined(game["tranzit"].randomGameID))
+			level.players[i] setClientDvar("password", game["tranzit"].randomGameID);
 	}
 	
 	game["tranzit"].playersReady = true;
+	
+	//lock a game in progress
+	if(isDefined(game["tranzit"].randomGameID))
+		setDvar("g_password", game["tranzit"].randomGameID);
 }
 
 waitForReadyupStatusChange()
@@ -135,6 +162,8 @@ waitForReadyupStatusChange()
 	
 	while(1)
 	{
+		wait .05;
+	
 		if(!isDefined(self.pers["team"]) || self.pers["team"] == "none")
 			continue;
 		
@@ -145,8 +174,6 @@ waitForReadyupStatusChange()
 			while(self useButtonPressed())
 				wait .05;
 		}
-		
-		wait .05;
 	}
 }
 

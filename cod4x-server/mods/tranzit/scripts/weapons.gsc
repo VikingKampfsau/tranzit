@@ -4,14 +4,16 @@ init()
 {
 	precacheLocationSelector("map_artillery_selector");
 	precacheShader("hud_temperature_gauge");
+	precacheShellshock("animchanger");
 	precacheShellshock("minigun");
 
 	precacheModel("worldmodel_flametank");
 	precacheModel("worldmodel_knife");
 
-	add_weapon("alien_servant", "winchester1200_reflex_mp");
-	add_weapon("fists", "defaultweapon_mp");
-	add_weapon("location_selector", "location_selector_mp");
+	add_weapon("alien_servant", "winchester1200_reflex_mp", true);
+	add_weapon("fists", "defaultweapon_mp", false);
+	add_weapon("location_selector", "location_selector_mp", false);
+	add_weapon("player_death", "skorpion_reflex_mp", false);
 	
 	add_effect("turret_overheat_smoke", "distortion/armored_car_overheat");	
 	add_effect("deathPortal_loop", "tranzit/raygun_mk3/fx_mk3_hole");
@@ -28,27 +30,13 @@ init()
 	
 	level.minigun_minHeat = 60;
 	level.minigun_maxHeat = 130;
-	level.minigun_overheatRate = 1.4;
+	level.minigun_overheatRate = 1.26;
 	level.minigun_cooldownRate = 0.95;
 	
 	level.deathPortals = [];
 	
 	if(!isDefined(level.mapSkyHeightScale))
 		level.mapSkyHeightScale = 1;
-}
-
-isSniper(weapon)
-{
-	if(isSubStr(weapon, "m40a3_"))
-		return true;
-	if(isSubStr(weapon, "dragunov_"))
-		return true;
-	if(isSubStr(weapon, "remington700_"))
-		return true;
-	if(isSubStr(weapon, "barrett_"))
-		return true;
-
-	return false;
 }
 
 /*----------------------|
@@ -146,6 +134,13 @@ watchSpecialUsage()
 		self waittill("weapon_change");
 		curWeapon = self getCurrentWeapon();
 	
+		if(	curWeapon == getWeaponFromCustomName("perksacola") ||
+			curWeapon == getWeaponFromCustomName("syrette"))
+		{
+			self shellshock("animchanger", 0.05);
+			continue;
+		}
+	
 		if(curWeapon == getWeaponFromCustomName("location_selector"))
 		{
 			if(!isDefined(self.actionSlotHardpoint))
@@ -210,10 +205,10 @@ spawnEMPGrenade()
 	//kill the avagadro zombie when in range
 	for(i=0;i<level.players.size;i++)
 	{
-		if(level.players[i] isAZombie() && isDefined(level.players[i].zombieType) && level.players[i].zombieType == "avagadro")
+		if(level.players[i] isAZombie() && isAlive(level.players[i]) && isDefined(level.players[i].zombieType) && level.players[i].zombieType == "avagadro")
 		{
 			if(Distance(level.players[i].origin, finalPos) <= maxEMPRadius)
-				level.players[i] FinishPlayerDamage(level.players[i], level.players[i], level.players[i].health, 0, "MOD_RIFLE_BULLET", "none", level.players[i].origin, VectorToAngles(level.players[i].origin - level.players[i].origin), "head", 0);
+				level.players[i] thread [[level.callbackPlayerDamage]](level.players[i], level.players[i], level.players[i].health + 666, 0, "MOD_RIFLE_BULLET", "none", level.players[i].origin, VectorToAngles(level.players[i].origin - level.players[i].origin), "head", 0, "EMPed");
 		}
 	}
 	
@@ -323,10 +318,10 @@ guidElectricProjectile(target)
 fireElectricProjectile(target)
 {
 	tag = "tag_weapon_right";
-	if(!isDefined(self GetTagOrigin(tag)))
+	if(!modelHasTag(self.model, tag))
 	{
 		tag = "tag_weapon_left";
-		if(!isDefined(self GetTagOrigin(tag)))
+		if(!modelHasTag(self.model, tag))
 			return;
 	}
 
@@ -697,9 +692,9 @@ absorbEntities(duration)
 					if(self.affectedEnts[i] isAZombie() && isAlive(self.affectedEnts[i]))
 					{
 						if(isDefined(self.owner) && isPlayer(self.owner))
-							self.affectedEnts[i] finishPlayerDamage(self.owner, self.owner, self.affectedEnts[i].health, 0, "MOD_RIFLE_BULLET", "none", self.affectedEnts[i].origin, VectorToAngles(self.affectedEnts[i].origin - self.affectedEnts[i].origin), "head", 0);
+							self.affectedEnts[i] thread [[level.callbackPlayerDamage]](self.owner, self.owner, self.affectedEnts[i].health + 666, 0, "MOD_RIFLE_BULLET", "ak47_mp", self.affectedEnts[i].origin, VectorToAngles(self.affectedEnts[i].origin - self.affectedEnts[i].origin), "head", 0, "killed by a portal");
 						else
-							self.affectedEnts[i] finishPlayerDamage(self.affectedEnts[i], self.affectedEnts[i], self.affectedEnts[i].health, 0, "MOD_RIFLE_BULLET", "none", self.affectedEnts[i].origin, VectorToAngles(self.affectedEnts[i].origin - self.affectedEnts[i].origin), "head", 0);
+							self.affectedEnts[i] thread [[level.callbackPlayerDamage]](self.affectedEnts[i], self.affectedEnts[i], self.affectedEnts[i].health + 666, 0, "MOD_RIFLE_BULLET", "ak47_mp", self.affectedEnts[i].origin, VectorToAngles(self.affectedEnts[i].origin - self.affectedEnts[i].origin), "head", 0, "killed by a portal");
 					}
 				}
 				
@@ -800,10 +795,15 @@ selectLocation(supportType)
 
 	self endon("stop_location_selection");
 	self waittill("confirm_location", targetLocation);
+	//targetLocation[2] is always 0, i'll fix that in each airsupport script
+
+	if(!isDefined(supportType))
+		supportType = "airstrike";
 
 	switch(supportType)
 	{
 		case "airstrike":
+		case "napalm":
 		{
 			if(isDefined(level.airstrikeInProgress))
 			{
@@ -812,7 +812,7 @@ selectLocation(supportType)
 				return false;
 			}
 			
-			self thread startAirSupport(targetLocation, ::useAirstrike);
+			self thread startAirSupport(supportType, targetLocation, scripts\airstrike::useAirstrike);
 			return true;
 		}
 		
@@ -832,7 +832,7 @@ selectLocation(supportType)
 				return false;
 			}
 
-			self thread startAirSupport(targetLocation, ::useCarepackageHeli);
+			self thread startAirSupport(supportType, targetLocation, scripts\carepackage::useCarepackageHeli);
 			return true;
 		}
 		
@@ -840,12 +840,12 @@ selectLocation(supportType)
 	}
 }
 
-startAirSupport(targetLocation, usedCallback)
+startAirSupport(supportType, targetLocation, usedCallback)
 {
 	self notify("determine_location");
 	wait .05;
 	self thread stopLocationSelection(false);
-	self thread [[usedCallback]](targetLocation);
+	self thread [[usedCallback]](supportType, targetLocation);
 }
 
 endSelectionOn(waitfor)
@@ -873,22 +873,4 @@ stopLocationSelection(disconnected)
 	}
 
 	self notify("stop_location_selection");
-}
-
-useAirstrike(targetLocation)
-{
-	//find the sky height
-	trace = BulletTrace(self.origin + (0,0,10000), self.origin, false, undefined);
-	skyPos = (targetLocation[0], targetLocation[1], trace["position"][2] - (514*level.mapSkyHeightScale));
-
-	thread scripts\airstrike::doArtillery(targetLocation, skyPos, self);
-}
-
-useCarepackageHeli(targetLocation)
-{
-	//find the sky height
-	trace = BulletTrace(self.origin + (0,0,10000), self.origin, false, undefined);
-	skyPos = (targetLocation[0], targetLocation[1], trace["position"][2] - (514*level.mapSkyHeightScale));
-
-	thread scripts\carepackage::spawnSupplyHeli(targetLocation, skyPos, self);
 }

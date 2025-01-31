@@ -32,11 +32,13 @@ init()
 	add_sound("insta_kill_end", "insta_kill_end");
 	add_sound("double_point_end", "double_point_end");
 	
+	game["powerup_dropping"] = false;
+	
 	game["powerup_achieved"] = 0;
 	game["powerup_achieved_max"] = 4;
-	
-	game["powerup_score"] = 5000;
-	game["powerup_score_increment"] = 1.24;
+
+	game["powerup_score_increment"] = 2000;
+	game["powerup_score"] = game["powerup_score_increment"];
 	
 	game["powerup_instakill"] = false;
 	game["powerup_instakill_timer"] = 0;
@@ -45,14 +47,11 @@ init()
 	game["powerup_doublepoints_timer"] = 0;
 	
 	thread powerup_hud_overlay();
-}
-
-updatePowerupScoreIncrement()
-{
-	game["powerup_score_increment"] = 1.14;
-
-	if(level.playerCount["allies"] > 0)
-		game["powerup_score_increment"] *= level.playerCount["allies"];
+	
+	while(game["tranzit"].wave < 1)
+		wait 1;
+		
+	game["powerup_score"] = int((level.players.size * game["tranzit"].score_start) + game["powerup_score_increment"]);
 }
 
 initPowerUp(name, model, timer)
@@ -65,38 +64,24 @@ initPowerUp(name, model, timer)
 	level.PowerUps[curEntry].name = name;
 	level.PowerUps[curEntry].model = model;
 	level.PowerUps[curEntry].timer = timer;
-	level.PowerUps[curEntry].percentage = 0.2; //getDvarFloat("scr_powerup_chance_" + name);
-}
-
-getRandomZombieDrop()
-{
-	total = 0;
-	for(i=0;i<level.PowerUps.size;i++)
-	{
-		while(level.PowerUps[i].percentage > 1)
-			level.PowerUps[i].percentage = (level.PowerUps[i].percentage / 10);
-	
-		total += level.PowerUps[i].percentage;
-	}
-
-	random = randomfloat(1);
-	
-	if(random <= total)
-	{
-		for(i=0;i<level.PowerUps.size;i++)
-		{
-			random -= level.PowerUps[i].percentage;
-			if(random <= 0)
-				return level.PowerUps[i];
-		}
-	}
-
-	return level.PowerUps[randomint(level.PowerUps.size)];
 }
 
 dropZombiePowerUp()
 {
+	// do not drop when there is already a drop in progress
+	if(game["powerup_dropping"])
+		return;
+
+	// do not drop when zombie was killed with nuke (drop)
 	if(level.zombiesNuked)
+		return;
+
+	// do not drop when max drops per round reached
+	if(game["powerup_achieved"] >= game["powerup_achieved_max"])
+		return;
+
+	// do not drop outside the playable area
+	if(!self scripts\maparea::isInPlayArea())
 		return;
 
 	score_total = 0;
@@ -106,16 +91,17 @@ dropZombiePowerUp()
 			score_total += level.players[i].score;
 	}
 	
-	if(game["powerup_achieved"] >= game["powerup_achieved_max"])
+	if(score_total < game["powerup_score"])
 		return;
-	
-	if(score_total < int(game["powerup_score"] * game["powerup_score_increment"]))
-		return;
+
+	game["powerup_dropping"] = true;
 
 	game["powerup_achieved"]++;
-	game["powerup_score"] *= game["powerup_score_increment"];
+	game["powerup_score_increment"] *= 1.14;
+	game["powerup_score"] = score_total + game["powerup_score_increment"];
 
-	random = getRandomZombieDrop();
+	level.PowerUps = shuffleArray(level.PowerUps);
+	random = level.PowerUps[0];
 	
 	powerup = spawn("script_model", self.origin + (0, 0, 40));
 	powerup SetModel(random.model);
@@ -129,6 +115,8 @@ dropZombiePowerUp()
 	powerup thread rotateDroppedPowerUp();
 	powerup thread deleteDroppedPowerUp();
 	powerup thread createPowerupLight();
+	
+	game["powerup_dropping"] = false;
 	
 	while(isDefined(powerup.trigger))
 	{
@@ -308,38 +296,21 @@ applyPowerUpToEverything(type)
 		randomSurvivor = getRandomPlayer(game["defenders"]);
 	
 		if(type == "maxammo")
+		{
 			randomSurvivor playSoundRef("full_ammo");
+		
+			for(i=0;i<level.players.size;i++)
+			{
+				if(level.players[i] isASurvivor())
+					level.players[i] thread GiveAmmoForAllWeapons();
+			}
+		}
 		else if(type == "nuke")
 		{
 			thread nukeBlockOtherDrops();
+			thread killAllZombies("powerup_nuke");
 
 			randomSurvivor playSoundRef("nuked");
-		}
-	
-		for(i=0;i<level.players.size;i++)
-		{
-			if(type == "nuke")
-			{
-				if(level.players[i] isAZombie())
-				{
-					if(!isDefined(level.players[i].zombieType) || level.players[i].zombieType != "avagadro")
-						level.players[i] FinishPlayerDamage(level.players[i], level.players[i], level.players[i].health, 0, "MOD_RIFLE_BULLET", "none", self.origin, VectorToAngles(self.origin - self.origin), "head", 0);
-					
-					continue;
-				}
-				
-				if(level.players[i] isASurvivor())
-				{
-					level.players[i] thread [[level.onXPEvent]]("powerup_nuke");
-					continue;
-				}
-			}
-			
-			if(type == "maxammo" && level.players[i] isASurvivor())
-			{
-				level.players[i] thread GiveAmmoForAllWeapons();
-				continue;
-			}
 		}
 	}
 }

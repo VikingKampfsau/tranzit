@@ -80,8 +80,18 @@ onStartGameType()
 	level.mapCenter = scripts\spawnlogic::findBoxCenter( level.spawnMins, level.spawnMaxs );
 	setMapCenter( level.mapCenter );
 	
-	allowed[0] = "war";
-	allowed[1] = "dm";
+	allowed = [];
+	allowed[allowed.size] = "war";
+	allowed[allowed.size] = "dm";
+	
+	if(game["tranzit"].mapType == "default")
+	{
+		allowed[allowed.size] = "sd"; //for packapunchMachines
+		allowed[allowed.size] = "bombzone"; //for ammoBoxes (model)
+		allowed[allowed.size] = "blocker"; //for ammoBoxes (clip)
+		allowed[allowed.size] = "hq"; //for misteryboxes
+	}
+	
 	maps\mp\gametypes\_gameobjects::main(allowed);
 	
 	maps\mp\gametypes\_rank::registerScoreInfo( "kill", 5 );

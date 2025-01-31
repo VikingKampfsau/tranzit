@@ -3,9 +3,10 @@
 
 init()
 {
-	game["tranzit"].survivalStarted = false;
-
 	game["tranzit"].wave = 0;
+	game["tranzit"].endtime = 0;
+	game["tranzit"].gametime = 0;
+	game["tranzit"].starttime = 0;
 	game["tranzit"].waveStarted = false;
 	game["tranzit"].specialWaveType = "";
 	game["tranzit"].specialWaveCount = 0;
@@ -23,10 +24,11 @@ init()
 	game["tranzit"].player_amount_max = 4;
 	
 	game["tranzit"].zombie_spawn_delay = 1.8;
-	game["tranzit"].zombie_health_increase = 100;
+	game["tranzit"].zombie_health_increase = 50;
 	game["tranzit"].zombie_health_increase_percent = 0.1;
 	game["tranzit"].zombie_health_start = 100;
 	game["tranzit"].zombie_max_ai = 24;
+	game["tranzit"].zombie_max_dwarfs = 2;
 	game["tranzit"].zombie_ai_per_player = 6;
 
 	game["tranzit"].avagadroReleased = false;
@@ -46,7 +48,6 @@ init()
 	add_sound("end_of_round", "round_over");
 	add_sound("end_of_game", "mx_game_over");
 
-	
 	PrecacheShader("hud_chalk_1");
 	PrecacheShader("hud_chalk_2");
 	PrecacheShader("hud_chalk_3");
@@ -74,12 +75,14 @@ init()
 		}
 	}
 
-	iPrintLnBold(getLocTextString("ERROR_MAP_NOT_WAYPOINTED"));
+	if(!isDefined(level.wpAmount) || level.wpAmount <= 0)
+		iPrintLnBold(getLocTextString("ERROR_MAP_NOT_WAYPOINTED"));
 }
 
 prepareWave()
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	if(game["tranzit"].wave > 0)
 	{
@@ -97,6 +100,9 @@ prepareWave()
 			game["tranzit"].avagadroThisWave = true; 
 			game["tranzit"].avagadroWaveCount++;
 		}
+
+		if(game["tranzit"].wave == 10)
+			game["tranzit"].betweenRoundTime = 20;
 
 		wait game["tranzit"].betweenRoundTime;
 		
@@ -152,39 +158,17 @@ prepareWave()
 			randomSurvivor playSoundRef("gen_teamwork");
 		}
 		
-		logPrint("\nplayers ready - starting game\n");
+		consolePrint("\nplayers ready - starting game\n");
 	}
 	
-	game["tranzit"].wave++;	
+	game["tranzit"].wave++;
+	game["tranzit"].starttime = getTime();	
 	game["powerup_achieved"] = 0;
 
 	chalk_one_up();
+	
 	thread zombieOutbreak();
-	thread monitorHumanWipeOut();
-	thread scripts\ambient::setAmbient("amb_spooky");
 	thread scripts\rank::checkForPlayerRankups();
-}
-
-monitorHumanWipeOut()
-{
-	level endon("game_ended");
-	
-	if(isDefined(game["tranzit"].survivalStarted) && game["tranzit"].survivalStarted)
-		return;
-		
-	game["tranzit"].survivalStarted = true;
-	
-	while(1)
-	{
-		if(level.aliveCount["allies"] <= 0)
-		{
-			logPrint("\ngame end from revive - all players are down\n");
-			thread scripts\waves::endGame();
-			return;
-		}
-		
-		wait .5;
-	}
 }
 
 getRandomSpecialWave()
@@ -202,6 +186,7 @@ getRandomSpecialWave()
 zombieOutbreak()
 {
 	level endon("game_ended");
+	level endon("game_will_end");
 
 	if(game["tranzit"].wave <= 1)
 		level.zombie_health = game["tranzit"].zombie_health_start;
@@ -229,7 +214,7 @@ zombieOutbreak()
 		}
 	}
 
-	level.dwarfsLeft = 0;
+	//level.dwarfsLeft = 0;
 	level.zombiesSpawned = 0;
 	level.zombiesTotalForWave = getZombieAmountForWave();
 	level.zombiesLeftInWave = level.zombiesTotalForWave;
@@ -283,6 +268,7 @@ zombieOutbreak()
 			continue;
 		}
 		
+		//kick AFK spectators or people that refuse to play
 		if(game["tranzit"].wave > 1)
 		{
 			level.players[i].afkWaves++;
@@ -323,6 +309,9 @@ zombieOutbreak()
 		level waittill("round_chalk_done");
 	
 	game["tranzit"].waveStarted = true;
+	
+	thread scripts\weather::fogChange();
+	thread scripts\ambient::setAmbient("amb_spooky");
 	
 	if(game["tranzit"].specialWaveType == "dogs")
 		playSoundToAllPlayers("ann_dog_start");
@@ -430,6 +419,7 @@ endWave()
 	
 	game["tranzit"].waveStarted = false;
 	
+	thread scripts\weather::fogChange();
 	thread scripts\ambient::stopAmbient();
 	
 	if(game["tranzit"].specialWaveType == "")
@@ -461,6 +451,11 @@ endGame()
 	level notify("game_ended");
 	
 	setGameEndTime(0);
+
+	//create the game over hud for all players
+	game["tranzit"].endtime = getTime();
+	game["tranzit"].gametime = game["tranzit"].endtime - game["tranzit"].starttime;
+	scripts\waves::createGameOverHud();
 
 	maps\mp\gametypes\_globallogic::updatePlacement();	
 	setdvar("g_deadChat", 1);
@@ -503,9 +498,14 @@ endGame()
 	
 	wait level.postRoundTime;
 	
+	destroyGameOverHud();
+	
 	removeAllTestClients();
 	
 	level.intermission = true;
+	
+	//force the default scoreboard at the end
+	setDvar("ui_showStockScoreboard", 1);
 	
 	//regain players array since some might've disconnected during the wait above
 	players = level.players;
@@ -518,12 +518,16 @@ endGame()
 		player notify("reset_outcome");
 		player [[level.spawnIntermission]]();
 		player setClientDvars(	"ui_hud_hardcore", 0,
-								"ui_showStockScoreboard", 1,
-								"g_scriptMainMenu", game["menu_eog_main"]);
+								"g_scriptMainMenu", game["menu_eog_main"],
+								"ui_showStockScoreboard", 1); //force the default scoreboard at the end
 	}
 	
 	logString("game ended");
 	wait getDvarFloat("scr_show_unlock_wait");
+	
+	//server is not private - unlock to allow new players to connect
+	if(!game["tranzit"].privateServer)
+		setDvar("g_password", "");
 	
 	thread maps\mp\gametypes\_globallogic::timeLimitClock_Intermission(getDvarFloat("scr_intermission_time"));
 	wait getDvarFloat("scr_intermission_time");
@@ -719,4 +723,114 @@ chalk_round_hint()
 	wait (time * 0.25);
 	
 	level notify("round_chalk_done");
+}
+
+createGameOverHud()
+{
+	if(isDefined(level.chalk_hud1)) level.chalk_hud1 destroy();
+	if(isDefined(level.chalk_hud2)) level.chalk_hud2 destroy();
+
+	for(j=0;j<level.players.size;j++)
+	{
+		if(level.players[j] isABot())
+			continue;
+
+		if(isDefined(level.players[j].locationTextHud))
+			level.players[j].locationTextHud destroy();
+
+		level.players[j].gameover_huds = [];
+		
+		for(i=0;i<3;i++)
+		{
+			level.players[j].gameover_huds[i] = NewClientHudElem(level.players[j]);
+			level.players[j].gameover_huds[i].alignX = "center";
+			level.players[j].gameover_huds[i].alignY = "middle";
+			level.players[j].gameover_huds[i].horzAlign = "center";
+			level.players[j].gameover_huds[i].vertAlign = "middle";
+			level.players[j].gameover_huds[i].y = -30 + (30*i);
+			level.players[j].gameover_huds[i].foreground = true;
+			level.players[j].gameover_huds[i].color = (1.0, 1.0, 1.0);
+			
+			if(i == 0)
+			{
+				level.players[j].gameover_huds[i].fontScale = 3;
+				level.players[j].gameover_huds[i].color = (1.0, 0, 0);
+				level.players[j].gameover_huds[i].label = &"GAME OVER";
+			}
+			else if(i == 1)
+			{
+				level.players[j].gameover_huds[i].fontScale = 2;
+			
+				if(game["tranzit"].wave <= 1)
+					level.players[j].gameover_huds[i].label = self getLocTextString("GAME_OVER_SURVIVED_NO_ROUND");
+				else if(game["tranzit"].wave <= 2)
+					level.players[j].gameover_huds[i].label = self getLocTextString("GAME_OVER_SURVIVED_SINGLE_ROUND");
+				else
+				{
+					level.players[j].gameover_huds[i].label = self getLocTextString("GAME_OVER_SURVIVED_MULTIPLE_ROUNDS");
+					level.players[j].gameover_huds[i] setValue(game["tranzit"].wave - 1);
+				}	
+			}
+			else
+			{
+				level.players[j].gameover_huds[i].vertAlign = "bottom";
+				level.players[j].gameover_huds[i].y = -30;
+				level.players[j].gameover_huds[i].fontScale = 1.4;
+			
+				time = millisecondsAsTime(game["tranzit"].gametime);
+				timeString = ": ";
+
+				if(time.days > 0)
+					timeString += time.days + " Days, ";
+				if(time.hours > 0)
+					timeString += time.hours + " Hours, ";
+				if(time.minutes > 0)
+					timeString += time.minutes + " Minutes and ";
+				
+				timeString += time.seconds + " Seconds";
+				
+				level.players[j].gameover_huds[i].label = &"MENU_TIME_PLAYED";
+				level.players[j].gameover_huds[i] setText(timeString);
+			}
+
+			level.players[j].gameover_huds[i].alpha = 0;
+			level.players[j].gameover_huds[i] FadeOverTime(3);
+			level.players[j].gameover_huds[i].alpha = 1;
+		}
+	}
+	
+	wait 3;
+}
+
+destroyGameOverHud()
+{
+	for(j=0;j<level.players.size;j++)
+	{
+		if(level.players[j] isABot())
+			continue;
+		
+		if(!isDefined(level.players[j].gameover_huds))
+			continue;
+		
+		for(i=0;i<level.players[j].gameover_huds.size;i++)
+		{
+			level.players[j].gameover_huds[i].alpha = 1;
+			level.players[j].gameover_huds[i] FadeOverTime(3);
+			level.players[j].gameover_huds[i].alpha = 0;
+		}
+	}
+	
+	wait 4.5;
+	
+	for(j=0;j<level.players.size;j++)
+	{
+		if(level.players[j] isABot())
+			continue;
+		
+		if(!isDefined(level.players[j].gameover_huds) || level.players[j].gameover_huds.size <= 0)
+			continue;
+		
+		for(i=0;i<level.players[j].gameover_huds.size;i++)
+			level.players[j].gameover_huds[i] destroy();
+	}
 }
