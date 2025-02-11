@@ -201,26 +201,26 @@ sendDiscordMessage(author, command, subMessage)
 	
 	embed = spawnStruct();
 	embed.sender = author.name + " (" + author.guid + ")";
-	embed.sender_avatar ="https://crops.giga.de/14/93/35/043030a8262119459ad158a42e_YyAxMjc0eDcxNyszKzM4AnJlIDg0MCA0NzIDMTMwMGE2MTVkODI=.jpg";
+	embed.sender_avatar = getDvar("webhook_url_avatar");
 	embed.title = StrColorStrip(getDvar("sv_hostname")) + " (IP: " + getDvar("net_ip") + ":" + getDvar("net_port") + ")";
 	embed.message = subMessage;
 	embed.color = "";
 	
 	if(command == "calladmin")
 	{
-		webhook.url = "https://discord.com/api/webhooks/420542354135449600/V_zA11Wx_ymsCz62lTzPUSWdEIdKMrnS8eF8TV4wvxzx1AXQXOTvqYmzbT6eXrR1QDhe";
+		webhook.url = getDvar("webhook_url_calladmin");
 
 		embed.color = 16711680; //www.spycolor.com -> decimal value!
 	}
 	else if(isSubStr(command, "bug"))
 	{
-		webhook.url = "https://discord.com/api/webhooks/958627045053722634/ERV00nMBUAFr50288_uoaZZ8_ddOSOZ-otK7gMxt7XqylvepEFuUa7oT7Us0qXOS75T4";
+		webhook.url = getDvar("webhook_url_bug");
 	
 		embed.color = 16711680; //www.spycolor.com -> decimal value!
 	}
 	else if(isSubStr(command, "suggest") || command == "feature" || command == "idea")
 	{
-		webhook.url = "https://discord.com/api/webhooks/958627851060514856/76bqIDheNV-JZACLnhVLeC7AwGPPwykZudJTQ2qbQ8cY_grodrl6TFW7OO9qJ93C7xVM";
+		webhook.url = getDvar("webhook_url_feature");
 	
 		embed.color = 16769280; //www.spycolor.com -> decimal value!
 	}
