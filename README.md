@@ -20,6 +20,8 @@ and much more...
 
 Install cod4x and add the required plugins to it.<br/>
 Copy the mod to your mods folder - if you already have an older version then remove it.<br/>
+<br/>
+The libcod4x_http_plugin requires libphobos2 v0.99 (atleast on linux)<br/>
 
 ## Configuration
 
