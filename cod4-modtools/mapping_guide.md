@@ -70,7 +70,7 @@ If necessary fix the bad path nodes in radiant and repeat step 3.
 
 In 'mods/spmod/mapents' create a new file sp_yourmapname.ents and open it with notepad.
 Insert this shema:
-<code>
+```
 {
 "sundiffusecolor" "0 0 0"
 "suncolor" "0 0 0"
@@ -92,7 +92,7 @@ Insert this shema:
 "angles" "0 0 0"
 "classname" "mp_global_intermission"
 }
-</code>
+```
 
 From radiant copy the origins of the SP player spawn and replace XXX in the above origin values of the 'mp_dm_spawn' and the 'global_intermission'.
 
@@ -112,7 +112,7 @@ Name it 'mp_yourmapname_spawns.map'
 ## Step 5: Compile your map for Multiplayer
 
 After building the fastfiles for the first time update the zone file and overwrite its content with this:
-<code>
+```
 ignore,code_post_gfx_mp
 ignore,common_mp
 ignore,localized_code_post_gfx_mp
@@ -134,9 +134,6 @@ fx,fire/firelp_barrel_pm
 fx,props/securityCamera_explosion
 fx,smoke/thin_black_smoke_L
 fx,weather/fog_river_200
-fx,tranzit/weather/fog_river_1000x1000
-fx,tranzit/weather/rain
-fx,tranzit/weather/thunderstorm
 
 impactfx,XXX
 
@@ -166,7 +163,7 @@ xmodel,head_mp_arab_regular_asad
 rawfile,vehicles/humvee
 xmodel,defaultvehicle_mp
 xmodel,pb_vehicle_truck
-</code>
+```
 
 Replace every instance of XXX with mp_yourmapname.
 
@@ -187,7 +184,7 @@ Add these three commands to your start.sh or server.cfg:
 +set navmeshtool_cleanup 2
 
 explanations:
-<code>
+```
 //create_spawnfile 0/1/2
 //	1 -> convert the radiant spawns into csv
 //	2 -> add the mapareas to an existing spawn csv of step 1
@@ -198,7 +195,7 @@ explanations:
 //navmeshtool_cleanup 0/1/2
 //	1 -> delete all temp files but dont move the output to the waypoints folder
 //	2 -> delete all temp files and move the output to the waypoints folder
-</code>
+```
 
 Boot the server with your map and check the console log for errors.
 The server will auto quit when it succeeded.
