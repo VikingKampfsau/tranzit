@@ -1,0 +1,25 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"classname" "worldspawn"
+// brush 0
+{
+ ( 32 16 0 ) ( -32 16 0 ) ( -32 -16 0 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -31 -16 88 ) ( -31 16 88 ) ( 33 16 88 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 44 -18 96 ) ( 44 14 96 ) ( 44 14 0 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 32 17 98 ) ( -32 17 98 ) ( -32 17 2 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -44 16 95 ) ( -44 -16 95 ) ( -44 -16 -1 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 44 -18 88 ) ( 0 -32 88 ) ( 0 -32 120 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 0 -32 88 ) ( -44 -18 88 ) ( 0 -32 120 ) clip_nosight_metal 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 1
+{
+"angles" "0 270 0"
+"origin" "1.8 1.8 0.0"
+"targetname" "packapunch"
+"model" "zombie_vending_packapunch"
+"classname" "script_model"
+}

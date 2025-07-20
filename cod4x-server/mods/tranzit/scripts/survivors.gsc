@@ -487,6 +487,12 @@ checkVehicle()
 	self endon("disconnect");
 	self endon("death");
 	
+	if(!isDefined(level.vehicle))
+	{
+		self.isOnTruck = false;
+		return;
+	}
+	
 	while(1)
 	{
 		self.isOnTruck = scripts\vehicle::playerOnLoadingArea();

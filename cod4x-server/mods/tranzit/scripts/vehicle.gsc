@@ -151,6 +151,12 @@ initTranzitVehicle()
 		self.mantleSpots[i].mantleAreaWp = curWP;
 		self.mantleSpots[i] linkTo(self);
 		
+		if(!isDefined(curWP) || curWP < 0 || !isDefined(self.mantleSpots[i].waypoint) || self.mantleSpots[i].waypoint < 0)
+		{
+			consolePrint("Can not find a waypoint for " + mantleSpots[i] + "\n");
+			continue;
+		}
+		
 		addWpNeighbour(self.mantleSpots[i].waypoint, curWP);
 		addWpNeighbour(curWP, self.mantleSpots[i].waypoint);
 	}

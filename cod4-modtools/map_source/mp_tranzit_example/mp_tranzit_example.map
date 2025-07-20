@@ -1,0 +1,965 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"contrastGain" ".25"
+"sunIsPrimaryLight" "1"
+"sunlight" "0.85"
+"sundirection" "-30 -42 0"
+"sundiffusecolor" "0.5 0.5 0.7"
+"suncolor" "0.5 0.6 1"
+"radiosityscale" "2"
+"diffusefraction" "0.15"
+"ambient" ".1"
+"_color" "0.46 0.64 0.61"
+"classname" "worldspawn"
+// brush 0
+{
+ ( 320 832 0 ) ( -320 832 0 ) ( -320 816 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -320 816 128 ) ( -320 832 128 ) ( 320 832 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 1328 128 ) ( 1456 1328 0 ) ( -1264 1328 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 1328 0 ) ( 1456 1328 128 ) ( 1472 1344 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1600 1344 16 ) ( 960 1344 16 ) ( 960 1344 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 1328 128 ) ( -1264 1328 0 ) ( -1280 1344 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 1
+{
+ ( 320 -944 0 ) ( -320 -944 0 ) ( -320 -960 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -320 -960 128 ) ( -320 -944 128 ) ( 320 -944 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -320 -960 16 ) ( 320 -960 16 ) ( 320 -960 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -944 128 ) ( 1456 -944 0 ) ( 1472 -960 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -944 0 ) ( 1456 -944 128 ) ( -1264 -944 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 -944 0 ) ( -1264 -944 128 ) ( -1280 -960 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 2
+{
+ ( 832 -304 0 ) ( 192 -304 0 ) ( 192 -320 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 192 -320 128 ) ( 192 -304 128 ) ( 832 -304 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -944 0 ) ( 1456 -944 128 ) ( 1472 -960 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1472 -832 16 ) ( 1472 -816 16 ) ( 1472 -816 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 1328 128 ) ( 1456 1328 0 ) ( 1472 1344 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -944 128 ) ( 1456 -944 0 ) ( 1456 1328 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 3
+{
+ ( -816 -304 0 ) ( -1456 -304 0 ) ( -1456 -320 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1456 -320 128 ) ( -1456 -304 128 ) ( -816 -304 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 -944 128 ) ( -1264 -944 0 ) ( -1280 -960 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 1328 128 ) ( -1264 1328 0 ) ( -1264 -944 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 1328 0 ) ( -1264 1328 128 ) ( -1280 1344 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1280 768 16 ) ( -1280 752 16 ) ( -1280 752 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 4
+{
+ ( 384 320 -5184 ) ( -384 320 -5184 ) ( -384 -320 -5184 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -896 -1920 432 ) ( -128 -1920 432 ) ( -128 -1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1920 192 432 ) ( 1920 832 432 ) ( 1920 832 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 384 1920 432 ) ( -384 1920 432 ) ( -384 1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1920 -192 432 ) ( -1920 -832 432 ) ( -1920 -832 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 320 -5168 ) ( 384 320 -5168 ) ( -384 -320 -5168 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 5
+{
+ ( 384 -192 -5184 ) ( -384 -192 -5184 ) ( -384 -832 -5184 ) sky_chechnya 256 256 0 512 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 -832 1280 ) ( -384 -192 1280 ) ( 384 -192 1280 ) sky_chechnya 256 256 0 512 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 128 -1920 432 ) ( 896 -1920 432 ) ( 896 -1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1920 -832 432 ) ( 1920 -192 432 ) ( 1920 -192 -64 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1920 -192 432 ) ( -1920 -832 432 ) ( -1920 -832 -64 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 896 -1904 1200 ) ( 128 -1904 1200 ) ( 896 -1904 704 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 6
+{
+ ( 896 320 -5184 ) ( 128 320 -5184 ) ( 128 -320 -5184 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 128 -320 1280 ) ( 128 320 1280 ) ( 896 320 1280 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 128 -1920 432 ) ( 896 -1920 432 ) ( 896 -1920 -64 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1920 -1344 432 ) ( 1920 -704 432 ) ( 1920 -704 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 896 1920 432 ) ( 128 1920 432 ) ( 128 1920 -64 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1904 832 -4688 ) ( 1904 192 -4688 ) ( 1904 832 -5184 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 7
+{
+ ( 384 832 -5184 ) ( -384 832 -5184 ) ( -384 192 -5184 ) sky_chechnya 256 256 0 -512 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 192 1280 ) ( -384 832 1280 ) ( 384 832 1280 ) sky_chechnya 256 256 0 -512 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1920 192 432 ) ( 1920 832 432 ) ( 1920 832 -64 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 384 1920 432 ) ( -384 1920 432 ) ( -384 1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1920 832 432 ) ( -1920 192 432 ) ( -1920 192 -64 ) sky_chechnya 256 256 512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 1904 1200 ) ( 384 1904 1200 ) ( -384 1904 704 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 8
+{
+ ( -128 320 -5184 ) ( -896 320 -5184 ) ( -896 -320 -5184 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -896 -320 1280 ) ( -896 320 1280 ) ( -128 320 1280 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -896 -1920 432 ) ( -128 -1920 432 ) ( -128 -1920 -64 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -128 1920 432 ) ( -896 1920 432 ) ( -896 1920 -64 ) sky_chechnya 256 256 -512 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1920 -192 432 ) ( -1920 -832 432 ) ( -1920 -832 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1904 192 -4688 ) ( -1904 832 -4688 ) ( -1904 192 -5184 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 9
+{
+ ( 816 816 0 ) ( -816 816 0 ) ( -816 -816 0 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -824 -816 832 ) ( -824 816 832 ) ( 808 816 832 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -816 -944 192 ) ( 816 -944 192 ) ( 816 -944 0 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -816 192 ) ( 1456 816 192 ) ( 1456 816 0 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 816 1328 192 ) ( -816 1328 192 ) ( -816 1328 0 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 816 192 ) ( -1264 -816 192 ) ( -1264 -816 0 ) lightgrid_volume 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 10
+{
+ ( -384 -320 1280 ) ( -384 320 1280 ) ( 384 320 1280 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 128 -1920 432 ) ( 896 -1920 432 ) ( 896 -1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1920 -832 432 ) ( 1920 -192 432 ) ( 1920 -192 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -128 1920 432 ) ( -896 1920 432 ) ( -896 1920 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1920 832 432 ) ( -1920 192 432 ) ( -1920 192 -64 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 320 1264 ) ( -384 -320 1264 ) ( 384 320 1264 ) sky_chechnya 256 256 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 11
+{
+ ( 320 320 -16 ) ( -320 320 -16 ) ( -320 -320 -16 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -320 -320 0 ) ( -320 320 0 ) ( 320 320 0 ) ch_tile_floor03 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -832 -960 112 ) ( -192 -960 112 ) ( -192 -960 -16 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1472 192 112 ) ( 1472 832 112 ) ( 1472 832 -16 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 832 1344 112 ) ( 192 1344 112 ) ( 192 1344 -16 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1280 -192 112 ) ( -1280 -832 112 ) ( -1280 -832 -16 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 12
+{
+ ( 512 128 0 ) ( -512 128 0 ) ( -512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 128 ) ( -512 128 128 ) ( 512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 -128 256 ) ( 504 128 256 ) ( 504 128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 128 256 ) ( -520 128 256 ) ( -520 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 128 256 ) ( -504 -128 256 ) ( -504 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 120 256 ) ( 512 120 256 ) ( -512 120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 13
+{
+ ( 512 128 0 ) ( -512 128 0 ) ( -512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 128 ) ( -512 128 128 ) ( 512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 -120 0 ) ( 504 -120 128 ) ( 512 -128 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 -128 256 ) ( 512 128 256 ) ( 512 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 128 256 ) ( -512 128 256 ) ( -512 128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 -120 128 ) ( 504 -120 0 ) ( 504 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 14
+{
+ ( 512 128 0 ) ( -512 128 0 ) ( -512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 128 ) ( -512 128 128 ) ( 512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 256 ) ( 512 -128 256 ) ( 512 -128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 -120 0 ) ( -504 -120 128 ) ( -512 -128 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 -120 128 ) ( -504 -120 0 ) ( -376 -120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -378 -64 128 ) ( -378 -192 128 ) ( -378 -64 160 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 15
+{
+ ( -184 128 0 ) ( -1208 128 0 ) ( -1208 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1208 -128 128 ) ( -1208 128 128 ) ( -184 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1208 -120 256 ) ( -184 -120 256 ) ( -184 -120 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -184 -136 256 ) ( -184 120 256 ) ( -184 120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -184 120 256 ) ( -1208 120 256 ) ( -1208 120 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -192 128 128 ) ( -192 -128 128 ) ( -192 128 -128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 16
+{
+ ( 320 128 0 ) ( -704 128 0 ) ( -704 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -704 -128 128 ) ( -704 128 128 ) ( 320 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -704 -120 256 ) ( 320 -120 256 ) ( 320 -120 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 320 -136 256 ) ( 320 120 256 ) ( 320 120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 320 120 256 ) ( -704 120 256 ) ( -704 120 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 312 128 128 ) ( 312 -128 128 ) ( 312 128 -128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 17
+{
+ ( 512 128 0 ) ( -512 128 0 ) ( -512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 128 ) ( -512 128 128 ) ( 512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 -128 256 ) ( 512 -128 256 ) ( 512 -128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 544 -120 256 ) ( -480 -120 256 ) ( 544 -120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -326 -128 256 ) ( -326 0 256 ) ( -326 -128 288 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -64 -64 128 ) ( -64 -128 128 ) ( -64 -128 160 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 18
+{
+ ( 446 128 104 ) ( -578 128 104 ) ( -578 -128 104 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -564 -128 128 ) ( -564 128 128 ) ( 460 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -564 -128 256 ) ( 460 -128 256 ) ( 460 -128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 492 -120 256 ) ( -532 -120 256 ) ( 492 -120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -378 -128 256 ) ( -378 0 256 ) ( -378 -128 288 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -326 -64 124 ) ( -326 -128 124 ) ( -326 -128 156 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 19
+{
+ ( 664 128 0 ) ( -360 128 0 ) ( -360 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -360 -128 128 ) ( -360 128 128 ) ( 664 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -216 -128 256 ) ( 808 -128 256 ) ( 808 -128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 632 -120 256 ) ( -392 -120 256 ) ( 632 -120 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 192 -96 128 ) ( 192 0 128 ) ( 192 -96 160 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 384 -120 96 ) ( 384 -120 160 ) ( 384 -88 96 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 20
+{
+ ( 792 128 0 ) ( -232 128 0 ) ( -232 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -232 -128 128 ) ( -232 128 128 ) ( 792 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -88 -128 256 ) ( 936 -128 256 ) ( 936 -128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 -120 0 ) ( 504 -120 128 ) ( 448 -120 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 -120 128 ) ( 504 -120 0 ) ( 512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 448 -120 160 ) ( 448 -120 96 ) ( 448 -88 96 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 21
+{
+ ( -440 120 0 ) ( -504 120 0 ) ( -504 64 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 64 64 ) ( -504 120 64 ) ( -440 120 64 ) ch_wood01 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -440 120 72 ) ( -504 120 72 ) ( -504 120 64 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 120 72 ) ( -504 64 72 ) ( -504 64 64 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -440 120 77 ) ( -504 64 77 ) ( -440 120 109 ) ch_wood01 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 22
+{
+ ( -192 120 0 ) ( 832 120 0 ) ( 832 376 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 832 376 128 ) ( 832 120 128 ) ( -192 120 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 832 376 256 ) ( -192 376 256 ) ( -192 376 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -192 384 256 ) ( -192 128 256 ) ( -192 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -192 128 256 ) ( 832 128 256 ) ( 832 128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -184 120 128 ) ( -184 376 128 ) ( -184 120 -128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 23
+{
+ ( -664 128 0 ) ( 360 128 0 ) ( 360 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 360 384 128 ) ( 360 128 128 ) ( -664 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 320 384 256 ) ( -704 384 256 ) ( -704 384 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -632 376 256 ) ( 392 376 256 ) ( -632 376 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -88 352 128 ) ( -88 256 128 ) ( -88 352 160 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -384 376 96 ) ( -384 376 160 ) ( -384 344 96 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 24
+{
+ ( -792 128 0 ) ( 232 128 0 ) ( 232 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 232 384 128 ) ( 232 128 128 ) ( -792 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 88 384 256 ) ( -936 384 256 ) ( -936 384 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 376 0 ) ( -504 376 128 ) ( -448 376 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 376 128 ) ( -504 376 0 ) ( -512 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -448 376 160 ) ( -448 376 96 ) ( -448 344 96 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 25
+{
+ ( -512 128 0 ) ( 512 128 0 ) ( 512 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 384 128 ) ( 512 128 128 ) ( -512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 498 384 256 ) ( -526 384 256 ) ( -526 384 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 376 128 ) ( 504 376 0 ) ( 48 376 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 376 0 ) ( 504 376 128 ) ( 512 384 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 48 320 128 ) ( 48 384 128 ) ( 48 384 160 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 26
+{
+ ( -512 128 0 ) ( 512 128 0 ) ( 512 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 384 128 ) ( 512 128 128 ) ( -512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 376 128 ) ( 504 376 0 ) ( 512 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 128 256 ) ( 512 128 256 ) ( 512 128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 128 256 ) ( 512 384 256 ) ( 512 384 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 504 376 0 ) ( 504 376 128 ) ( 504 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 27
+{
+ ( -512 128 0 ) ( 512 128 0 ) ( 512 384 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 512 384 128 ) ( 512 128 128 ) ( -512 128 128 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 376 0 ) ( -504 376 128 ) ( -512 384 128 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -512 384 256 ) ( -512 128 256 ) ( -512 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 376 128 ) ( -504 376 0 ) ( -504 128 0 ) ch_concretewall08 128 128 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -504 -120 128 ) ( -504 -120 0 ) ( -512 -128 0 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 1
+{
+"angles" "0 90 0"
+"origin" "0.0 0.0 32.0"
+"classname" "reflection_probe"
+}
+// entity 2
+{
+"origin" "0.0 0.0 640.0"
+"classname" "mp_global_intermission"
+}
+// entity 3
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1024.0 248.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto129"
+"target" "auto130"
+}
+// entity 4
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "872.0 -160.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto130"
+"target" "auto131"
+}
+// entity 5
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1165.0 569.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto128"
+"target" "auto129"
+}
+// entity 6
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1240.0 728.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto127"
+"target" "auto128"
+}
+// entity 7
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1256.0 872.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto126"
+"target" "auto127"
+}
+// entity 8
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1224.0 984.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto125"
+"target" "auto126"
+}
+// entity 9
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1064.0 1112.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto123"
+"target" "auto124"
+}
+// entity 10
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "792.0 1016.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto120"
+"target" "auto121"
+}
+// entity 11
+{
+"speed" "11,9318"
+"lookahead" "1"
+"target" "auto122"
+"targetname" "auto121"
+"classname" "info_vehicle_node"
+"origin" "859.0 1072.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+}
+// entity 12
+{
+"speed" "11,9318"
+"lookahead" "1"
+"target" "auto123"
+"targetname" "auto122"
+"classname" "info_vehicle_node"
+"origin" "936.0 1112.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+}
+// entity 13
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "648.0 792.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto118"
+"target" "auto119"
+}
+// entity 14
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "712.0 920.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto119"
+"target" "auto120"
+}
+// entity 15
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "553.0 661.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto117"
+"target" "auto118"
+}
+// entity 16
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "376.0 576.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto116"
+"target" "auto117"
+}
+// entity 17
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "1160.0 1080.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto124"
+"target" "auto125"
+}
+// entity 18
+{
+"classname" "script_vehicle_mp"
+"model" "pb_vehicle_truck"
+"angles" "0 90 0"
+"origin" "-1023.2 -0.6 -255.0"
+"target" "tranzit_start"
+"script_vehiclestartmove" "0"
+"targetname" "tranzit_vehicle_temp"
+"vehicletype" "humvee"
+}
+// entity 19
+{
+"angles" "0 90 0"
+"origin" "230.5 -122.5 54.8"
+"model" "mp_forsaken_world/zombiemode/powerswitch.map"
+"classname" "misc_prefab"
+}
+// entity 20
+{
+"origin" "256.5 98.5 0.0"
+"angles" "0 360 0"
+"model" "mp_forsaken_world/zombiemode/packapunch.map"
+"classname" "misc_prefab"
+}
+// entity 21
+{
+"angles" "0 90 0"
+"origin" "-255.6 99.6 10.0"
+"model" "mp_forsaken_world/zombiemode/misterybox.map"
+"classname" "misc_prefab"
+}
+// entity 22
+{
+"script_location" "Play Area: Rooms"
+"targetname" "maparea"
+"spawner_id" "4"
+"classname" "trigger_multiple"
+// brush 0
+{
+ ( 60 -792 0 ) ( -132 -792 0 ) ( -132 -920 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -164 -920 1088 ) ( -164 -792 1088 ) ( 28 -792 1088 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 92 -192 1568 ) ( 284 -192 1568 ) ( 284 -192 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 576 -928 1568 ) ( 576 -800 1568 ) ( 576 -800 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 148 448 1568 ) ( -44 448 1568 ) ( -44 448 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -576 -744 1568 ) ( -576 -872 1568 ) ( -576 -872 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 23
+{
+"origin" "-453.5 155.0 0.0"
+"angles" "0 90 0"
+"model" "mp_forsaken_world/zombiemode/weaponfridge.map"
+"classname" "misc_prefab"
+}
+// entity 24
+{
+"targetname" "vehicle_trigger"
+"classname" "trigger_multiple"
+// brush 0
+{
+ ( -1152.5 51.5 0 ) ( -1151.5 -204 0 ) ( -927.5 -203.5 0 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -927.5 -203.5 144 ) ( -1151.5 -204 144 ) ( -1152.5 51.5 144 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1050 172 -134 ) ( -986 172 -134 ) ( -1050 172 -102 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -922 140 -134 ) ( -922 108 -134 ) ( -922 140 -102 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -986 -148 -134 ) ( -1082 -148 -134 ) ( -986 -148 -102 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1114 -116 -134 ) ( -1114 12 -134 ) ( -1114 -116 -102 ) trigger 64 64 2810 -7036 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 25
+{
+"origin" "-256.0 -128.0 0.0"
+"angles" "0 270 0"
+"model" "mp_forsaken_world/zombiemode/wallweapon_random.map"
+"classname" "misc_prefab"
+}
+// entity 26
+{
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/door02.map"
+"origin" "-352.0 -124.0 0.0"
+}
+// entity 27
+{
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/barricade.map"
+"angles" "360 2.59282e-006 -0.000324703"
+"origin" "416.0 -136.0 0.0"
+}
+// entity 28
+{
+"origin" "936.0 712.0 21.0"
+"model" "prefabs/misc_models/foliage_red_pine_xxl.map"
+"classname" "misc_prefab"
+}
+// entity 29
+{
+"target" "auto116"
+"targetname" "auto115"
+"classname" "info_vehicle_node"
+"origin" "168.0 544.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 30
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "-16.0 560.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto114"
+"target" "auto115"
+}
+// entity 31
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "-797.0 687.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto111"
+"target" "auto112"
+}
+// entity 32
+{
+"target" "auto113"
+"targetname" "auto112"
+"classname" "info_vehicle_node"
+"origin" "-544.0 738.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 33
+{
+"target" "auto114"
+"targetname" "auto113"
+"classname" "info_vehicle_node"
+"origin" "-224.0 672.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 34
+{
+"target" "auto139"
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "-152.0 -736.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto140"
+}
+// entity 35
+{
+"targetname" "auto139"
+"target" "auto134"
+"script_wait" "0"
+"origin" "-355.6 -731.3 32.0"
+"classname" "info_vehicle_node"
+"angles" "0 165 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 36
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 165 0"
+"classname" "info_vehicle_node"
+"origin" "-579.0 -695.1 32.0"
+"script_wait" "0"
+"targetname" "auto134"
+"target" "auto136"
+}
+// entity 37
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 165 0"
+"script_wait" "0"
+"origin" "-783.7 -634.1 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto136"
+"target" "auto137"
+}
+// entity 38
+{
+"target" "auto138"
+"targetname" "auto137"
+"classname" "info_vehicle_node"
+"origin" "-931.4 -493.7 32.0"
+"script_wait" "0"
+"angles" "0 165 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 39
+{
+"target" "auto140"
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "80.0 -744.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto142"
+}
+// entity 40
+{
+"target" "auto142"
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "336.0 -712.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto144"
+}
+// entity 41
+{
+"target" "auto144"
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "504.0 -648.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto146"
+}
+// entity 42
+{
+"target" "auto146"
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"script_wait" "0"
+"origin" "664.0 -520.0 32.0"
+"classname" "info_vehicle_node"
+"targetname" "auto131"
+}
+// entity 43
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/perkmachine_fastreload.map"
+"origin" "-51.0 102.0 0.0"
+}
+// entity 44
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/perkmachine_juggernaut.map"
+"origin" "45.0 102.0 0.0"
+}
+// entity 45
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/perkmachine_quickrevive.map"
+"origin" "141.0 102.0 0.0"
+}
+// entity 46
+{
+"origin" "-486.1 101.9 64.0"
+"angles" "0 45 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/bankaccount.map"
+}
+// entity 47
+{
+"origin" "11.1 383.4 8.0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/blocker_bunker_stairs.map"
+"angles" "0 110 0"
+}
+// entity 48
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/craftingtable_generator.map"
+"origin" "-123.0 152.5 0.0"
+}
+// entity 49
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_generator_1.map"
+"origin" "-17.0 160.0 0.0"
+}
+// entity 50
+{
+"angles" "0 90 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_generator_2.map"
+"origin" "-13.0 224.0 0.0"
+}
+// entity 51
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_generator_3.map"
+"origin" "-15.0 290.0 0.0"
+}
+// entity 52
+{
+"origin" "-147.0 102.0 0.0"
+"model" "mp_forsaken_world/zombiemode/perkmachine_doubletap.map"
+"classname" "misc_prefab"
+"angles" "0 270 0"
+}
+// entity 53
+{
+"origin" "-266.5 167.0 0.0"
+"model" "mp_forsaken_world/zombiemode/perkmachine_ammo.map"
+"classname" "misc_prefab"
+"angles" "0 360 0"
+}
+// entity 54
+{
+"origin" "-130.0 -130.5 0.0"
+"angles" "0 180 0"
+"model" "mp_forsaken_world/zombiemode/wallweapon_mp5.map"
+"classname" "misc_prefab"
+}
+// entity 55
+{
+"script_location" "Play Area: Vehicle Stop 1"
+"targetname" "maparea"
+"spawner_id" "1"
+"classname" "trigger_multiple"
+// brush 0
+{
+ ( -1060 -776 0 ) ( -1252 -776 0 ) ( -1252 -904 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1284 -904 1088 ) ( -1284 -776 1088 ) ( -1092 -776 1088 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -996 -640 1568 ) ( -804 -640 1568 ) ( -804 -640 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -768 -944 1568 ) ( -768 -816 1568 ) ( -768 -816 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -964 448 1568 ) ( -1156 448 1568 ) ( -1156 448 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1264 -760 1568 ) ( -1264 -888 1568 ) ( -1264 -888 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 56
+{
+"origin" "488.0 316.0 0.0"
+"angles" "0 180 0"
+"model" "prefabs/misc_models/bc_militarytent_wood_table.map"
+"classname" "misc_prefab"
+}
+// entity 57
+{
+"origin" "488.0 188.0 0.0"
+"angles" "0 180 0"
+"model" "prefabs/misc_models/bc_militarytent_wood_table.map"
+"classname" "misc_prefab"
+}
+// entity 58
+{
+"origin" "488.0 316.0 44.0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/pickup_facemask_gas.map"
+"angles" "0 270 0"
+}
+// entity 59
+{
+"origin" "488.0 188.0 44.0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/pickup_facemask_nvg.map"
+"angles" "0 270 0"
+}
+// entity 60
+{
+"script_location" "Play Area: Vehicle Stop 3"
+"targetname" "maparea"
+"spawner_id" "3"
+"classname" "trigger_multiple"
+// brush 0
+{
+ ( -36 -1080 0 ) ( -228 -1080 0 ) ( -228 -1208 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -260 -1208 1088 ) ( -260 -1080 1088 ) ( -68 -1080 1088 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 28 -944 1568 ) ( 220 -944 1568 ) ( 220 -944 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 576 -1256 1568 ) ( 576 -1128 1568 ) ( 576 -1128 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -36 -512 1568 ) ( -228 -512 1568 ) ( -228 -512 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -448 -1048 1568 ) ( -448 -1176 1568 ) ( -448 -1176 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 61
+{
+"script_location" "Play Area: Vehicle Stop 2"
+"targetname" "maparea"
+"spawner_id" "2"
+"classname" "trigger_multiple"
+// brush 0
+{
+ ( 804 -328 0 ) ( 612 -328 0 ) ( 612 -456 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 580 -456 1088 ) ( 580 -328 1088 ) ( 772 -328 1088 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 924 0 1568 ) ( 1116 0 1568 ) ( 1116 0 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 1456 -528 1568 ) ( 1456 -400 1568 ) ( 1456 -400 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 804 512 1568 ) ( 612 512 1568 ) ( 612 512 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 768 -312 1568 ) ( 768 -440 1568 ) ( 768 -440 -1184 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 62
+{
+"target" "tranzit_start"
+"targetname" "auto138"
+"classname" "info_vehicle_node"
+"origin" "-1024.0 -292.0 32.0"
+"script_wait" "0"
+"angles" "0 0 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 63
+{
+"speed" "11,9318"
+"lookahead" "1"
+"angles" "0 0 0"
+"classname" "info_vehicle_node"
+"origin" "-1011.0 377.0 32.0"
+"script_wait" "0"
+"targetname" "auto2"
+"target" "auto110"
+}
+// entity 64
+{
+"target" "auto111"
+"targetname" "auto110"
+"script_wait" "0"
+"origin" "-936.0 542.0 32.0"
+"classname" "info_vehicle_node"
+"angles" "0 0 0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 65
+{
+"target" "auto2"
+"targetname" "auto1"
+"angles" "0 0 0"
+"classname" "info_vehicle_node"
+"origin" "-1029.0 222.0 32.0"
+"script_wait" "0"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 66
+{
+"target" "auto1"
+"targetname" "tranzit_start"
+"classname" "info_vehicle_node"
+"origin" "-1023.2 -0.6 32.0"
+"script_wait" "120"
+"angles" "0 90 0"
+"spawnflags" "1"
+"lookahead" "1"
+"speed" "11,9318"
+}
+// entity 67
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/craftingtable_monkeybomb.map"
+"origin" "77.0 152.5 0.0"
+}
+// entity 68
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_1.map"
+"origin" "183.0 160.0 0.0"
+}
+// entity 69
+{
+"angles" "0 90 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_2.map"
+"origin" "187.0 224.0 0.0"
+}
+// entity 70
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_3.map"
+"origin" "185.0 290.0 0.0"
+}
+// entity 71
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/craftingtable_sentrygun.map"
+"origin" "285.0 152.5 0.0"
+}
+// entity 72
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_1.map"
+"origin" "391.0 160.0 0.0"
+}
+// entity 73
+{
+"angles" "0 90 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_2.map"
+"origin" "395.0 224.0 0.0"
+}
+// entity 74
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_3.map"
+"origin" "393.0 290.0 0.0"
+}

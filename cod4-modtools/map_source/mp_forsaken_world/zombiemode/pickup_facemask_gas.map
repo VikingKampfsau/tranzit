@@ -1,0 +1,35 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"classname" "worldspawn"
+}
+// entity 1
+{
+"classname" "trigger_use_touch"
+"targetname" "facemask"
+"target" "auto1"
+// brush 0
+{
+ ( 32 34 -16 ) ( -32 34 -16 ) ( -32 -30 -16 ) trigger 64 64 0 -2 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -24 -30 48 ) ( -24 34 48 ) ( 40 34 48 ) trigger 64 64 0 -2 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -32 -30 32 ) ( 32 -30 32 ) ( 32 -30 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 32 -30 32 ) ( 32 34 32 ) ( 32 34 0 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 32 34 32 ) ( -32 34 32 ) ( -32 34 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -32 34 32 ) ( -32 -30 32 ) ( -32 -30 0 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 12 34 32 ) ( 32 14 32 ) ( 12 34 64 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 32 -10 32 ) ( 12 -30 32 ) ( 32 -10 64 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -12 -30 32 ) ( -32 -10 32 ) ( -12 -30 64 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -32 14 32 ) ( -12 34 32 ) ( -32 14 64 ) trigger 64 64 2 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 2
+{
+"classname" "script_model"
+"model" "face_accessories_gasmask"
+"origin" "0.5 -0.5 -2.1"
+"target" "gas"
+"targetname" "auto1"
+"angles" "336.7 90 90"
+}

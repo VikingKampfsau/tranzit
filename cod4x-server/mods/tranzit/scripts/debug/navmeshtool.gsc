@@ -1,14 +1,11 @@
 #include scripts\_include;
 
-//create_spawnfile 0/1	
+//create_spawnfile 0/1/2
 //	1 -> convert the radiant spawns into csv
 //	2 -> add the mapareas to an existing spawn csv of step 1
 
-//create_navmesh 0/1/2/3
-//	1 -> move the mesh to the ground and save it into a new map file
-//	2 -> convert the radiant mesh into csv
-//	3 -> build the waypoint csv from an existing output of step 2
-//	4 -> add the mapareas to an existing waypoint csv of step 3
+//create_navmesh 0/1
+//	1 -> add the mapareas to an existing waypoint csv
 
 //navmeshtool_cleanup 0/1/2
 //	1 -> delete all temp files but dont move the output to the waypoints folder
@@ -22,9 +19,6 @@ init()
 	//"0" will make the path calc loop through all existing waypoints
 	//"999" maybe gets around this and the path calc will just loop through waypoints with this area value
 	level.NoMapAreaValue = "999"; //"0";
-
-	if(getDvarFloat("create_navmesh_rectside") <= 0)
-		setDvar("create_navmesh_rectside", 500);
 
 	if(getDvar("navmeshtool_cleanup") == "")
 		setDvar("navmeshtool_cleanup", 2);
@@ -43,16 +37,6 @@ init()
 
 	if( getDvarInt("create_navmesh") > 0 )
 	{
-		updateZValueInMapFile = false;
-		if( getDvarInt("create_navmesh") == 1 )
-			updateZValueInMapFile = true;
-		
-		if( getDvarInt("create_navmesh") < 3 )
-		{
-			thread createNavMeshFile(updateZValueInMapFile);
-			level waittill("navmeshtool_finished_createNavMeshFile");
-		}
-
 		thread createWaypointFile();
 		level waittill("navmeshtool_finished_createWaypointFile");
 	}
@@ -97,7 +81,7 @@ createSpawnFile()
 		return;
 	}
 	else
-	{	
+	{
 		file = fs_fOpen( filePath, "read" );
 		if(file > 0)
 		{
@@ -112,12 +96,15 @@ createSpawnFile()
 				
 				//if undefined then we reached the end of file
 				if( !isDefined(string) )
+				{
+					//consolePrint("EOF\n");
 					break;
+				}
 		
 				//search for "origin", "classname" or "targetname"
 				while( isSubStr(string, "origin") || isSubStr(string, "classname") || isSubStr(string, "targetname") )
 				{
-					printLn( "Found potential spawn at line " + curLineNum + ", reading." );
+					//consolePrint("Found potential spawn at line " + curLineNum + ", reading.\n");
 					
 					// setup a variable for the new spawn entry
 					if(!isDefined(spawn))
@@ -143,7 +130,7 @@ createSpawnFile()
 							continue;
 
 						spawn.origin = (toks[1] + " " + toks[2] + " " + toks[3]);
-						spawn.origin = getSubStr(spawn.origin, 1 , spawn.origin.size-1);
+						spawn.origin = getSubStr(spawn.origin, 1 , spawn.origin.size-2);
 					}
 					else if( isSubStr(string, "targetname") )
 					{
@@ -201,8 +188,10 @@ createSpawnFile()
 					}
 
 					//end of entity
-					if( string == "}" )
+					if( string == "}" || string == "}\r")
 					{
+						//consolePrint( "Found eof entity at line " + curLineNum + ".\n" );
+					
 						if( !isDefined(spawn.group) )
 							spawn.group = " ";
 						
@@ -218,7 +207,7 @@ createSpawnFile()
 				}//while(isSubStr())
 			}// while(1)
 			
-			printLn( "Read " + curLineNum + " lines." );
+			consolePrint( "Read " + curLineNum + " lines - found " + spawns.size + " spawns.\n" );
 		
 			fs_fClose(file);
 		
@@ -228,7 +217,7 @@ createSpawnFile()
 
 			if( file > 0 )
 			{
-				//printLn( "id,team,origin,group,maparea" );
+				consolePrint( "id,team,origin,group,maparea\n" );
 				//FS_WriteLine( file, "id,team,origin,group,maparea" );
 			
 				for( i=0; i<spawns.size; i++ )
@@ -236,11 +225,11 @@ createSpawnFile()
 					spawn = spawns[i];
 					string = spawn.team + "," + spawn.origin + "," + spawn.group; 
 					
-					printLn( i + "," + string );
+					consolePrint( i + "," + string + "\n");
 					FS_WriteLine( file, i + "," + string );
 				}
 
-				//printLn( "spawns," + i );
+				//consolePrint( "spawns," + i + "\n" );
 				//FS_WriteLine( file, "spawns," + i );
 
 				fs_fClose(file);
@@ -346,209 +335,6 @@ addMapAreaToSpawnFile(startAtLineNo)
 	level notify("navmeshtool_finished_addMapAreaToSpawnFile");
 }
 
-createNavMeshFile(updateZValueInMapFile)
-{
-	wait .1; //used to make sure the notify/waittill works
-
-	shapes = [];		// array with all shapes in the map file
-
-	//import *.map file
-	filePath = "navmeshtool/import/" + level.script + "_navmesh.map";
-	if(!fs_testFile(filePath))
-	{
-		consolePrint( "Could not import file - aborting\n" );
-		level notify("navmeshtool_finished_createNavMeshFile");
-		return;
-	}
-	else
-	{
-		fileExport = undefined;
-		if(updateZValueInMapFile)
-		{
-			fileExport = fs_fOpen( filePath + "_grounded.map", "write" );
-			
-			if(fileExport <= 0)
-			{
-				consolePrint( "Could not create updated map file - aborting\n" );
-				level notify("navmeshtool_finished_createNavMeshFile");
-				return;
-			}
-		}
-	
-		file = fs_fOpen( filePath, "read" );
-		if(file > 0)
-		{
-			// count the number of lines we've read
-			curLineNum = 0;
-			while(1)
-			{
-				ResetTimeout();
-			
-				string = fs_ReadLine(file);
-				curLineNum++;
-				
-				//if undefined then we reached the end of file
-				if( !isDefined(string) )
-					break;
-
-				if(updateZValueInMapFile)
-					FS_WriteLine( fileExport, string );
-				
-				//search for "mesh", every mesh is one navhmesh shape to process
-				if( isSubStr(string, "mesh") )
-				{
-					printLn( "Found new shape at line " + curLineNum + ", reading." );
-					
-					// setup a variable for the new shape
-					shape = [];		// the new shape data
-					
-					// continue to read the file
-					while(1)
-					{
-						// read the next line
-						newline = fs_ReadLine(file);
-						curLineNum++;
-
-						// make sure there actually is a line
-						if( !isDefined(newline) )
-						{
-							consolePrint( "End of file during mesh block - aborting!\n" );
-							level notify("navmeshtool_finished_createNavMeshFile");
-							return;
-						}
-					
-						// skip empty lines
-						if( newline == "" || newline == " " )
-							continue;
-					
-						// trim off leading and trailing spaces
-						newline = trim(newline);
-						
-						// check if the mesh section is over
-						if( getSubStr(newline, 0, 1) == "}" )
-						{
-							if(updateZValueInMapFile)
-								FS_WriteLine( fileExport, newline );
-						
-							printLn( "Read full shape, moving on." );
-							break;		// leave the while(1)
-						}
-						else if( getSubStr(newline, 1, 2) == "v" )
-						{
-							// split the line up
-							toks = strTok( newline, " " );
-							// make sure the part we care about is present
-							if( isDefined(toks) && isDefined(toks[1]) && isDefined(toks[2]) && isDefined(toks[3]) )
-							{
-								// NOTE
-								// toks[0] = "v"
-								// toks[1] = x
-								// toks[2] = y
-								// toks[3] = z
-								// all others are irrelevant
-							
-								// make a new point from the given data
-								point = (float(toks[1]), float(toks[2]), float(toks[3]));
-								
-								if(updateZValueInMapFile)
-								{
-									ground = BulletTrace(point + (0,0,5), point - (0,0,5000), false, undefined);
-									
-									if(isDefined(ground["position"]))
-										toks[3] = ground["position"][2] + 5;
-									
-									updatedZLine = "";
-									for(u=0;u<toks.size;u++)
-										updatedZLine = updatedZLine + toks[u] + " ";
-									
-									FS_WriteLine( fileExport, updatedZLine );
-								}
-								
-								// filter dummy points, aka points that are too close together
-								is_dummy = false;
-								for( i=0; i<shape.size; i++ )
-								{
-									// check every point already in the shape against the new one
-									if( shape[i] == point )
-									{
-										consolePrint( "Skipping dummy at " + point + "\n" );
-										is_dummy = true;
-										break;
-									}
-								}
-								
-								// save valid points to the shape
-								if( !is_dummy )
-									shape[shape.size] = point;
-							}
-							else
-							{
-								consolePrint( "Line " + curLineNum + " is invalid - aborting!\n" );
-								level notify("navmeshtool_finished_createNavMeshFile");
-								return;
-							}
-						}
-						else
-						{
-							if(updateZValueInMapFile)
-								FS_WriteLine( fileExport, "  " + newline );
-						}
-						// NOTE all other lines aren't relevant for us, we care about } and v
-					}	// while(1)
-					
-					// save the shape into our global array
-					shapes[shapes.size] = shape;
-				}
-			}	// while(1)
-			
-			printLn( "Read " + curLineNum + " lines." );
-		
-			fs_fClose(file);
-			
-			if(updateZValueInMapFile)
-			{
-				fs_fClose(fileExport);
-				level notify("navmeshtool_finished_createNavMeshFile");
-				return;
-			}
-			
-			//export to csv
-			filePath = "navmeshtool/export/" + level.script + "_navmesh.csv";
-			file = fs_fOpen(filePath, "write");
-
-			if( file > 0 )
-			{
-				printLn( "id,verts" );
-				FS_WriteLine( file, "id,verts" );
-			
-				for( i=0; i<shapes.size; i++ )
-				{
-					shape = shapes[i];
-					string = shape[0][0] + " " + shape[0][1] + " " + shape[0][2];
-					for( j=1; j<shape.size; j++ )
-						string = string + ";" + shape[j][0] + " " + shape[j][1] + " " + shape[j][2];
-					
-					printLn( i + "," + string );
-					FS_WriteLine( file, i + "," + string );
-				}
-
-				printLn( "navmesh," + i );
-				FS_WriteLine( file, "navmesh," + i );
-
-				fs_fClose(file);
-			}
-			else
-			{
-				consolePrint( "Could not export file - aborting\n" );
-				level notify("navmeshtool_finished_createNavMeshFile");
-				return;
-			}
-		}
-	}
-	
-	level notify("navmeshtool_finished_createNavMeshFile");
-}
-
 createWaypointFile(startAtLineNo)
 {
 	wait .1; //used to make sure the notify/waittill works
@@ -556,24 +342,13 @@ createWaypointFile(startAtLineNo)
 	if(!isDefined(startAtLineNo))
 		startAtLineNo = 0;
 
-	filePath = "navmeshtool/export/" + level.script + "_waypoints.csv";
+	importFilePath = "navmeshtool/import/" + level.script + "_waypoints.csv";
+	exportFilePath = "navmeshtool/export/" + level.script + "_waypoints.csv";
 	
 	if(startAtLineNo > 0)
-		outputFile = openFile(filePath, "append");
+		outputFile = openFile(exportFilePath, "append");
 	else
 	{
-		if( getDvarInt("create_navmesh") < 4 )
-		{
-			filePath = getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + "navmeshtool/export/";
-			lua_createNavMeshFile(filePath, level.script, getDvarFloat("create_navmesh_rectside"));
-			
-			//the game can not access the created "_waypoints.csv.tmp" from lua
-			//so restart this function
-			setDvar("create_navmesh", 4);
-			thread createWaypointFile(0);
-			return;
-		}
-
 		consolePrint("createWaypointFile: Adding maparea to waypoint file\n");
 
 		if(!isDefined(level.mapAreas) || !level.mapAreas.size)
@@ -583,10 +358,10 @@ createWaypointFile(startAtLineNo)
 			return;
 		}
 	
-		outputFile = openFile(filePath, "write");
+		outputFile = openFile(exportFilePath, "write");
 	}
 	
-	inputFile = openFile(filePath + ".tmp", "read");
+	inputFile = openFile(importFilePath, "read");
 
 	if(inputFile > 0 && outputFile > 0)
 	{
@@ -622,6 +397,8 @@ createWaypointFile(startAtLineNo)
 			if(!isDefined(line))
 				break;
 
+			line = StrRepl(line, "\r", ""); 
+
 			if(isEmptyString(line))
 				continue;
 
@@ -649,9 +426,9 @@ createWaypointFile(startAtLineNo)
 	else
 	{
 		if(inputFile <= 0)
-			consolePrint("^1inputFile not found - aborting\n");
+			consolePrint("^1inputFile '" + importFilePath + "' not found - aborting\n");
 		else if(outputFile <= 0)
-			consolePrint("^1outputFile not found - aborting\n");
+			consolePrint("^1outputFile '" + exportFilePath + "' not found - aborting\n");
 	}
 	
 	level notify("navmeshtool_finished_createWaypointFile");
@@ -669,21 +446,30 @@ cleanupExportFolder()
 	
 	for(i=0;i<fileName.size;i++)
 	{
-		sourceFile = getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + exportPath + fileName[i];
-		targetFile = getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + waypointPath + fileName[i];
+		sourceFile = exportPath + fileName[i];
+		targetFile = waypointPath + fileName[i];
 		tempFile = sourceFile + ".tmp";
 		
-		if( getDvarInt("navmeshtool_cleanup") == 2 )
+		if(getDvarInt("navmeshtool_cleanup") == 2)
 		{
 			if(fs_testFile(sourceFile))
-				lua_copyFile(sourceFile, targetFile);
+			{
+				consolePrint("copy '" + sourceFile + "' to '" + targetFile + "'\n");
+				lua_copyFile(getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + sourceFile, getDvar("fs_homepath") + "/" + getDvar("fs_game") + "/" + targetFile);
+			}
 		}
 			
 		if(fs_testFile(sourceFile))
+		{
+			consolePrint("deleting sourceFile '" + sourceFile + "'\n");
 			FS_Remove(sourceFile);
+		}
 			
 		if(fs_testFile(tempFile))
+		{
+			consolePrint("deleting tempFile '" + tempFile + "'\n");
 			FS_Remove(tempFile);
+		}
 	}
 }
 

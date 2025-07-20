@@ -1,0 +1,107 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"classname" "worldspawn"
+}
+// entity 1
+{
+"targetname" "auto1"
+"modelscale" "1"
+"angles" "332.605 211.215 37.2101"
+"origin" "-1048.5 1300.5 -16.5"
+"model" "ch_bedframemetal_gray"
+"classname" "script_model"
+}
+// entity 2
+{
+"targetname" "auto1"
+"classname" "script_model"
+"model" "com_barrel_white_rust"
+"origin" "-1046.1 1267.4 16.6"
+"angles" "339.584 201.852 41.0181"
+"modelscale" "1"
+}
+// entity 3
+{
+"targetname" "auto1"
+"classname" "script_model"
+"model" "vehicle_80s_sedan1_tandest"
+"origin" "-1078.3 1277.7 6.3"
+"angles" "22.1429 24.0122 -40.2342"
+"modelscale" "1"
+}
+// entity 4
+{
+"targetname" "auto1"
+"classname" "script_model"
+"model" "com_cardboardbox04"
+"origin" "-1002.3 1284.1 -0.1"
+"angles" "315.96 284.751 -10.3722"
+"modelscale" "1"
+}
+// entity 5
+{
+"targetname" "auto1"
+"classname" "script_model"
+"model" "com_bike_destroyed"
+"origin" "-996.4 1279.6 4.4"
+"angles" "355.229 355.213 -44.8005"
+"modelscale" "1"
+}
+// entity 6
+{
+"targetname" "auto1"
+"classname" "script_model"
+"model" "ch_mattress_3"
+"origin" "-1008.9 1291.6 -7.6"
+"angles" "316.193 253.575 11.5335"
+"modelscale" "1"
+}
+// entity 7
+{
+"targetname" "auto1"
+"origin" "-1068.0 1232.0 24.0"
+"classname" "script_origin"
+}
+// entity 8
+{
+"targetname" "auto1"
+"origin" "-1068.0 1360.0 -56.0"
+"classname" "script_origin"
+}
+// entity 9
+{
+"targetname" "blocker"
+"target" "auto1"
+"classname" "script_brushmodel"
+// brush 0
+{
+ ( -1092 1186 -96 ) ( -1140 1186 -96 ) ( -1140 1090 -96 ) clip_nosight 64 64 -1126 -834 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1140 1106 320 ) ( -1140 1202 320 ) ( -1092 1202 320 ) clip_nosight 64 64 -1126 -834 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1142 1240 46 ) ( -1094 1240 46 ) ( -1094 1240 14 ) clip_nosight 64 64 -1126 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -960 1070 40 ) ( -960 1166 40 ) ( -960 1166 8 ) clip_nosight 64 64 834 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1102 1352 48 ) ( -1150 1352 48 ) ( -1150 1352 16 ) clip_nosight 64 64 -1126 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1168 1190 48 ) ( -1168 1094 48 ) ( -1168 1094 16 ) clip_nosight 64 64 834 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 1
+{
+ ( -960 1312 -96 ) ( -1168 1312 -96 ) ( -1168 1296 -96 ) origin 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1168 1296 -80 ) ( -1168 1312 -80 ) ( -960 1312 -80 ) origin 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1168 1296 -80 ) ( -960 1296 -80 ) ( -960 1296 -96 ) origin 64 64 0 112 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1040 1296 -80 ) ( -1040 1312 -80 ) ( -1040 1312 -96 ) origin 64 64 0 112 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -960 1312 -80 ) ( -1168 1312 -80 ) ( -1168 1312 -96 ) origin 64 64 0 112 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -1056 1312 -80 ) ( -1056 1296 -80 ) ( -1056 1296 -96 ) origin 64 64 0 112 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 10
+{
+"origin" "-1068.0 1224.0 40.0"
+"classname" "node_pathnode"
+}
+// entity 11
+{
+"origin" "-1068.0 1368.0 -56.0"
+"classname" "node_pathnode"
+}

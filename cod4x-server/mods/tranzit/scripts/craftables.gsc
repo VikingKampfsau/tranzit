@@ -180,6 +180,9 @@ createBuildablePickups()
 	//loop through all of them and randomize the activation
 	for(i=0;i<curType.size;i++)
 	{
+		if(!isDefined(possibleBuildables[curType[i]]) || possibleBuildables[curType[i]].size <= 0)
+			continue;
+	
 		backup = possibleBuildables[curType[i]];
 	
 		possibleBuildables[curType[i]] = shuffleArray(possibleBuildables[curType[i]]);

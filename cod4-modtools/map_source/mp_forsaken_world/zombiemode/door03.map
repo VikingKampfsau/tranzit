@@ -1,0 +1,96 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"contrastGain" ".25"
+"sunRadiosity" "1"
+"sunlight" ".6"
+"sundirection" "-30 42 0"
+"sundiffusecolor" "0.5 0.6 1"
+"suncolor" "0.75 0.9 1"
+"diffusefraction" "0.35"
+"ambient" "0.1"
+"_color" "0.6 0.7 1.000000"
+"classname" "worldspawn"
+// brush 0
+{
+  contents detail;
+ ( 35 58 -118 ) ( 35 58 28 ) ( 35 -36 11 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16383.939 16383.939 0 0 0 5.1147032e-005
+ ( 37 58 28 ) ( 35 58 28 ) ( 35 58 -118 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16385.291 16384.25 0 0 0 5.9931364e-005
+ ( 37 -36 -118 ) ( 37 -36 11 ) ( 37 58 28 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16383.918 16383.939 0 0 0 0
+ ( 37 -44 -118 ) ( 35 -44 -118 ) ( 35 -44 11 ) me_woodplanks01 128 128 96 99 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 3521 -44 0 ) ( 3521 58 28 ) ( 3553 -44 0 ) me_woodplanks01 128 128 96 -300 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 37 -24 -2 ) ( 37 -34 -2 ) ( 69 -34 -2 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 1
+{
+  contents detail;
+ ( -37 58 -118 ) ( -37 58 28 ) ( -37 -36 11 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16383.939 16383.939 0 0 0 5.1147032e-005
+ ( -35 58 28 ) ( -37 58 28 ) ( -37 58 -118 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16382.602 16384.063 0 0 0 0.00030588801
+ ( -35 -36 -116 ) ( -35 -36 13 ) ( -35 58 30 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16383.918 16383.939 0 0 0 0
+ ( -35 -44 -118 ) ( -37 -44 -118 ) ( -37 -44 11 ) me_woodplanks01 128 128 96 99 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 3521 -44 0 ) ( 3521 58 28 ) ( 3553 -44 0 ) me_woodplanks01 128 128 96 -300 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 37 -24 -2 ) ( 37 -34 -2 ) ( 69 -34 -2 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 1
+{
+"origin" "0.0 -56.0 8.0"
+"targetname" "auto1"
+"classname" "script_origin"
+}
+// entity 2
+{
+"origin" "0.0 58.0 -96.0"
+"targetname" "auto1"
+"classname" "script_origin"
+}
+// entity 3
+{
+"height" "170"
+"radius" "80"
+"targetname" "door"
+"target" "auto1"
+"classname" "script_brushmodel"
+// brush 0
+{
+ ( 47 58 -104 ) ( -23 58 -104 ) ( -23 -44 -104 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -35 56 18 ) ( 35 56 18 ) ( 35 56 -19 ) me_door_03 -70 119.45098 -35 104 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 35 -44 26 ) ( 35 58 26 ) ( 35 58 -11 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 35 58 26 ) ( -35 58 26 ) ( -35 58 -11 ) me_door_03 -70 120 -35 104 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -35 58 26 ) ( -35 -44 26 ) ( -35 -44 -11 ) caulk 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 35 -44 -12 ) ( 35 58 16 ) ( 67 -44 -12 ) caulk -70 2 -35 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 1
+{
+  contents detail;
+ ( 27 -44 36 ) ( 31 -44 36 ) ( 31 -44 22 ) me_door_03 64 128 0 0 0 0 lightmap_gray 16384 16386.451 0 0 0 4.2008975e-005
+ ( 31 58 20 ) ( 31 58 34 ) ( 27 58 34 ) me_woodplanks01 128 128 300 99 0 0 lightmap_gray 16384 16386.451 0 0 0 4.2008975e-005
+ ( -35 46 20 ) ( -35 46 34 ) ( -35 -2 34 ) caulk -102 30 -44 2 0 0 lightmap_gray 16382.99 16384 0 0 0 0
+ ( 35 44 34 ) ( 35 44 20 ) ( 35 -4 20 ) caulk -102 30 -44 2 0 0 lightmap_gray 16385.764 16384 0 0 0 0
+ ( 130 -44 0 ) ( 130 58 28 ) ( 162 -44 0 ) me_door_03 -70 102 -35 44 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -59 58 26 ) ( -59 -44 -2 ) ( -27 58 26 ) me_door_03 -70 102 -35 44 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+// brush 2
+{
+ ( 2 64 -108 ) ( -78 64 -108 ) ( -78 -16 -108 ) origin 64 64 50 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -78 -18 -100 ) ( -78 62 -100 ) ( 2 62 -100 ) origin 64 64 50 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -78 4 -32 ) ( 2 4 -32 ) ( 2 4 -176 ) origin 64 64 50 64 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 4 -16 -32 ) ( 4 64 -32 ) ( 4 64 -176 ) origin 64 64 0 64 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 10 12 -34 ) ( -70 12 -34 ) ( -70 12 -178 ) origin 64 64 50 64 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -4 64 -32 ) ( -4 -16 -32 ) ( -4 -16 -176 ) origin 64 64 0 64 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 4
+{
+"angles" "0 0 0"
+"origin" "0.0 -64.0 20.0"
+"classname" "node_pathnode"
+}
+// entity 5
+{
+"angles" "0 0 0"
+"origin" "0.0 80.0 -96.0"
+"classname" "node_pathnode"
+}
