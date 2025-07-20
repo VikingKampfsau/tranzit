@@ -731,28 +731,28 @@ iwmap 4
 "angles" "0 180 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/craftingtable_generator.map"
-"origin" "-123.0 152.5 0.0"
+"origin" "-123.0 144.5 0.0"
 }
 // entity 49
 {
 "angles" "0 270 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_generator_1.map"
-"origin" "-17.0 160.0 0.0"
+"origin" "-121.0 208.0 0.0"
 }
 // entity 50
 {
 "angles" "0 90 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_generator_2.map"
-"origin" "-13.0 224.0 0.0"
+"origin" "-117.0 272.0 0.0"
 }
 // entity 51
 {
 "angles" "0 180 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_generator_3.map"
-"origin" "-15.0 290.0 0.0"
+"origin" "-119.0 338.0 0.0"
 }
 // entity 52
 {
@@ -912,54 +912,103 @@ iwmap 4
 "angles" "0 180 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/craftingtable_monkeybomb.map"
-"origin" "77.0 152.5 0.0"
+"origin" "-11.0 144.5 0.0"
 }
 // entity 68
 {
 "angles" "0 270 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_1.map"
-"origin" "183.0 160.0 0.0"
+"origin" "-9.0 216.0 0.0"
 }
 // entity 69
 {
 "angles" "0 90 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_2.map"
-"origin" "187.0 224.0 0.0"
+"origin" "-5.0 280.0 0.0"
 }
 // entity 70
 {
 "angles" "0 180 0"
 "classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_monkeybomb_3.map"
-"origin" "185.0 290.0 0.0"
+"origin" "-7.0 346.0 0.0"
 }
 // entity 71
 {
 "angles" "0 180 0"
 "classname" "misc_prefab"
-"model" "mp_forsaken_world/zombiemode/craftingtable_sentrygun.map"
-"origin" "285.0 152.5 0.0"
+"model" "mp_forsaken_world/zombiemode/craftingtable_riotshield.map"
+"origin" "101.0 144.5 0.0"
 }
 // entity 72
 {
 "angles" "0 270 0"
 "classname" "misc_prefab"
-"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_1.map"
-"origin" "391.0 160.0 0.0"
+"model" "mp_forsaken_world/zombiemode/buildable_riotshield_1.map"
+"origin" "102.0 216.0 0.0"
 }
 // entity 73
 {
 "angles" "0 90 0"
 "classname" "misc_prefab"
-"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_2.map"
-"origin" "395.0 224.0 0.0"
+"model" "mp_forsaken_world/zombiemode/buildable_riotshield_2.map"
+"origin" "106.0 280.0 0.0"
 }
 // entity 74
 {
 "angles" "0 180 0"
 "classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/craftingtable_sentrygun.map"
+"origin" "213.0 144.5 0.0"
+}
+// entity 75
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_1.map"
+"origin" "214.0 216.0 0.0"
+}
+// entity 76
+{
+"angles" "0 90 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_sentrygun_2.map"
+"origin" "218.0 280.0 0.0"
+}
+// entity 77
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
 "model" "mp_forsaken_world/zombiemode/buildable_sentrygun_3.map"
-"origin" "393.0 290.0 0.0"
+"origin" "216.0 346.0 0.0"
+}
+// entity 78
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/craftingtable_wavegun.map"
+"origin" "325.0 144.5 0.0"
+}
+// entity 79
+{
+"angles" "0 270 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_wavegun_1.map"
+"origin" "326.0 216.0 0.0"
+}
+// entity 80
+{
+"angles" "0 90 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_wavegun_2.map"
+"origin" "330.0 280.0 0.0"
+}
+// entity 81
+{
+"angles" "0 180 0"
+"classname" "misc_prefab"
+"model" "mp_forsaken_world/zombiemode/buildable_wavegun_3.map"
+"origin" "328.0 346.0 0.0"
 }

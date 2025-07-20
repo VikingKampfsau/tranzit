@@ -11,7 +11,7 @@
 
 Download the content of https://github.com/VikingKampfsau/tranzit/tree/main/cod4-modtools and paste into your CoD4 modtools installation.
 
-## Step 1: Prepare your map for tranZit
+## Step 1: Prepare your map for TranZit
 
 Once you are done with the geometry of your map you are ready to add all the things required for proper TranZit gameplay.
 
@@ -41,14 +41,14 @@ Therefor create a subfolder in 'map_source' and give it the name of your multipl
 Save your map without its worldspawn settings in this directory.
 
 Within the 'map_source' folder create two new .map files:
-# 1. mp_yourmapname
+### 1. mp_yourmapname
 - Add the worldspawn settings
 - Add your real map - the one you previously saved in the subfolder - as a prefab
 - Add the player spawns (TDM) within the play areas
 - Add the team start spawns for players (mp_tdm_spawn_allies_start) within the first play area
 - Add the zombie spawns (DM) and a zombie team spawn (mp_tdm_spawn_axis_start) which is not used in TranZit but required by CoD4
 
-# 2. sp_yourmapname
+### 2. sp_yourmapname
 - Add the worldspawn settings
 - Add your real map - the one you previously saved in the subfolder - as a prefab
 - Add a singleplayer spawn (info_player_start)
