@@ -5,8 +5,6 @@
 
 init()
 {
-	add_weapon("weapondrop", "weapondrop_mp", true);
-	
 	game["tranzit"].weaponDrop = [];
 	game["tranzit"].weaponDrop["curdrops"] = 0;
 	game["tranzit"].weaponDrop["maxdrops"] = 10;
@@ -48,7 +46,7 @@ dropWeaponOnDeath()
 	
 	item.owner = self;
 	
-	item thread maps\mp\gametypes\_weapons::watchPickup();
+	item thread watchPickup();
 	item thread deletePickupAfterAWhile();
 }
 
@@ -57,114 +55,111 @@ dropWeaponOnResponse()
 	if(game["tranzit"].weaponDrop["curdrops"] >= game["tranzit"].weaponDrop["maxdrops"])
 		return;
 
-	if(isDefined(self.isDroppingWeapon))
-		return;
-
 	//drop the strongest weapon on death only
+	//on manual call drop the current weapon
 	weapon = self getCurrentWeapon();
 
 	if(!isDropableWeapon(weapon))
 		return;
 
-	self thread monitorWeaponThrow(weapon);
-	self giveWeapon("weapondrop_mp");
-	self setSpawnWeapon("weapondrop_mp");
-}
-
-monitorWeaponThrow(weapon)
-{
-	self endon("disconnect");
-	self endon("death");
-
-	self waittill("weapon_change", newWeapon);
-
-	if(newWeapon == "weapondrop_mp")
+	//no ammo at all
+	if(!self AnyAmmoForWeaponModes(weapon))
 	{
-		while(self getCurrentWeapon() != newWeapon)
-			wait .05;
-
-		self.isDroppingWeapon = weapon;
-
-		self execClientCommand("attack"); //frag might work too - depends on the weaponfile
-		self waittill("grenade_fire", grenade, weaponName);
-		
-		self takeWeapon("weapondrop_mp");
-		self.weapons = self getweaponslist();
-		if(isDefined(self.weapons[0]))
-			self switchToWeapon(self.weapons[0]);
-		
-		self.isDroppingWeapon = undefined;
-
-		if(!self AnyAmmoForWeaponModes(weapon))
-		{
-			if(isDefined(grenade))
-				grenade delete();
-			
-			return;
-		}
-		
-		clipAmmo = self GetWeaponAmmoClip(weapon);
-		if(clipAmmo <= 0)
-		{
-			if(isDefined(grenade))
-				grenade delete();
-			
-			return;
-		}
-
-		stockAmmo = self GetWeaponAmmoStock(weapon);
-		stockMax = WeaponMaxAmmo(weapon);
-		if(stockAmmo > stockMax)
-			stockAmmo = stockMax;
-		
-		item = self dropItem(weapon);
-		item ItemWeaponSetAmmo(clipAmmo, stockAmmo);
-		//item maps\mp\gametypes\_weapons::itemRemoveAmmoFromAltModes();
-		
-		item.origin -= (0,0,100000);
-		
-		item thread createFakeModel(grenade, getWeaponModel(weapon, 0));
-		item thread deletePickupAfterAWhile();
-		
-		game["tranzit"].weaponDrop["curdrops"]++;
+		self takeWeapon(weapon);
+		return;
 	}
-}
-
-createFakeModel(grenade, weaponModel)
-{
-	self endon("death");
-
-	//the model of the grenade is not changable so spawn a fakeModel
-	fakeModel = spawn("script_model", grenade.origin);
-	fakeModel setModel(weaponModel);
-	fakeModel.angles = grenade.angles;
-	fakeModel linkTo(grenade);
-		
-	grenade hide();
-	grenade maps\mp\gametypes\_weapons::waitTillNotMoving();
 	
-	if(!isDefined(grenade))
+	clipAmmo = self GetWeaponAmmoClip(weapon);
+	stockAmmo = self GetWeaponAmmoStock(weapon);
+	stockMax = WeaponMaxAmmo(weapon);
+	if(stockAmmo > stockMax)
+		stockAmmo = stockMax;
+	
+	item = self dropItem(weapon);
+	item ItemWeaponSetAmmo(clipAmmo, stockAmmo);
+	//item maps\mp\gametypes\_weapons::itemRemoveAmmoFromAltModes();
+	
+	item.owner = self;
+	item.origin -= (0,0,-999999);
+	item hide();
+	
+	//should this be done here or when the item is visible through item show() again?
+	//let's keep it here and do some tests
+	item thread watchPickup();
+	
+	//already start that here
+	//in case we can spawn a physicsObject it would be good if it's deleted when thrown out of map
+	item thread deletePickupAfterAWhile();
+	
+	//move the startpos for the throw a bit back to avoid throwing through walls
+	offsetVec = self getTagOrigin("tag_weapon_right") - self.origin;
+	forward = AnglesToForward(self getPlayerAngles());
+	forwardOffset = vectorDot(offsetVec, forward);
+	
+	tracestartPos = self getTagOrigin("tag_weapon_right") - forward * abs(forwardOffset);
+	traceEndPos = self getTagOrigin("tag_weapon_right");
+	
+	trace = bulletTrace(tracestartPos, traceEndPos, false, self);
+	if(trace["fraction"] < 1) //arm is in a wall
 	{
-		game["tranzit"].weaponDrop["curdrops"]--;
-		
-		fakeModel delete();
-		self delete();
+		origin = trace["position"];
+		force = forward * 300 * trace["fraction"];
 	}
 	else
 	{
-		self.origin = grenade.origin;
-		self thread maps\mp\gametypes\_weapons::watchPickup();
-		
-		grenade delete();
-		fakeModel delete();
+		origin = traceEndPos;
+		force = forward * 600;
 	}
+	
+	angles = self getTagAngles("tag_weapon_right") + (RandomInt(15), RandomInt(15), RandomInt(15));
+	model = getWeaponModel(weapon, 0);
+	
+	item.physObj = spawnPhysicsObject(model, origin, angles, force);
+	
+	//failed to create a physics model - delete the script_model and do the default weapon drop
+	if(item.physObj.classname == "script_model")
+	{
+		item.physObj delete();
+		item.origin += (0,0,-999999);
+		item show();
+		return;
+	}
+	
+	item.physObj thread deleteOnParentRemoval(item);
+	item.physObj maps\mp\gametypes\_weapons::waitTillNotMoving();
+	
+	item.origin = item.physObj.origin;
+	item.angles = item.physObj.angles;
+	item show();
+	
+	//reset the alive time
+	item thread deletePickupAfterAWhile();
+	
+	item.physObj delete();
+}
+
+deleteOnParentRemoval(parent)
+{
+	self endon("death");
+	
+	while(isDefined(parent))
+		wait .5;
+	
+	if(isDefined(self))
+		self delete();
 }
 
 deletePickupAfterAWhile()
 {
+	self notify("deletePickupAfterAWhile_only_once");
+	self endon("deletePickupAfterAWhile_only_once");
+
 	self endon("death");
 	
 	wait game["tranzit"].weaponDrop["livetime"];
+
+	if(isDefined(self.physObj))
+		self.physObj delete();
 
 	if(!isDefined(self))
 		return;
@@ -172,4 +167,51 @@ deletePickupAfterAWhile()
 	game["tranzit"].weaponDrop["curdrops"]--;
 
 	self delete();
+}
+
+watchPickup()
+{
+	self endon("death");
+	
+	weapname = self maps\mp\gametypes\_weapons::getItemWeaponName();
+	
+	while(1)
+	{
+		self waittill( "trigger", player, droppedItem );
+		
+		//VIKING - I have no idea when this loop breaks but when the weapon is picked up or ammo is received then
+		//'self endon("death")' fires and stops this function.
+		//my guess is that the loop breaks (and is restarted a bit down) when not the full ammo is picked up from ground
+		if ( isdefined( droppedItem ) )
+			break;
+			
+		// otherwise, player merely acquired ammo and didn't pick this up
+	}
+		
+	/#
+	if ( getdvar("scr_dropdebug") == "1" )
+		println( "picked up weapon: " + weapname + ", " + isdefined( self.ownersattacker ) );
+	#/
+
+	assert( isdefined( player.tookWeaponFrom ) );
+	
+	// make sure the owner information on the dropped item is preserved
+	droppedWeaponName = droppedItem maps\mp\gametypes\_weapons::getItemWeaponName();
+	if ( isdefined( player.tookWeaponFrom[ droppedWeaponName ] ) )
+	{
+		droppedItem.owner = player.tookWeaponFrom[ droppedWeaponName ];
+		droppedItem.ownersattacker = player;
+		player.tookWeaponFrom[ droppedWeaponName ] = undefined;
+	}
+	droppedItem thread watchPickup();
+	
+	// take owner information from self and put it onto player
+	if ( isdefined( self.ownersattacker ) && self.ownersattacker == player )
+	{
+		player.tookWeaponFrom[ weapname ] = self.owner;
+	}
+	else
+	{
+		player.tookWeaponFrom[ weapname ] = undefined;
+	}
 }

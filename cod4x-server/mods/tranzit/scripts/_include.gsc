@@ -12,6 +12,11 @@ initDebugVar(name, value)
 /*-----------------------|
 |	math related		 |
 |-----------------------*/
+magnitude(vector)
+{
+	return sqrt(sqr(vector[0]) + sqr(vector[1]) + sqr(vector[2]));
+} 
+
 sqr(value)
 {
 	return (value*value);
@@ -885,27 +890,75 @@ playLocalSoundToAllPlayers(alias)
 /*-----------------------|
 |	entity related		 |
 |-----------------------*/
-isLookingAt(entity)
+forceOrigin(prevorigin, entity)
+{
+	self endon("death");
+
+	while(1)
+	{
+		if(!isDefined(self))
+			break;
+	
+		if(isDefined(prevorigin) && self.origin != prevorigin)
+			self.origin = prevorigin;
+		else if(isDefined(entity) && self.origin != entity.origin)
+			self.origin = entity.origin;
+		
+		wait .05;
+	}
+}
+
+isLookingAtPosition(position)
+{
+	if(!isDefined(position))
+		return false;
+
+	playerEyePos = self getEye();
+	playerAngles = self getPlayerAngles();
+	
+	playerForward = anglesToForward(playerAngles);
+	
+	dirToPos = VectorNormalize(position - playerEyePos);
+	
+	//0,5 ≈ 60°
+	//0,72 ≈ 45°
+	//0,87 ≈ 30°
+	dot = vectorDot(dirToPos, playerForward);
+	
+	return (dot > 0.72);
+}
+
+isLookingAtEntity(entity)
 {
 	if(!isDefined(entity))
 		return false;
 
 	entityPos = entity.origin;
-	playerPos = self getEye();
 
-	entityPosAngles = vectorToAngles( entityPos - playerPos );
-	entityPosForward = anglesToForward( entityPosAngles );
+	result = self isLookingAtPosition(entityPos);
+	return result;
+}
 
-	playerPosAngles = self getPlayerAngles();
-	playerPosForward = anglesToForward( playerPosAngles );
-
-	newDot = vectorDot( entityPosForward, playerPosForward );
-
-	if ( newDot < 0.72 ) {
+isLookingInEntDirection(entity)
+{
+	if(!isDefined(entity))
 		return false;
-	} else {
-		return true;
-	}
+
+	entityPos = (entity.origin[0], entity.origin[1], self.origin[2] + 50);
+
+	result = self isLookingAtPosition(entityPos);
+	return result;
+}
+
+isLookingInDirection(position)
+{
+	if(!isDefined(position))
+		return false;
+
+	position = (position[0], position[1], self getEye()[2]);
+	
+	result = self isLookingAtPosition(position);
+	return result;
 }
 
 getClosestEnt(curOrigin, array)
@@ -1302,7 +1355,7 @@ GiveInventory()
 	
 		if(isHardpointWeapon(self.weapons[i]))
 		{
-			self giveActionslotWeapon("hardpoint", self.weapons[i]);
+			self giveActionslotWeapon("hardpoint", self.weapons[i], 1);
 			continue;
 		}
 
@@ -1401,7 +1454,7 @@ giveActionslotWeapon(type, weapon, ammo)
 	else if(type == "hardpoint")
 	{
 		self.actionSlotHardpoint = weapon;
-		weapon = getWeaponFromCustomName("location_selector");		
+		weapon = getWeaponFromCustomName("location_selector");	
 		self giveWeapon(weapon);
 		self setActionSlot(4, "weapon", weapon);
 	}
@@ -1526,7 +1579,7 @@ giveNewWeapon(newWeapon, noWeaponSwitch, keepHands, ammoClip, ammoStock)
 	}
 	
 	if(isHardpointWeapon(newWeapon))
-		self giveActionslotWeapon("hardpoint", newWeapon);
+		self giveActionslotWeapon("hardpoint", newWeapon, 1);
 	else
 	{
 		if(isOtherExplosive(newWeapon))
@@ -1674,6 +1727,19 @@ setClientDvarsDelayed(dvars, values, cancelString)
 	//self iPrintLnBold("received " + dvars.size + " processed " + processed);
 }
 
+CharacterPhysicsTrace(isRealPlayer, start, end, hitCharacters, ignoreEnt)
+{
+	if(!isDefined(isRealPlayer))
+		isRealPlayer = true;
+
+	if(isRealPlayer)
+		result = PlayerPhysicsTrace(start, end, hitCharacters, ignoreEnt);
+	else
+		result = BotPlayerPhysicsTrace(start, end, hitCharacters, ignoreEnt);
+	
+	return result;
+}
+
 /*-----------------------|
 |	weapon related		 |
 |-----------------------*/
@@ -1684,6 +1750,12 @@ add_weapon(ref, weapon, isDropable)
 
 	if(!isDefined(level.tranzitWeapon))
 		level.tranzitWeapon = []; 
+
+	for(i=0;i<level.tranzitWeapon.size;i++)
+	{
+		if(isDefined(level.tranzitWeapon[i]) && level.tranzitWeapon[i].weapon == weapon)
+			return;
+	}
 
 	curEntry = level.tranzitWeapon.size;
 	level.tranzitWeapon[curEntry] = spawnStruct();
@@ -1719,7 +1791,7 @@ isCustomWeapon(weapon)
 {
 	for(i=0;i<level.tranzitWeapon.size;i++)
 	{
-		if(level.tranzitWeapon[i].weapon == weapon)
+		if(toLower(level.tranzitWeapon[i].weapon) == toLower(weapon))
 			return level.tranzitWeapon[i].name;
 	}
 	
@@ -1730,7 +1802,7 @@ getCustomWeaponArrayElemFromCustomName(name)
 {
 	for(i=0;i<level.tranzitWeapon.size;i++)
 	{
-		if(level.tranzitWeapon[i].name == name)
+		if(toLower(level.tranzitWeapon[i].name) == toLower(name))
 			return level.tranzitWeapon[i];
 	}
 	
@@ -1741,7 +1813,7 @@ getWeaponFromCustomName(name)
 {
 	for(i=0;i<level.tranzitWeapon.size;i++)
 	{
-		if(level.tranzitWeapon[i].name == name)
+		if(toLower(level.tranzitWeapon[i].name) == toLower(name))
 			return level.tranzitWeapon[i].weapon;
 	}
 	
@@ -1939,6 +2011,12 @@ isOtherExplosive(weapon)
 
 isHardpointWeapon(weapon)
 {
+	if(weapon == "airstrike")
+		return true;
+		
+	if(weapon == "carepackage")
+		return true;
+
 	if(weapon == getWeaponFromCustomName("location_selector"))
 		return true;
 
@@ -2161,7 +2239,7 @@ pushPlayer(pushingEnt, direction, pushes, pushZoms, killZoms)
 			break;
 
 		//no [[level.callbackPlayerDamage]] here, we need the full damage - not reduced by armorVest/juggernaut
-		self iPrintLnBold("vehicle push - heavy");
+		//self iPrintLnBold("vehicle push - heavy");
 		self finishPlayerDamage(pushingEnt, self, power, 0, "MOD_PROJECTILE", "none", pushingEnt.origin, self.origin - pushingEnt.origin, "none", 0);
 
 		self.health = health;
@@ -2201,6 +2279,19 @@ pushPlayer2D(pushFromEnt, insideCheckerEnt, checkerEntIsTouchable, direction, st
 		else
 			self SetVelocity(forward * strength);
 	}
+}
+
+setWorldmodelAnim(animName, animType, forceDuration, setTimer, isContinue, force)
+{
+	if(!isDefined(animName) || !isDefined(animType))
+		return;
+
+	if(!isDefined(forceDuration)) forceDuration = 0;
+	if(!isDefined(setTimer)) setTimer = 1;
+	if(!isDefined(isContinue)) isContinue = 1;
+	if(!isDefined(force)) force = 1;
+
+	self setAnim(animName, animType, forceDuration, setTimer, isContinue, force);
 }
 
 /*-----------------------|
@@ -2498,6 +2589,9 @@ createDateArray(strDate, delimiter)
 	{
 		array = strToK(strDate, delimiter);
 		
+		if(array.size <= 0)
+			return undefined;
+
 		if(array[0].size < 4) array[0] = "0" + array[0];
 		if(array[0].size < 4) array[0] = "2" + array[0];
 		if(array[1].size < 2) array[1] = "0" + array[1];
@@ -2584,6 +2678,15 @@ secondsAsTime(seconds)
 /*-----------------------|
 |		map related		 |
 |-----------------------*/
+mapHasMinimap()
+{
+	minimapCorners = getEntArray("minimap_corner", "targetname");
+	if(isDefined(minimapCorners) && minimapCorners.size > 0)
+		return true;
+		
+	return false;
+}
+
 getMapType(mapName)
 {
 	//tranzit has a vehicle and a vehicle path
@@ -2606,9 +2709,10 @@ GetSkyHeight(groundPos, returnFixedGroundPos)
 
 	//if the map has a compass use the corners to calculate the height
 	//the corners are in the corners of the skybox - it should be save to use them
-	minimapCorners = getEntArray("minimap_corner", "targetname");
-	if(isDefined(minimapCorners) && minimapCorners.size > 0)
+	if(mapHasMinimap())
 	{
+		minimapCorners = getEntArray("minimap_corner", "targetname");
+	
 		start = minimapCorners[0].origin;
 		for(i=1;i<minimapCorners.size;i++)
 		{

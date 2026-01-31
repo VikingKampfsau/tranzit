@@ -8,9 +8,19 @@ init()
 	precacheModel("vehicle_blackhawk");
 	precacheModel("com_plasticcase_green_big");
 
-	add_effect("carepackage_smoke", "tranzit/misc/carepackage_smoke");
-	add_effect("carepackage_light", "tranzit/misc/carepackage_light");
+	add_effect("carepackage_smoke", "red_smoke");
+	
+	add_effect("spotlight", "misc/spotlight_large");
+	add_effect("spotlight_dlight", "misc/spotlight_dlight");
+	add_effect("white_blink", "misc/aircraft_light_white_blink");
+	add_effect("white_blink_tail", "misc/aircraft_light_red_blink");
+	add_effect("wingtip_green", "misc/aircraft_light_wingtip_green");
+	add_effect("wingtip_red", "misc/aircraft_light_wingtip_red");
 
+	add_weapon("chainsaw", "skorpion_acog_mp", true);
+	add_weapon("flamethrower", "uzi_acog_mp", true);
+	add_weapon("raygun", "briefcase_bomb_mp", true);
+	
 	level.crateOwnerUseTime = 2;
 	level.crateNonOwnerUseTime = 4;
 	
@@ -19,18 +29,31 @@ init()
 	level.cp_content = [];
 	level.carepackageFlySpeed = 100;
 
-	AddToPackage("airstrike_mp", "Airstrike", 50);
-	
-	AddToPackage("instakill", "Insta-Kill", 10);
-	AddToPackage("doublepoints", "x2 Points", 10);
-	AddToPackage("maxammo", "Ammo", 10);
-	AddToPackage("nuke", "Nuke", 10);
-	AddToPackage("carpenter", "Carpenter", 10);
+	//sum of the chances has to be 100!
+	AddToPackage("hardpoint", 	"airstrike", 							"Airstrike", 				4);
+	AddToPackage("weapon", 		getWeaponFromCustomName("chainsaw"), 	"Chainsaw", 				2);
+	AddToPackage("weapon", 		getWeaponFromCustomName("flamethrower"), "Flamethrower", 			5);
+	AddToPackage("weapon", 		getWeaponFromCustomName("raygun"), 		"Raygun", 					3);
+	AddToPackage("powerup", 	"instakill", 							"Insta-Kill", 				8);
+	AddToPackage("powerup", 	"doublepoints", 						"x2 Points", 				8);
+	AddToPackage("powerup", 	"maxammo", 								"Ammo", 					9);
+	AddToPackage("powerup", 	"nuke", 								"Nuke", 					7);
+	AddToPackage("powerup", 	"carpenter", 							"Carpenter", 				9);
+	AddToPackage("perk", 		"perk_quickrevive", 					"PERK_QUICKREVIVE", 		5);
+	AddToPackage("perk", 		"specialty_fastreload", 				"PERK_FASTRELOAD", 			5);
+	AddToPackage("perk", 		"specialty_rof", 						"PERK_ROF", 				5);
+	AddToPackage("perk", 		"specialty_armorvest", 					"PERK_ARMORVEST", 			5);
+	AddToPackage("perk", 		"specialty_bulletdamage", 				"PERK_BULLETDAMAGE", 		5);
+	AddToPackage("perk", 		"specialty_explosivedamage", 			"PERK_EXPLOSIVEDAMAGE", 	5);
+	AddToPackage("perk", 		"specialty_longersprint", 				"PERK_LONGERSPRINT", 		5);
+	AddToPackage("perk", 		"specialty_bulletaccuracy", 			"PERK_BULLETACCURACY", 		5);
+	AddToPackage("perk", 		"specialty_bulletpenetration", 			"PERK_BULLETPENETRATION", 	5);
 }
 
-AddToPackage(weapon, hinttxt, chance)
+AddToPackage(type, weapon, hinttxt, chance)
 {
 	struct = spawnstruct();
+	struct.type = type;
 	struct.weapon = weapon;
 	struct.hinttxt = hinttxt;
 	struct.chance = chance;
@@ -38,8 +61,14 @@ AddToPackage(weapon, hinttxt, chance)
 	level.cp_content[level.cp_content.size] = struct;
 }
 
-useCarepackageHeli(supportType, targetLocation)
+useCarepackageHeli(supportType, targetLocation, use_map_artillery_selector)
 {
+	if(!use_map_artillery_selector)
+	{
+		playSoundAtPosition("smokegrenade_explode_default", targetLocation);
+		playFx(level._effect["smoke_location_marker"], targetLocation);
+	}
+	
 	thread spawnSupplyHeli(targetLocation, self);
 }
 
@@ -115,9 +144,7 @@ spawnSupplyHeli(targetLocation, owner)
 
 	dropInfo.cpDir = VectorToAngles(VectorNormalize(dropInfo.planeEndPoint - dropInfo.planeStartPoint));
 	dropInfo.cpFlyHeight = (dropInfo.planeFlyHeight - dropInfo.cpUnderHelicopter);
-	dropInfo.cpFallTime = sqrt(2*dropInfo.cpFlyHeight/getDvarFloat("g_gravity"));	
-	dropInfo.cpFallDist = (level.carepackageFlySpeed*dropInfo.cpFallTime);
-	dropInfo.releaseLocation = dropInfo.targetLocation + (0,0,dropInfo.planeFlyHeight) - AnglesToForward(dropInfo.cpDir)*dropInfo.cpFallDist;
+	dropInfo.releaseLocation = dropInfo.targetLocation + (0,0,dropInfo.planeFlyHeight);
 	
 	//drawDebugLine(startPoint, dropInfo.releaseLocation, (0,1,0), 1, 600); //flypath from start to releaseLocation
 	//drawDebugLine(dropInfo.targetLocation, dropInfo.targetLocation + (0,0,dropInfo.planeFlyHeight), (1,0,0), 1, 600); //targetLocation up to the helicopter height
@@ -144,10 +171,15 @@ CallSupplyHeli(dropInfo)
 	self setneargoalnotifydist(200);
 	self setturningability(0.9);	
 	
-	self setvehgoalpos(dropInfo.releaseLocation, 0);
+	self thread createHeliLights(dropInfo.targetLocation);
+	
+	self setvehgoalpos(dropInfo.releaseLocation, 1);
 	self waittillmatch("goal");
 	
 	self thread DropCarePackage(dropInfo);
+	wait 5; //3 from DropCarePackage + 2
+	
+	self helicopterSearchlight_off();
 	
 	self setvehgoalpos(dropInfo.planeEndPoint, 0);
 	self waittillmatch("goal");
@@ -158,118 +190,78 @@ CallSupplyHeli(dropInfo)
 	self delete();
 }
 
-physicsLaunchZ(dropInfo)
+createHeliLights(targetPos)
 {
 	self endon("death");
 	
-	speed = level.carepackageFlySpeed;
-	dir = AnglesToForward(dropInfo.cpDir);
-	forward = dir * speed * 0.1;
-	downwards = -0.5 * getDvarFloat("g_gravity") * sqr(0.1);
-	nextPos = self.origin + forward + (0,0,downwards);
-	trace = BulletTrace(self.origin, nextPos, false, self);
+	//light on ground
+	self.spotlight = spawn("script_model", self getTagOrigin("tag_barrel"));
+	self.spotlight.angles = VectorToAngles(VectorNormalize(targetPos - self getTagOrigin("tag_barrel")));
+	self.spotlight setModel("tag_origin");
+	self.spotlight linkto(self, "tag_barrel");
 	
-	iPrintLnBold(self.origin + " -> " + nextPos);
+	//light on heli
+	self.dlight = spawn("script_origin", self getTagOrigin("tag_ground"));
+	self.dlight setModel("tag_origin");
+	self.dlight.spot_radius = 256;
 	
-	//started in or on solid
-	if(trace["fraction"] < 1)
-	{
-		iPrintLnBold("started in solid");
+	//simple blinking lights (we don't stop them so we can trigger them right away
+	wait .05;
+	playFxOnTag(level._effect["white_blink"], self, "tag_light_belly");
+	playFxOnTag(level._effect["wingtip_green"], self, "tag_light_L_wing");
+	playFxOnTag(level._effect["wingtip_red"], self, "tag_light_R_wing");
+	wait .3;
+	playFxOnTag(level._effect["white_blink_tail"], self, "tag_light_tail");
 		
-		if(isDefined(trace["entity"]))
-			iPrintLnBold(trace["entity"].classname);
+	while(Distance2D(self.origin, targetPos) > 9000)
+		wait 0.5;
+	
+	self thread helicopterSearchlight_on(targetPos);
+}
+
+helicopterSearchlight_off()
+{
+	if(isDefined(self.dlight))
+		self.dlight delete();
 		
-		return;
-	}
+	if(isDefined(self.spotlight))
+		self.spotlight delete();
+}
 
-	iPrintLnBold("starting bounce check");
+helicopterSearchlight_on(targetPos)
+{
+	self endon("death");
 
-	helper = spawn("script_model", self.origin);
-	helper.angles = self.angles;
-	helper setModel(self.model);
-	helper moveGravity(dir * speed, dropInfo.cpFallTime);
-	self hide();
-
-	bounced = 0;
-	safetyBreak = 0;
-	prevorigin = helper.origin;
+	wait 0.5;
+	playFxOnTag(level._effect["spotlight"], self.spotlight, "tag_origin");
+	playFxOnTag(level._effect["spotlight_dlight"], self.dlight, "tag_origin");
+	
 	while(1)
 	{
-		prevorigin = helper.origin;
-		
 		wait .05;
 		
-		trace = BulletTrace(prevorigin, helper.origin, false, helper);
-		
-		drawDebugLine(prevorigin, helper.origin, (1,1,1), 1, 600); //show where it came from
-		iPrintLnBold(prevorigin + " -> " + helper.origin);
-		
-		//Bounce
-		if(trace["fraction"] < 1)
-		{
-			tempOrigin = trace["position"];
-			tempAngles = helper.angles;
-		
-			iPrintLnBold("do bounce - " + speed);
-			//reduce the velocity to prevent an endless bouncing
-			if(bounced == 0)
-				speed *= 2;
-			else if(bounced == 1)
-				speed /= 2;
-			else
-				speed *= 0.42;
-			
-			//reflect the velocity
-			//this will bounce up to where it came from
-			//dir = AnglesToForward(VectorToAngles(tempOrigin - prevorigin));
-			//forward = dir * (speed * -1); //bounce in opposite direction
-			dir = AnglesToUp(trace["normal"]);
-			forward = dir * speed;
-			
-			drawDebugLine(tempOrigin, tempOrigin + forward, (1,0,0), 1, 600); //show direction of dir
-			drawDebugLine(tempOrigin, tempOrigin + (0,0,250), (0,1,0), 1, 600); //show direction upwards
-			
-			helper delete();
-			helper = spawn("script_model", tempOrigin);
-			helper.angles = tempAngles;
-			helper setModel(self.model);
-			
-			if(bounced <= 2 && speed >= 60)
-				helper moveGravity(forward, 999);
-			else
-			{
-				iPrintLnBold("final bounce");
-			
-				fallTime = sqrt(2*length(forward)/getDvarFloat("g_gravity")); //not correct becuase the gravity is not recognized upwards? or?
-				helper moveGravity(forward, fallTime);
-				wait fallTime;
-				break;
-			}
-			
-			bounced++;
-		}
-		
-		if(helper.origin != prevorigin)
-		{
-			safetyBreak = 0;
-			continue;
-		}
-		
-		//for debugging - have to find a proper solution
-		safetyBreak++;
-		if(safetyBreak >= 10)
-		{
-			iPrintLnBold("safetyBreak");
+		if(!isDefined(self.dlight))
 			break;
+		
+		if(isDefined(self.spotlight))
+		{
+			self unlink();
+			self.spotlight.angles = VectorToAngles(VectorNormalize(targetPos - self getTagOrigin("tag_barrel")));
+			self.spotlight linkto(self, "tag_barrel");
 		}
+	
+		if(Distance2D(self.dlight.origin, targetPos) > self.dlight.spot_radius)
+			continue;
+	
+		forward = anglesToForward(self getTagAngles("tag_barrel"));
+		start = self getTagOrigin("tag_barrel");
+		end = start + vectorscale(forward, 3000);
+
+		trace = bulletTrace(start, end, false, self);
+		dropspot = trace["position"] + vectorscale(forward, -96);
+
+		self.dlight moveTo(dropspot, .05);
 	}
-	
-	self show();
-	self.origin = helper.origin;
-	self.angles = helper.angles;
-	helper delete();
-	
-	iPrintLnBold("stopped bounce check");
 }
 
 DropCarePackage(dropInfo)
@@ -278,18 +270,24 @@ DropCarePackage(dropInfo)
 
 	wait 3; //can i remove/lower this later or will this make the trace hit the helicopter?
 
-	carepackage = spawn("script_model", dropInfo.releaseLocation - (0,0,dropInfo.cpUnderHelicopter));
-	carepackage.angles = (0,RandomInt(360),0);
-	carepackage.targetname = "trajectory_debug";
-	carepackage setModel("com_plasticcase_green_big");
+	carepackage = spawnPhysicsObject("com_plasticcase_green_big", dropInfo.releaseLocation - (0,0,dropInfo.cpUnderHelicopter), (RandomFloatRange(-7,7), RandomInt(360), RandomFloatRange(-7,7)), (0,0,0));
 	
-	//use only one of them
-	carepackage moveGravity(AnglesToForward(dropInfo.cpDir)*level.carepackageFlySpeed, dropInfo.cpFallTime);
-	//carepackage physicsLaunchZ(dropInfo); //does not look really good
+	//failed to create a physics model - delete the script_model and do nothing
+	if(carepackage.classname == "script_model")
+	{
+		level.totalcps--;
+		
+		self.owner iPrintLnBold(self.owner getLocTextString("CAREPACKAGE_CONTENT_NONE"));
+		
+		carepackage delete();
+		return;
+	}
 	
 	carepackage.type = "carepackage";
 	carepackage.owner = self.owner;
 
+	//real players could be blocked with 'carepackage setContents(1)' but that wouldn't make bots jump over
+	//so let's keep the trigger workaround
 	carepackage.blocker = [];
 	carepackage.blocker[0] = spawn("trigger_radius", carepackage.origin, 0, 32, 35);
 	carepackage.blocker[1] = spawn("trigger_radius", carepackage.origin + vectorscale(anglesToRight(carepackage.angles), 32), 0, 32, 35);
@@ -305,13 +303,11 @@ DropCarePackage(dropInfo)
 	carepackage.deathtrigger thread ForceOrigin(undefined, carepackage);
 	carepackage.deathtrigger thread MakeDeadly(carepackage);
 
-	carepackage.fxEnt = spawn("script_model", carepackage.origin + (0,0,40));
+	carepackage.fxEnt = spawn("script_model", carepackage.origin + (0,0,30));
 	carepackage.fxEnt setModel("tag_origin");
 	carepackage.fxEnt linkTo(carepackage);
 
-	wait .05;
-	playFxOnTag(level._effect["carepackage_light"], carepackage.fxEnt, "tag_origin");
-	wait (dropInfo.cpFallTime-0.05);
+	carepackage maps\mp\gametypes\_weapons::waitTillNotMoving();
 
 	playFxOnTag(level._effect["carepackage_smoke"], carepackage.fxEnt, "tag_origin");
 
@@ -329,21 +325,6 @@ DropCarePackage(dropInfo)
 	carepackage thread crateUseThink(self.owner);
 }
 
-ForceOrigin(prevorigin, entity)
-{
-	self endon("death");
-
-	while(1)
-	{
-		if(isDefined(prevorigin) && self.origin != prevorigin)
-			self.origin = prevorigin;
-		else if(isDefined(entity) && self.origin != entity.origin)
-			self.origin = entity.origin;
-		
-		wait .05;
-	}
-}
-
 DontBlockBots()
 {
 	self endon("death");
@@ -353,7 +334,7 @@ DontBlockBots()
 		self waittill("trigger", player);
 		
 		if(player isAZombie())
-			player thread scripts\zombies::botJump();
+			player thread scripts\climbspots::botJump();
 	}
 }
 
@@ -446,7 +427,11 @@ crateUseThinkOwner()
 		if(!player isReadyToUse())
 			continue;
 
-		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("CAREPACKAGE_OPEN_PRESS_BUTTON"), undefined, self.content.hinttxt);
+		contentText = player getLocTextString(self.content.hinttxt);
+		if(contentText == "")
+			contentText = self.content.hinttxt;
+
+		player thread showTriggerUseHintMessage(self.trigger, player getLocTextString("CAREPACKAGE_OPEN_PRESS_BUTTON"), undefined, contentText);
 
 		result = self useHoldThink(player, level.crateOwnerUseTime);
 
@@ -597,34 +582,43 @@ GivePackageContent(carepackage)
 		}
 	}
 
-	if(getSubStr(newWeapon, newWeapon.size - 3, newWeapon.size) != "_mp")
-		newWeapon = newWeapon + "_mp";
-
-	if(isOtherExplosive(newWeapon) && self hasActionSlotWeapon("weapon"))
+	if(isHardpointWeapon(newWeapon))
 	{
-		if(self.actionSlotWeapon != newWeapon)
+		if(self hasActionSlotWeapon("hardpoint"))
 		{
-			self iPrintLnBold(self getLocTextString("CAREPACKAGE_CONTENT_NONE"));
+			if(self.actionSlotHardpoint != newWeapon)
+			{
+				self iPrintLnBold(self getLocTextString("CAREPACKAGE_CONTENT_NONE"));
+				return;
+			}
+		}
+	}
+	else if(scripts\perks::isDefaultPerk(newWeapon) || scripts\perks::isZombiePerk(newWeapon))
+	{
+		self scripts\perks::shoutOutPerk(newWeapon);
+		self scripts\perks::setZombiePerk(newWeapon);
+		return;
+	}
+	else
+	{
+		if(getSubStr(newWeapon, newWeapon.size - 3, newWeapon.size) != "_mp")
+			newWeapon = newWeapon + "_mp";
+
+		if(isOtherExplosive(newWeapon) && self hasActionSlotWeapon("weapon"))
+		{
+			if(self.actionSlotWeapon != newWeapon)
+			{
+				self iPrintLnBold(self getLocTextString("CAREPACKAGE_CONTENT_NONE"));
+				return;
+			}
+		}
+		
+		if(self hasWeapon(newWeapon))
+		{
+			self giveMaxAmmo(newWeapon);
 			return;
 		}
 	}
 	
-	if(isHardpointWeapon(newWeapon) && self hasActionSlotWeapon("hardpoint"))
-	{
-		if(self.actionSlotHardpoint != newWeapon)
-		{
-			self iPrintLnBold(self getLocTextString("CAREPACKAGE_CONTENT_NONE"));
-			return;
-		}
-	}
-
-	if(self hasWeapon(newWeapon))
-	{
-		self giveMaxAmmo(newWeapon);
-		return;
-	}
-
 	self giveNewWeapon(newWeapon);
-
-	return;
 }

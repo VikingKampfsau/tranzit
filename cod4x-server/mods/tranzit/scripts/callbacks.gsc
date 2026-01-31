@@ -349,6 +349,7 @@ Callback_StartGameType()
 	thread scripts\barricades::init();
 	thread scripts\battlechatter::init();
 	thread scripts\carepackage::init();
+	thread scripts\climbspots::init();
 	thread scripts\craftables::init();
 	thread scripts\facemasks::init();
 	thread scripts\generator::init();
@@ -740,7 +741,11 @@ onPlayerDamage(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, 
 
 		if(isDefined(sMeansOfDeath))
 		{
-			if(sMeansOfDeath == "MOD_MELEE")
+			if(sMeansOfDeath == "MOD_FALLING")
+			{
+				return;
+			}
+			else if(sMeansOfDeath == "MOD_MELEE")
 			{
 				if(self.zombieType == "avagadro")
 				{
@@ -1029,6 +1034,9 @@ finishPlayerDamageWrapper(eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath
 	if(isDefined(self))
 	{
 		self finishPlayerDamage( eInflictor, eAttacker, iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, psOffsetTime );
+	
+		if(isDefined(eAttacker) && sMeansOfDeath == "MOD_MELEE")
+			eAttacker notify("stop_knifeassist");
 	
 		self maps\mp\gametypes\_globallogic::damageShellshockAndRumble( eInflictor, sWeapon, sMeansOfDeath, iDamage );
 	}

@@ -108,7 +108,7 @@ onSurvivorKilled(attacker, sMeansOfDeath, sWeapon)
 		self linkTo(self.camera);
 		
 		self.camera.speed = 5; //tweak me
-		self.camera.endPos = PlayerPhysicsTrace(self.camera.origin, self.camera.origin - AnglesToForward(self.camera.angles)*100);
+		self.camera.endPos = CharacterPhysicsTrace(true, self.camera.origin, self.camera.origin - AnglesToForward(self.camera.angles)*100);
 		time = Distance(self.camera.origin, self.camera.endPos) / self.camera.speed;
 		
 		if(time < 0.05)
@@ -144,7 +144,7 @@ onZombieDamaged(sWeapon, sMeansOfDeath, sHitLoc, vPoint, eAttacker, eInflictor)
 {
 	if(!isDefined(self) || !isAlive(self))
 		return;
-
+	
 	self thread zombiePainSound();
 	
 	if(!isDefined(sHitLoc) || !isDefined(sMeansOfDeath))

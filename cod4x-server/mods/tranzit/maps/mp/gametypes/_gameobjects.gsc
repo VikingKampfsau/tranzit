@@ -581,13 +581,13 @@ setDropped()
 //	trace = bulletTrace( self.safeOrigin + (0,0,20), self.safeOrigin - (0,0,20), false, undefined );
 	if ( isDefined( self.carrier ) )
 	{
-		trace = playerPhysicsTrace( self.carrier.origin + (0,0,20), self.carrier.origin - (0,0,2000), false, self.carrier.body );
-		angleTrace = bulletTrace( self.carrier.origin + (0,0,20), self.carrier.origin - (0,0,2000), false, self.carrier.body );
+		trace = CharacterPhysicsTrace(true, self.carrier.origin + (0,0,20), self.carrier.origin - (0,0,2000), false, self.carrier.body);
+		angleTrace = bulletTrace(self.carrier.origin + (0,0,20), self.carrier.origin - (0,0,2000), false, self.carrier.body);
 	}
 	else
 	{
-		trace = playerPhysicsTrace( self.safeOrigin + (0,0,20), self.safeOrigin - (0,0,20), false, undefined );
-		angleTrace = bulletTrace( self.safeOrigin + (0,0,20), self.safeOrigin - (0,0,20), false, undefined );
+		trace = CharacterPhysicsTrace(true, self.safeOrigin + (0,0,20), self.safeOrigin - (0,0,20), false, undefined);
+		angleTrace = bulletTrace(self.safeOrigin + (0,0,20), self.safeOrigin - (0,0,20), false, undefined);
 	}
 	
 	droppingPlayer = self.carrier;

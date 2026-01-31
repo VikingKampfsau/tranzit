@@ -76,23 +76,6 @@ init()
 	
 	level.botMeleeDist = 64;
 	level.botRangeAttackDist["avagadro"] = 512;
-	
-	//add other maps separated by comma - the teleport causes problems on navmeshed maps and should only be used for rotu maps
-	disabledClipTeleportMaps = "mp_forsaken_world";
-	disabledClipTeleportMaps = strToK(disabledClipTeleportMaps, ",");
-	
-	level.clipTeleport = true;
-	if(isDefined(disabledClipTeleportMaps) && disabledClipTeleportMaps.size > 0)
-	{
-		for(i=0;i<disabledClipTeleportMaps.size;i++)
-		{
-			if(level.script == disabledClipTeleportMaps[i])
-			{
-				level.clipTeleport = false;
-				break;
-			}
-		}
-	}
 }
 
 initZombieModel(type, body, head, crawlerTorso, crawlerGibLegs, GibHead)
@@ -192,6 +175,7 @@ spawnZombie(zombieType, target)
 	self.isWaved = false;
 	self.isElectrified = false;
 	self.doJump = false;
+	self.climb = false;
 	
 	self.mantleInVehicle = false;
 	
@@ -211,8 +195,8 @@ spawnZombie(zombieType, target)
 	if(isDefined(self.damageTrigger))
 		self.damageTrigger delete();
 		
-	if(isDefined(self.mover))
-		self.mover delete();
+	if(isDefined(self.linkedMoveHelper))
+		self.linkedMoveHelper delete();
 		
 	if(isDefined(self.glowFxEnt))
 		self.glowFxEnt delete();
@@ -459,14 +443,17 @@ botBehavior(forcedTarget)
 		}
 	
 		//start the anim to make it look like he crawls out of the ground
-		self setAnim("both", "ai_zombie_climbout_ground");
+		self setWorldmodelAnim("both", "ai_zombie_climbout_ground");
 		//a short delay before making the zombie visible to make sure the anim is playing
 		wait .2;
 		self show();
 		//wait for the crawl anim to finish
 		wait 5.4;
 
-		self thread botCheckMantle();
+		self thread scripts\climbspots::botCheckMantle();
+		self thread scripts\climbspots::botCheckHighJump();
+		self thread scripts\climbspots::botCheckLadderClimb();
+		self thread scripts\climbspots::botCheckLadderAndMantleWeapon();
 	}
 
 	self thread zombieGrowl();
@@ -529,7 +516,7 @@ botBehavior(forcedTarget)
 				self.myTarget = self scripts\barricades::zombieCloseToBarricade();
 				if(isDefined(self.myTarget) && isDefined(self.myTarget.barricadeHealth))
 				{
-					if(self.myTarget.barricadeHealth > 0 /*&& self isLookingAt(self.myTarget)*/)
+					if(self.myTarget.barricadeHealth > 0 /*&& self isLookingAtEntity(self.myTarget)*/)
 					{
 						self botMoveTo(self.origin);
 						self botAttackTarget("barricade");
@@ -664,7 +651,7 @@ botCalculateNextStepTowards()
 	self notify("botCalculateNextStep");
 	self endon("botCalculateNextStep");
 	
-	if(self isMantling() || (isDefined(self.mantleInVehicle) && self.mantleInVehicle))
+	if(self isMantling() || self.doJump || (isDefined(self.mantleInVehicle) && self.mantleInVehicle))
 		return;
 	
 	//if(!isDefined(self.myWaypoint)) uncomment this line when the lags return
@@ -700,7 +687,7 @@ botCalculateNextStepTowards()
 		freePath = true;
 	if(isDefined(target.targetname) && isSubStr(target.targetname, "tag_mantlespot_"))
 		freePath = true;
-	else if(PlayerPhysicsTrace(self.origin + (0,0,5), target.origin + (0,0,5)) == target.origin + (0,0,5))
+	else if(CharacterPhysicsTrace(false, self.origin + (0,0,5), target.origin + (0,0,5)) == target.origin + (0,0,5))
 		freePath = true;
 	
 	if(freePath)
@@ -749,22 +736,6 @@ botCalculateNextStepTowards()
 						//self.myWaypoint = undefined;
 					}
 				}
-				
-				/* moved into the mantle check function */
-				//if(isDefined(level.clipTeleport) && level.clipTeleport)
-				//{
-					//fix to teleport bots through clips (mainly rotu maps)
-					//we can run up to 16 units without jumping
-					//default jump height is 39
-					//trace = bulletTrace(self.origin + (0,0,17), getWpOrigin(self.nextWp) + (0,0,17), false, undefined);
-					//if(trace["fraction"] < 1)
-					//trace = PlayerPhysicsTrace(self.origin + (0,0,17), getWpOrigin(self.nextWp) + (0,0,17));
-					//if(trace != getWpOrigin(self.nextWp) + (0,0,17))
-					//{
-					//	if(Distance(self.origin + (0,0,17), trace/*["position"]*/) < 64)
-					//		self moveThroughClip(getWpOrigin(self.nextWp) + (0,0,17), 27);
-					//}
-				//}
 			}
 		}
 		else
@@ -819,7 +790,7 @@ botCalculateNextStepTowards()
 				if(isPlayer(target))
 					self.lookAt = target getTagOrigin("j_spine4");
 				if(!isDefined(self.lookAt))
-					self.lookAt = target.origin + (0,0,50);
+					self.lookAt = target.origin + (0,0,self getEye()[2]);
 				
 				time = self botCalculateAimTime(self.lookAt, "movement");
 				self botDoAim(self.lookAt, time);
@@ -840,13 +811,13 @@ botCalculateNextStepTowards()
 					if(isPlayer(target))
 						self.lookAt = target getTagOrigin("j_spine4");
 					if(!isDefined(self.lookAt))
-						self.lookAt = target.origin + (0,0,50);
+						self.lookAt = target.origin + (0,0,self getEye()[2];
 					
 					time = self botCalculateAimTime(self.lookAt, "movement");
 					self botDoAim(self.lookAt, time);
 				}*/
 				
-				self.lookAt = moveTo + (0,0,50);
+				self.lookAt = moveTo + (0,0,self getEye()[2]);
 				time = self botCalculateAimTime(self.lookAt, "movement");
 				self botDoAim(self.lookAt, time);
 			}
@@ -913,130 +884,6 @@ botCheckCombatDistance()
 	}
 }
 
-botCheckMantle()
-{
-	self endon("disconnect");
-	self endon("death");
-	
-	if(self.zombieType == "avagadro")
-		return;
-	
-	self thread botCheckLadderAndMantleWeapon();
-	
-	//always do it - else the bots do not teleport through clips on rotu maps
-	//if(!isDefined(level.mantleTriggers) || level.mantleTriggers.size <= 0)
-	//	return;
-		
-	while(1)
-	{
-		wait .5;
-	
-		if(self isOnLadder() || self isMantling())
-			continue;
-
-		if(isDefined(self.isAttacking) && self.isAttacking)
-			continue;
-	
-		doMantle = false;
-		isInMantleTrigger = false;
-		
-		if(isDefined(level.mantleTriggers) && level.mantleTriggers.size > 0)
-		{
-			for(i=0;i<level.mantleTriggers.size;i++)
-			{
-				if(self isTouching(level.mantleTriggers[i]) /*&& !level.mantleTriggers[i].inUse*/)
-				{
-					isInMantleTrigger = true;
-					targetEnts = getEntArray(level.mantleTriggers[i].target, "targetname");
-					
-					if(!isDefined(targetEnts) || targetEnts.size <= 0)
-						continue;
-				
-					targetEnt = getFarestEnt(self.origin, targetEnts);
-					
-					if(isDefined(targetEnt))
-					{
-						if(self isLookingAt(targetEnt) && self.origin[2] <= targetEnt.origin[2])
-						{
-							doMantle = true;
-							break;
-						}	
-					}
-					else
-					{
-						for(j=0;j<targetEnts.size;j++)
-						{
-							if(self isLookingAt(targetEnts[j]) && self.origin[2] <= targetEnts[j].origin[2])
-							{
-								doMantle = true;
-								break;
-							}
-						}
-						
-						if(doMantle)
-							break;
-					}
-				}
-			}
-		}
-		
-		if(doMantle)
-		{
-			self botMantle();
-			continue;
-		}
-		else
-		{
-			if(!isInMantleTrigger && isDefined(self.nextWp))
-			{
-				if(isDefined(level.clipTeleport) && level.clipTeleport)
-				{
-					//fix to teleport bots through clips (mainly rotu maps)
-					//we can run up to 16 units without jumping
-					//default jump height is 39
-					//trace = bulletTrace(self.origin + (0,0,17), getWpOrigin(self.nextWp) + (0,0,17), false, undefined);
-					//if(trace["fraction"] < 1)
-					trace = PlayerPhysicsTrace(self.origin + (0,0,17), getWpOrigin(self.nextWp) + (0,0,17));
-					if(trace != getWpOrigin(self.nextWp) + (0,0,17))
-					{
-						if(Distance(self.origin + (0,0,17), trace/*["position"]*/) < 64)
-							self moveThroughClip(getWpOrigin(self.nextWp) + (0,0,17), 27);
-					}
-				}
-			}
-		}
-	}
-}
-
-botCheckLadderAndMantleWeapon()
-{
-	self endon("disconnect");
-	self endon("death");
-
-	while(!self isOnLadder() && !self isMantling())
-		wait .05;
-
-	//force crouch - this fixes stuck bots when mantling e.g. a window
-	self botAction("+gocrouch");
-
-	//here?
-	//self enableWeapons();
-	//self switchToWeapon(self.zombieWeapon);
-	//self setSpawnWeapon(self.zombieWeapon);
-
-	wait .1;
-	
-	//or there?
-	self enableWeapons();
-	self switchToWeapon(self.zombieWeapon);
-	self setSpawnWeapon(self.zombieWeapon);
-
-	//reset the forced crouch
-	self botAction("-gocrouch");
-	
-	self thread botCheckLadderAndMantleWeapon();
-}
-
 botMelee(iDamage, damageDelay)
 {
 	self endon("disconnect");
@@ -1058,15 +905,15 @@ botMelee(iDamage, damageDelay)
 			{
 				//idle
 				if(moveSpeed == 0)
-					self setAnim("torso", "ai_zombie_attack_crawl_lunge");
+					self setWorldmodelAnim("torso", "ai_zombie_attack_crawl_lunge");
 				else
-					self setAnim("torso", "ai_zombie_attack_crawl");
+					self setWorldmodelAnim("torso", "ai_zombie_attack_crawl");
 			}
 			//grabbing through barricade = crouch
 			else if(self getStance() == "crouch")
 			{
-				self setAnim("both", "ai_zombie_window_attack_arm_L_out");
-				//self setAnim("both", "ai_zombie_window_attack_arm_r_out");
+				self setWorldmodelAnim("both", "ai_zombie_window_attack_arm_L_out");
+				//self setWorldmodelAnim("both", "ai_zombie_window_attack_arm_r_out");
 			}
 			else
 			{
@@ -1074,34 +921,34 @@ botMelee(iDamage, damageDelay)
 				if(moveSpeed == 0)
 				{
 					random = randomInt(3);
-					if(random == 0) self setAnim("both", "ai_zombie_attack_v1");
-					else if(random == 1) self setAnim("both", "ai_zombie_attack_v3");
-					else if(random == 2) self setAnim("both", "ai_zombie_attack_v4");
+					if(random == 0) self setWorldmodelAnim("both", "ai_zombie_attack_v1");
+					else if(random == 1) self setWorldmodelAnim("both", "ai_zombie_attack_v3");
+					else if(random == 2) self setWorldmodelAnim("both", "ai_zombie_attack_v4");
 				}
 				else
 				{
-					self setAnim("torso", "ai_pt_zombie_attack_v1");
+					self setWorldmodelAnim("torso", "ai_pt_zombie_attack_v1");
 				}
 			}
 			break;
 	
 		case "dog":
-			self setAnim("both", "zombie_dog_run_attack");
+			self setWorldmodelAnim("both", "zombie_dog_run_attack");
 			break;
 		
 		case "dwarf":
-			self setAnim("both", "ai_zombie_screecher_headpull");
+			self setWorldmodelAnim("both", "ai_zombie_screecher_headpull");
 			break;
 		
 		case "quad":
 			random = randomInt(3);
-			if(random == 0) self setAnim("both", "ai_zombie_quad_attack");
-			else if(random == 1) self setAnim("both", "ai_zombie_quad_attack_2");
-			else if(random == 2) self setAnim("both", "ai_zombie_quad_attack_3");
+			if(random == 0) self setWorldmodelAnim("both", "ai_zombie_quad_attack");
+			else if(random == 1) self setWorldmodelAnim("both", "ai_zombie_quad_attack_2");
+			else if(random == 2) self setWorldmodelAnim("both", "ai_zombie_quad_attack_3");
 			break;
 
 		case "avagadro":
-			self setAnim("both", "ai_zombie_avogadro_melee_attack_v1");
+			self setWorldmodelAnim("both", "ai_zombie_avogadro_melee_attack_v1");
 			break;
 
 		default: break;
@@ -1118,36 +965,6 @@ botMelee(iDamage, damageDelay)
 	{
 		self.myTarget notify("damage", iDamage, self, VectorToAngles(self.myTarget.origin - self.origin), self.origin, "MOD_MELEE");
 	}
-}
-
-botMantle()
-{
-	self botJump();
-}
-
-botJump()
-{
-	self endon("disconnect");
-	self endon("death");
-
-	self botStop();
-
-	self.doJump = true;
-	while(self GetStance() != "stand")
-	{
-		self setStance("stand"); 
-		//setStance requires cod4x new_arch
-		//self botAction("+gostand");
-		wait .05;
-		//with setStance -gostand could be removed
-		//self botAction("-gostand");
-	}
-	
-	self botAction("+gostand");
-	wait .05;
-	self botAction("-gostand");
-	
-	self.doJump = false;
 }
 
 botDoAim(target, time)
@@ -1381,7 +1198,7 @@ botEntityIsAttackable(entity)
 
 canAttackTarget(type)
 {
-	if(!self isOnLadder() && !self isMantling())
+	if(!self isOnLadder() && !self isMantling() && !self.doJump)
 	{
 		if(isDefined(self.myTarget))
 		{
@@ -1421,7 +1238,7 @@ canAttackTarget(type)
 botLinkToPlayer()
 {
 	self botStop();
-	self botJump();
+	self scripts\climbspots::botJump();
 
 	PlayFx(level._effect["screecher_disappear"], self.origin);
 	
@@ -1504,21 +1321,7 @@ monitorKnifeDamage()
 		}
 	}
 }
-
-ForceOrigin(prevorigin, entity)
-{
-	self endon("death");
-
-	while(1)
-	{
-		if(isDefined(prevorigin) && self.origin != prevorigin)
-			self.origin = prevorigin;
-		else if(isDefined(entity) && self.origin != entity.origin)
-			self.origin = entity.origin;
-		
-		wait .05;
-	}
-}*/
+*/
 
 monitorKnifeDamage()
 {
@@ -1610,7 +1413,7 @@ botAttackTarget(type)
 			self.lookAt = self.myTarget getTagOrigin("j_spine4");
 		if(!isDefined(self.lookAt))
 		{
-			self.lookAt = self.myTarget.origin + (0,0,10);
+			self.lookAt = self.myTarget.origin + (0,0,self getEye()[2]);
 		
 			if(type == "barricade")
 				self.lookAt = self.myTarget.origin + (0,0,50);
@@ -1877,25 +1680,25 @@ zombieGrowl()
 
 moveThroughClip(targetPos, speed, ignorePlayerPhysics)
 {
-	if(!isDefined(self.mover))
-		self.mover = spawn("script_origin", (0,0,0));
+	if(!isDefined(self.linkedMoveHelper))
+		self.linkedMoveHelper = spawn("script_origin", (0,0,0));
 	
-	self.mover.origin = self.origin + (0,0,17);
-	self.mover.angles = self.angles;
-	self linkTo(self.mover);
+	self.linkedMoveHelper.origin = self.origin + (0,0,17);
+	self.linkedMoveHelper.angles = self.angles;
+	self linkTo(self.linkedMoveHelper);
 	
 	target = targetPos;
 	if(!isDefined(ignorePlayerPhysics) || !ignorePlayerPhysics)
-		target = PlayerPhysicsTrace(targetPos, self.mover.origin);
+		target = CharacterPhysicsTrace(false, targetPos, self.linkedMoveHelper.origin);
 	
-	time = (distance(self.mover.origin, target)/speed);
+	time = (distance(self.linkedMoveHelper.origin, target)/speed);
 	
 	if(time <= 0)
 		time = 0.05;
 	
-	self.mover moveTo(target, time);
+	self.linkedMoveHelper moveTo(target, time);
 	wait (time + 0.05);
 	
 	self unlink();
-	self.mover delete();
+	self.linkedMoveHelper delete();
 }

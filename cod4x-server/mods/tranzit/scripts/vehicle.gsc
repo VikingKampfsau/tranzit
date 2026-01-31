@@ -478,7 +478,7 @@ canMantleInVehicle(mantleSpot)
 
 	if(self isASurvivor())
 	{
-		if(!self isLookingAt(level.tranzitVehicle))
+		if(!self isLookingAtEntity(level.tranzitVehicle))
 			return false;
 	}
 
@@ -528,25 +528,24 @@ doMantleInVehicle(mantleSpot)
 	else
 		mantleInfo.mantleSpot = "side";
 
-	if(!isDefined(self.scriptedMantleHelper))
-		self.scriptedMantleHelper = spawn("script_model", mantleSpot.origin);
-	else
-		self.scriptedMantleHelper.origin = mantleSpot.origin;
+	if(isDefined(self.linkedMoveHelper))
+		self.linkedMoveHelper delete();
 	
-	self.scriptedMantleHelper.angles = level.tranzitVehicle.angles;
+	self.linkedMoveHelper = spawn("script_model", mantleSpot.origin);
+	self.linkedMoveHelper.angles = level.tranzitVehicle.angles;
 	
 	if(self isAZombie())
 		self botStop();
 	
 	self freezeControls(true);
-	self linkTo(self.scriptedMantleHelper); //avoids flickering caused by gravity
+	self linkTo(self.linkedMoveHelper); //avoids flickering caused by gravity
 
 	if(self isASurvivor())
 	{
 		if(mantleInfo.mantleSpot == "back")
 		{
 			self disableWeapons();
-			self setAnim("both", "mp_mantle_up_45");
+			self setWorldmodelAnim("both", "mp_mantle_up_45");
 			
 			mantleInfo.climbs = getAnimLength(%mp_mantle_up_45)/0.05;
 			mantleInfo.movement = getFakeMantleValues(45);
@@ -556,14 +555,14 @@ doMantleInVehicle(mantleSpot)
 	{
 		if(mantleInfo.mantleSpot == "back")
 		{
-			self setAnim("both", "sp_mantle_up_45");
+			self setWorldmodelAnim("both", "sp_mantle_up_45");
 			
 			mantleInfo.climbs = getAnimLength(%sp_mantle_up_45)/0.05;
 			mantleInfo.movement = getFakeMantleValues(45);
 		}
 		else
 		{
-			self setAnim("both", "sp_mantle_up_57");
+			self setWorldmodelAnim("both", "sp_mantle_up_57");
 			
 			mantleInfo.climbs = getAnimLength(%sp_mantle_up_57)/0.05;
 			mantleInfo.movement = getFakeMantleValues(57);
@@ -575,13 +574,13 @@ doMantleInVehicle(mantleSpot)
 		if(!isDefined(mantleInfo.movement.forward[i]) || !isDefined(mantleInfo.movement.up[i]))
 			break;
 	
-		offset = self.scriptedMantleHelper.origin - level.tranzitVehicle.origin;
+		offset = self.linkedMoveHelper.origin - level.tranzitVehicle.origin;
 		newPos = level.tranzitVehicle.origin;
 		newPos += offset;
 		newPos += anglesToForward(VectorToAngles(level.tranzitVehicle GetTagOrigin("tag_body") - self.origin)) * mantleInfo.movement.forward[i];
 		newPos += (0,0,mantleInfo.movement.up[i]);
 		
-		self.scriptedMantleHelper moveTo(newPos, 0.05);
+		self.linkedMoveHelper moveTo(newPos, 0.05);
 		
 		wait 0.05;
 	}
@@ -590,7 +589,7 @@ doMantleInVehicle(mantleSpot)
 	self freezeControls(false);
 	self enableWeapons();
 	
-	self.scriptedMantleHelper delete();
+	self.linkedMoveHelper delete();
 	
 	self.mantleInVehicle = false;
 }

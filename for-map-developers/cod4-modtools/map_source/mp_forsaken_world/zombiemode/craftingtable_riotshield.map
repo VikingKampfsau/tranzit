@@ -1,0 +1,40 @@
+iwmap 4
+"000_Global" flags  active
+"The Map" flags 
+// entity 0
+{
+"classname" "worldspawn"
+// brush 0
+{
+ ( 48 16 0 ) ( -48 16 0 ) ( -48 -32 0 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -52 -32 128 ) ( -52 16 128 ) ( 44 16 128 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -48 -16 72 ) ( 48 -16 72 ) ( 48 -16 0 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 44 -32 72 ) ( 44 16 72 ) ( 44 16 0 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 48 16 72 ) ( -48 16 72 ) ( -48 16 0 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -44 16 72 ) ( -44 -32 72 ) ( -44 -32 0 ) clip 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}
+// entity 1
+{
+"angles" "0 270 0"
+"targetname" "auto1"
+"target" "riotshield"
+"origin" "0.0 0.0 -0.2"
+"model" "craftingtable"
+"classname" "script_model"
+}
+// entity 2
+{
+"targetname" "craftingTable"
+"target" "auto1"
+"classname" "trigger_use_touch"
+// brush 0
+{
+ ( -8 32 0 ) ( -48 32 0 ) ( -48 -32 0 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -48 -32 72 ) ( -48 32 72 ) ( -8 32 72 ) trigger 64 64 0 0 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -48 -32 72 ) ( -8 -32 72 ) ( -8 -32 -32 ) trigger 64 64 0 120 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( 48 -40 72 ) ( 48 24 72 ) ( 48 24 -32 ) trigger 64 64 0 120 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -8 16 72 ) ( -48 16 72 ) ( -48 16 -32 ) trigger 64 64 0 120 0 0 lightmap_gray 16384 16384 0 0 0 0
+ ( -48 40 72 ) ( -48 -24 72 ) ( -48 -24 -32 ) trigger 64 64 0 120 0 0 lightmap_gray 16384 16384 0 0 0 0
+}
+}

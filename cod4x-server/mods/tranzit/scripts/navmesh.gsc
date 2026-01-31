@@ -21,6 +21,8 @@
 
 init()
 {
+	level.wpAmount = 0;
+
 	thread removeRadiantPathnodes();
 	thread initWaypoints();
 }
@@ -46,7 +48,7 @@ initWaypoints()
 	//verify the file before import
 	if(fs_testFile(fileName))
 	{
-		//consolePrint("^3file exists\n");
+		//consolePrint("^3file " + fileName + " exists\n");
 	
 		file = openFile(fileName, "read");
 		if(file > 0)
@@ -61,7 +63,7 @@ initWaypoints()
 				//if undefined then we reached the end of file
 				if(!isDefined(line))
 				{
-					//consolePrint("^3file is empty\n");
+					consolePrint("^3waypoint file is empty\n");
 					break;
 				}
 
@@ -91,7 +93,7 @@ initWaypoints()
 			
 			if(!isDefined(verified))
 			{
-				//consolePrint("^1tranZit WP csv is not valid - aborting!\n");
+				consolePrint("^1waypoint csv is not valid - aborting!\n");
 				return;
 			}
 			else
@@ -106,11 +108,11 @@ initWaypoints()
 				//	consolePrint("^3file complete\n");
 			}
 		}
+	
+		consolePrint("^3file action complete\n");
+
+		level.wpAmount = loadWaypoints_Internal( fileNameLua );
 	}
-
-	consolePrint("^3file action complete\n");
-
-	level.wpAmount = loadWaypoints_Internal( fileNameLua );
 	
 	//tranzit waypoints csv found and read
 	if(isDefined(level.wpAmount) && level.wpAmount > 0)
@@ -257,7 +259,7 @@ importWaypointsToArray()
 }
 
 //important: lua arrays start with index 1 not 0
-//so we have to increase the wp and childid by 1
+//so we have to increase the wp and child id by 1
 writeWaypointFileToHDD()
 {
 	//loop through all waypoints to find unlinked (no children)
@@ -280,6 +282,8 @@ writeWaypointFileToHDD()
 			
 			if(isDefined(level.waypoints[i].children) && level.waypoints[i].children.size > 0)
 			{
+				string = string + level.waypoints[i].children.size + ",";
+			
 				for(j=0;j<level.waypoints[i].children.size;j++)
 				{
 					childID = level.waypoints[i].children[j] + 1;
@@ -361,7 +365,7 @@ imProvePath(path)
 				prevTraceWorked = true;
 				continue;
 			}
-			else if(PlayerPhysicsTrace(curWpOrigin, nextWpOrigin) == nextWpOrigin)
+			else if(CharacterPhysicsTrace(false, curWpOrigin, nextWpOrigin) == nextWpOrigin)
 			{
 				//consolePrint(nextPos + " is a free way - might skip this\n");
 				prevTraceWorked = true;
@@ -441,7 +445,7 @@ findEntryPoint(path)
 	{
 		nextWpOrigin = getWpOrigin(path[nextPos]) + offset;
 	
-		if(PlayerPhysicsTrace(self.origin, nextWpOrigin) == nextWpOrigin)
+		if(CharacterPhysicsTrace(false, self.origin, nextWpOrigin) == nextWpOrigin)
 		{
 			tempPath[tempPath.size] = path[nextPos];
 			break;

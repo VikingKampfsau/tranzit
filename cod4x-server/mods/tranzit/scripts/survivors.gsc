@@ -20,6 +20,12 @@ init()
 	initSurvivorModel("body_complete_mp_vip", "", true);
 	//initSurvivorModel("body_mp_vip_pres", "head_mp_usmc_zack", false);
 	
+	if(getDvar("scr_knife_assist_range") == "")
+		setDvar("scr_knife_assist_range", 128);
+		
+	if(getDvar("scr_knife_assist_angle") == "")
+		setDvar("scr_knife_assist_angle", 15);
+	
 	/*the tranzit_extrafunctions plugin adds this new functions:
 	player printWeaponState(); -> returns the current weaponState integer
 	player isSwitchingWeapons(); -> returns if the player cycles weapons
@@ -111,6 +117,7 @@ spawnSurvivor()
 	self SetMoveSpeedScale(self.moveSpeedScale);
 
 	self thread monitorSpeed();
+	//self thread monitorMelee();
 	self thread checkVehicle();
 	//self thread watchForElevator(); //to much false positives
 	self thread damagePlayerInFog();
@@ -129,11 +136,7 @@ spawnSurvivor()
 	self scripts\perks::setZombiePerk("specialty_pistoldeath");
 	
 	self thread scripts\weather::playerWeather();
-	
-	if(game["debug"]["status"] && game["debug"]["playerValueHud"])
-	{
-		self thread scripts\debug\valuedebugging::privateValueDebugHuds();
-	}
+	self thread scripts\debug\valuedebugging::privateValueDebugHuds();
 }
 
 detachOldWeaponModels()
@@ -451,7 +454,7 @@ diveToProne()
 
 	angles = self getPlayerAngles();
 	angles = (0, angles[1], 0);
-	origin_in_air = PlayerPhysicsTrace(self.origin + (0, 0, 2), self.origin + (0, 0, 60));
+	origin_in_air = CharacterPhysicsTrace(true, self.origin + (0, 0, 2), self.origin + (0, 0, 60));
 	self setOrigin(origin_in_air);
 	self SetVelocity((anglesToUp(angles)*velocity_multiplier_up) + (AnglesToForward(angles)*velocity_multiplier_fw));
 	
@@ -482,16 +485,126 @@ monitorSpeed()
 	//result: sprint is 285
 }
 
+monitorMelee()
+{
+	self endon("disconnect");
+	self endon("death");
+	
+	while(1)
+	{
+		if(self isMeleeing())
+		{
+			if(weaponHasMeleeCharge(self getCurrentWeapon()))
+				self thread activateKnifeAssist();
+			
+			while(self isMeleeing())
+				wait .05;
+		}
+		
+		wait .05;
+	}
+}
+
+activateKnifeAssist()
+{
+	self endon("disconnect");
+	self endon("death");
+	self endon("stop_knifeassist");
+
+	knife_maxRange = getDvarInt("player_meleeRange");
+	if(knife_maxRange <= 0)
+		return;
+
+	knife_assist_maxRange = getDvarInt("scr_knife_assist_range");
+	if(knife_assist_maxRange <= 0)
+		return;
+	
+	knife_assist_maxAngle = getDvarInt("scr_knife_assist_angle");	
+	if(knife_assist_maxAngle <= 0)
+		return;
+	
+	targetInfo = [];
+	targetInfo["alpha"] = undefined;
+	targetInfo["player"] = undefined;
+	targetInfo["vDirToTarget"] = undefined;
+	for(i=0;i<level.players.size;i++)
+	{
+		if(level.players[i] == self)
+			continue;
+			
+		if(!isAlive(level.players[i]))
+			continue;
+	
+		if(!level.players[i] isAZombie())
+			continue;
+		
+		vDist = Distance(self.origin, level.players[i].origin);		
+		if(vDist > knife_assist_maxRange)
+			continue;
+
+		angleDiff = abs(maps\mp\gametypes\_missions::AngleClamp180(VectorToAngles(level.players[i].origin - self.origin)[1] - self getPlayerAngles()[1]));
+		if(angleDiff > knife_assist_maxAngle)
+			continue;
+
+		//path to enemy clear?
+		if( !BulletTracePassed(self.origin + (0,0,20), self.origin + (0,0,20) + AnglesToForward((0, self getPlayerAngles()[1], 0))*vDist, false, self) ||
+			!BulletTracePassed(self.origin + (0,0,40), self.origin + (0,0,40) + AnglesToForward((0, self getPlayerAngles()[1], 0))*vDist, false, self) ||
+			!BulletTracePassed(self.origin + (0,0,75), self.origin + (0,0,75) + AnglesToForward((0, self getPlayerAngles()[1], 0))*vDist, false, self))
+			continue;
+
+		//update the target
+		if(!isDefined(targetInfo["alpha"]) || angleDiff < targetInfo["alpha"])
+		{
+			targetInfo["alpha"] = angleDiff;
+			targetInfo["player"] = level.players[i];
+			targetInfo["vDist"] = vDist;
+			targetInfo["vDirToTarget"] = VectorToAngles(level.players[i].origin - self.origin);
+		}
+	}
+	
+	if(!isDefined(targetInfo["player"]) || !isAlive(targetInfo["player"]))
+		return;
+	
+	//no lunge when close enough for default slash
+	if(targetInfo["vDist"] <= knife_maxRange)
+		return;
+	
+	//stop a jump
+	if(!self isOnGround())
+		self setOrigin(self.origin);
+
+	trace = BulletTrace(self getEye(), self getEye() + AnglesToForward(self getPlayerAngles())*targetInfo["vDist"], true, self);
+	
+	//crosshair on enemy = teleport to player = damage
+	if(isDefined(trace["entity"]) && trace["entity"] == targetInfo["player"])
+	{
+		//iPrintLnBold("crosshair on enemey");
+		targetOrigin = targetInfo["player"].origin - AnglesToForward(targetInfo["vDirToTarget"])*knife_maxRange;
+	}
+	//crosshair NOT on enemy = teleport next to player = no damage
+	else
+	{
+		//iPrintLnBold("crosshair NOT on enemey");
+		targetOrigin = self.origin + AnglesToForward((0, self getPlayerAngles()[1], 0))*knife_assist_maxRange;
+	}
+	
+	//sadly PlayerPhysicsTrace ignores characters so a trace is necessary first
+	targetOrigin = BulletTrace(self.origin, targetOrigin, true, self)["position"];
+	targetOrigin = PlayerPhysicsTrace(self.origin, targetOrigin);
+	
+	self setOrigin(targetOrigin);
+	
+	//apply the animations
+	self forceViewmodelAnimation("meleecharge");
+	self setWorldmodelAnim("torso", "pt_melee_pistol_2");
+}
+
 checkVehicle()
 {
 	self endon("disconnect");
 	self endon("death");
 	
-	if(!isDefined(level.vehicle))
-	{
-		self.isOnTruck = false;
-		return;
-	}
+	mantleSpot = undefined;
 	
 	while(1)
 	{
@@ -499,7 +612,10 @@ checkVehicle()
 		
 		if(!self.isOnTruck)
 		{
-			if(self scripts\vehicle::canMantleInVehicle(level.tranzitVehicle.mantleSpots[0]))
+			if(isDefined(level.tranzitVehicle) && isDefined(level.tranzitVehicle.mantleSpots) && isDefined(level.tranzitVehicle.mantleSpots[0]))
+				mantleSpot = level.tranzitVehicle.mantleSpots[0];
+		
+			if(self scripts\vehicle::canMantleInVehicle(mantleSpot))
 			{
 				self thread scripts\survivors::showMantleHint();
 			

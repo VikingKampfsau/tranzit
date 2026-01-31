@@ -40,8 +40,14 @@ init()
 	level.napalmSettings.rocketTrailFx = loadfx("smoke/smoke_geotrail_hellfire");
 }
 
-useAirstrike(supportType, targetLocation)
+useAirstrike(supportType, targetLocation, use_map_artillery_selector)
 {
+	if(!use_map_artillery_selector)
+	{
+		playSoundAtPosition("smokegrenade_explode_default", targetLocation);
+		playFx(level._effect["smoke_location_marker"], targetLocation);
+	}
+	
 	thread doArtillery(supportType, self, targetLocation);
 }
 
@@ -50,7 +56,7 @@ doArtillery(supportType, owner, targetLocation)
 	level.airstrikeInProgress = true;
 	yaw = randomfloat(360);
 	
-	/*for(i=0;i<level.players.size;i++)
+	for(i=0;i<level.players.size;i++)
 	{
 		if(isAlive(level.players[i]) && level.players[i] isAsurvivor())
 		{
@@ -60,7 +66,6 @@ doArtillery(supportType, owner, targetLocation)
 	}
 	
 	wait 2;
-	*/
 
 	if(!isDefined(owner))
 	{
@@ -391,7 +396,7 @@ callStrike_bombEffect(plane, launchTime, bombFallTime, owner, supportType, targe
 	if(supportType != "napalm")
 	{
 		for(i=0;i<damageArea.size;i++)
-			thread doDamgeInDamageArea(bombOrigin, damageArea[i].origin, undefined, supportType, owner);
+			thread doDamgeInDamageArea(bombOrigin, damageArea[i].origin, bomb, supportType, owner);
 	}
 	else
 	{
@@ -423,14 +428,15 @@ doDamgeInDamageArea(bombOrigin, damageArea, bombParticle, supportType, owner)
 	playRumbleOnPosition("artillery_rumble", damageArea);
 	earthquake(0.7, 0.75, damageArea, 1000);
 	
-	if(supportType == "napalm" && isDefined(bombParticle))
+	if(supportType != "napalm")
+		thread losRadiusDamage(damageArea + (0,0,16), 512, 200, 30, owner, bombParticle); //targetpos, radius, maxdamage, mindamage, player causing damage, entity that player used to cause damage
+	else
 		thread spawnNapalmFireGroup(damageArea, bombParticle, owner);
 }
 
 losRadiusDamage(pos, radius, max, min, owner, eInflictor)
 {
 	ents = maps\mp\gametypes\_weapons::getDamageableEnts(pos, radius, true);
-
 	for(i=0;i<ents.size;i++)
 	{
 		if(ents[i].entity == self)

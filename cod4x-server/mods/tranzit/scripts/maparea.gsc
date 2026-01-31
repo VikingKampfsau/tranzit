@@ -68,6 +68,11 @@ monitorMovementInMap()
 	level endon("game_ended");
 	level endon("game_will_end");
 
+	wait 1;
+	
+	if(game["debug"]["status"] && !game["debug"]["startZombieSurvival"])
+		return;
+
 	while(1)
 	{
 		wait .5;

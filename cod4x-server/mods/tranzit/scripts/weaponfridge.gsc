@@ -54,6 +54,9 @@ openWeaponFridge()
 
 getFridgedWeapon()
 {
+	if(!isDefined(self.inFridge))
+		self.inFridge = [];
+
 	if(!isDefined(self.fridgedWeapon))
 		self.fridgedWeapon = spawnStruct();
 
@@ -67,7 +70,6 @@ getFridgedWeapon()
 		
 		if(file > 0)
 		{
-			self.inFridge = [];
 			while(1)
 			{
 				line = fReadLn(file);
@@ -127,11 +129,15 @@ swapWeapons()
 	toFridge = spawnStruct();
 	toFridge.map = level.script;
 	toFridge.weapon = self getCurrentWeapon();
-	if(toFridge.weapon == "none")
-		return;
 	
 	if(file > 0)
 	{
+		if(toFridge.weapon == "none")
+		{
+			closeFile(file);
+			return;
+		}
+	
 		toFridge.weaponAmmoClip = self getWeaponAmmoClip(toFridge.weapon);
 		if(!isDefined(toFridge.weaponAmmoClip))
 			toFridge.weaponAmmoClip = 0;

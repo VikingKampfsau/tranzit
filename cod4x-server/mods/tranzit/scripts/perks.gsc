@@ -130,7 +130,7 @@ isDefaultPerk(name)
 		if(name == level.default_perks[i].name)
 			return true;
 	}
-	
+
 	return false;
 }
 
@@ -291,6 +291,9 @@ initVendingMachine()
 
 hidePerkMachineParts()
 {
+	if(!isDefined(self.content) || self.content == "rotu_shop")
+		return;
+
 	hideStatus = "on";
 	visibleStatus = "off";
 	
@@ -385,6 +388,7 @@ activateVendingMachine(localPowerSupply, delay)
 		self thread switchOnPowerLight(fxData.lightFX);
 		self thread PlayVendingSound(fxData.sound, true, fxData.soundLength);
 	}
+
 
 	self hidePerkMachineParts();
 

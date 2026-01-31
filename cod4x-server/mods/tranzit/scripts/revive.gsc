@@ -268,8 +268,8 @@ MoveReviveObj(player)
 		if(player moverightbuttonpressed())
 			newPos += AnglesToRight((player.angles[0], player.angles[1], 0))*2;
 
-		newPos = PlayerPhysicsTrace(player.origin + (0,0,5), newPos);
-		newPos = PlayerPhysicsTrace(newPos, newPos - (0,0,1000));
+		newPos = CharacterPhysicsTrace(true, player.origin + (0,0,5), newPos);
+		newPos = CharacterPhysicsTrace(true, newPos, newPos - (0,0,1000));
 		
 		if(newPos[2] < player.origin[2])
 		{
@@ -438,7 +438,7 @@ reviveVictim()
 	if(isDefined(self.bleedOverlay))
 		self.bleedOverlay destroy();
 
-	dropTarget = PlayerPhysicsTrace(self.origin + (0,0,5), self.origin);
+	dropTarget = CharacterPhysicsTrace(true, self.origin + (0,0,5), self.origin);
 	
 	self spawn(dropTarget, self.angles);
 	self playSoundRef("revive_revived");

@@ -28,7 +28,7 @@ attackerIsDamagingRiotShield(eInflictor, eAttacker, vPoint, vDir, sMeansOfDeath)
 
 	if(sMeansOfDeath == "MOD_MELEE")
 	{
-		if(self isLookingAt(eAttacker))
+		if(self isLookingAtEntity(eAttacker))
 			return true;
 	
 		return false;

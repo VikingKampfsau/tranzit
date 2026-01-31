@@ -1,0 +1,243 @@
+iwmap 4
+// entity 0
+{
+"contrastGain" ".25"
+"sunIsPrimaryLight" "1"
+"sunlight" "0.85"
+"sundirection" "-30 -42 0"
+"sundiffusecolor" "0.5 0.5 0.7"
+"suncolor" "0.5 0.6 1"
+"radiosityscale" "2"
+"diffusefraction" "0.15"
+"ambient" ".1"
+"_color" "0.46 0.64 0.61"
+"classname" "worldspawn"
+}
+// entity 1
+// entity 2
+{
+"origin" "-1216.0 -448.0 16.0"
+"angles" "0 360 0"
+"classname" "mp_tdm_spawn_axis_start"
+}
+// entity 3
+// entity 4
+{
+"angles" "0 270 0"
+"origin" "384.0 64.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 5
+{
+"origin" "-1216.0 -320.0 16.0"
+"angles" "0 360 0"
+"classname" "mp_tdm_spawn_allies_start"
+}
+// entity 6
+{
+"origin" "-1216.0 -384.0 16.0"
+"angles" "0 360 0"
+"classname" "mp_tdm_spawn"
+}
+// entity 7
+// entity 8
+// entity 9
+// entity 10
+// entity 11
+// entity 12
+// entity 13
+// entity 14
+// entity 15
+// entity 16
+// entity 17
+// entity 18
+// entity 19
+// entity 20
+// entity 21
+// entity 22
+// entity 23
+// entity 24
+// entity 25
+// entity 26
+// entity 27
+// entity 28
+// entity 29
+// entity 30
+// entity 31
+// entity 32
+// entity 33
+// entity 34
+// entity 35
+// entity 36
+// entity 37
+// entity 38
+// entity 39
+// entity 40
+// entity 41
+// entity 42
+// entity 43
+// entity 44
+// entity 45
+// entity 46
+// entity 47
+// entity 48
+// entity 49
+// entity 50
+// entity 51
+// entity 52
+// entity 53
+// entity 54
+// entity 55
+// entity 56
+// entity 57
+// entity 58
+// entity 59
+// entity 60
+// entity 61
+// entity 62
+// entity 63
+// entity 64
+// entity 65
+// entity 66
+// entity 67
+// entity 68
+// entity 69
+// entity 70
+// entity 71
+{
+"angles" "0 270 0"
+"origin" "448.0 0.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 72
+{
+"angles" "0 270 0"
+"origin" "-1040.0 1200.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 73
+{
+"angles" "0 270 0"
+"origin" "-720.0 816.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 74
+{
+"angles" "0 270 0"
+"origin" "-384.0 1088.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 75
+{
+"angles" "0 270 0"
+"origin" "544.0 736.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 76
+{
+"angles" "0 270 0"
+"origin" "-32.0 784.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 77
+{
+"angles" "0 270 0"
+"origin" "224.0 1040.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 78
+{
+"angles" "0 270 0"
+"origin" "768.0 1184.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 79
+{
+"angles" "0 270 0"
+"origin" "1200.0 976.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 80
+{
+"angles" "0 270 0"
+"origin" "800.0 336.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 81
+{
+"angles" "0 270 0"
+"origin" "1264.0 464.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 82
+{
+"angles" "0 270 0"
+"origin" "752.0 -288.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 83
+{
+"angles" "0 270 0"
+"origin" "1056.0 64.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 84
+{
+"angles" "0 270 0"
+"origin" "1216.0 -832.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 85
+{
+"angles" "0 270 0"
+"origin" "1216.0 -416.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 86
+{
+"angles" "0 270 0"
+"origin" "816.0 -624.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 87
+{
+"angles" "0 270 0"
+"origin" "224.0 -432.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 88
+{
+"angles" "0 270 0"
+"origin" "32.0 -736.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 89
+{
+"angles" "0 270 0"
+"origin" "-416.0 -320.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 90
+{
+"angles" "0 270 0"
+"origin" "-336.0 -704.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 91
+{
+"angles" "0 270 0"
+"origin" "-912.0 -688.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 92
+{
+"angles" "0 270 0"
+"origin" "-1040.0 480.0 16.0"
+"classname" "mp_dm_spawn"
+}
+// entity 93
+{
+"angles" "0 270 0"
+"origin" "-736.0 256.0 16.0"
+"classname" "mp_dm_spawn"
+}

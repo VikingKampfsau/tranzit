@@ -32,7 +32,7 @@ calcPlayerRank()
 	if(isDefined(self.pers["isBot"]) && !self.pers["isBot"])
 		return;
 	
-	currentDate = createDateArray(TimeToString(getRealTime(), 0, "%F"), "-");
+	currentDate = createDateArray(TimeToString(getRealTime(), 0, "%Y-%m-%d"), "-");
 	playerOfflineDays = self getOfflineDays(currentDate);
 	playerTallyMarks = self getZombieRankTallyMarks(playerOfflineDays);
 	playerZombieRank = self getZombieRank(playerOfflineDays);
@@ -49,7 +49,7 @@ calcPlayerRank()
 	
 	if(game["debug"]["status"] && game["debug"]["playerRank"])
 	{
-		consolePrint("currentDate: " + TimeToString(getRealTime(), 0, "%F") + "\n");
+		consolePrint("currentDate: " + TimeToString(getRealTime(), 0, "%Y-%m-%d") + "\n");
 		consolePrint("player: " + self.name + "\n");
 		consolePrint("playerOfflineDays: " + playerOfflineDays + "\n");
 		consolePrint("playerTallyMarks: " + playerTallyMarks + "\n");
@@ -67,7 +67,8 @@ calcPlayerRank()
 
 updateLastSeenValue(date)
 {
-	self setStat(2441, int(date[0] + "" + date[1] + "" + date[2]));
+	if(isDefined(date))
+		self setStat(2441, int(date[0] + "" + date[1] + "" + date[2]));
 }
 
 getZombieRank(playerOfflineDays)
@@ -123,6 +124,9 @@ getZombieRankTallyMarks(playerOfflineDays)
 
 getOfflineDays(currentDate)
 {
+	if(!isDefined(currentDate))
+		return 0;
+
 	playerlastSeen = self getStat(2441);
 
 	if(playerlastSeen <= 0)

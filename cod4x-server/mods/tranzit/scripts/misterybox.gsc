@@ -10,6 +10,7 @@ init()
 
 	precacheModel("zombie_treasure_box");
 	precacheModel("com_teddy_bear");
+	precacheModel("misterybox_hardpoint_preview");
 
 	add_effect("misterybox_location_light", "tranzit/misterybox/misterybox_location_light");
 	add_effect("misterybox_flies", "tranzit/misterybox/misterybox_flies");
@@ -57,6 +58,9 @@ init()
 	initMisteryWeapon("usp_mp");
 	initMisteryWeapon("uzi_mp");
 	initMisteryWeapon("winchester1200_mp");
+	
+	initMisteryWeapon("carepackage");
+	initMisteryWeapon("airstrike");
 	
 	initMisteryWeapon(getWeaponFromCustomName("chainsaw"));
 	initMisteryWeapon(getWeaponFromCustomName("emp_grenade"));
@@ -307,15 +311,27 @@ doMisteryBox(box, player)
 	{
 		randomWeapon = player calculateRandomWeapon();
 		
-		if(randomWeapon.weaponName != "teddy")
-		{
-			weaponModel setModel(getWeaponModel(randomWeapon.weaponName, 0));
-			weaponModel.angles = (0,(box.angles[1] + 90),0);
-		}
-		else
+		if(randomWeapon.weaponName == "teddy")
 		{
 			weaponModel setModel("com_teddy_bear");
 			weaponModel.angles = (0,(box.angles[1] + 180),0);
+		}
+		else
+		{
+			if(!isHardpointWeapon(randomWeapon.weaponName))
+				weaponModel setModel(getWeaponModel(randomWeapon.weaponName, 0));
+			else
+			{
+				weaponModel setModel("misterybox_hardpoint_preview");
+				
+				if(randomWeapon.weaponName != "airstrike")
+					weaponModel hidePart("tag_preview_airstrike", weaponModel.model);
+
+				if(randomWeapon.weaponName != "carepackage")
+					weaponModel hidePart("tag_preview_carepackage", weaponModel.model);
+			}
+			
+			weaponModel.angles = (0,(box.angles[1] + 90),0);
 		}
 
 		wait .1;

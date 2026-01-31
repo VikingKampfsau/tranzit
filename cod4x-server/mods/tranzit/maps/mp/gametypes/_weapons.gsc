@@ -376,7 +376,7 @@ watchPickup()
 			break;
 		// otherwise, player merely acquired ammo and didn't pick this up
 	}
-	
+		
 	/#
 	if ( getdvar("scr_dropdebug") == "1" )
 		println( "picked up weapon: " + weapname + ", " + isdefined( self.ownersattacker ) );
@@ -1426,7 +1426,10 @@ getDamageableEnts(pos, radius, doLOS, startRadius)
 	players = level.players;
 	for (i = 0; i < players.size; i++)
 	{
-		if (!isalive(players[i]) || players[i].sessionstate != "playing")
+		if (!isAlive(players[i]))
+			continue;
+		
+		if( players[i].sessionstate != "playing")
 			continue;
 		
 		playerpos = players[i].origin + (0,0,32);

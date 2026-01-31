@@ -86,102 +86,6 @@ resetPlayerSettings()
 						"cg_thirdperson", self.playerSetting["thirdperson"]);
 }
 
-TargetMarkers()
-{
-	self endon("death");
-	self endon("disconnect");
-
-	self setClientDvars("waypointiconheight", 20,
-						"waypointiconwidth", 20);
-
-	self.targetMarkers = [];
-
-	for(i=0;i<level.alivePlayers[game["attackers"]].size;i++)
-	{
-		enemy = level.alivePlayers[game["attackers"]][i];
-		
-		if(isDefined(self.targetMarkers[i]))
-			self.targetMarkers[i] delete();
-	
-		self.targetMarkers[i] = newClientHudElem(self);
-		self.targetMarkers[i].x = enemy.origin[0];
-		self.targetMarkers[i].y = enemy.origin[1];
-		self.targetMarkers[i].z = enemy.origin[2];
-		self.targetMarkers[i].isFlashing = false;
-		self.targetMarkers[i].isShown = true;
-		self.targetMarkers[i].baseAlpha = 0;
-		self.targetMarkers[i].alpha = 0;
-		self.targetMarkers[i].owner = self;
-		self.targetMarkers[i].team = self.pers["team"];
-		self.targetMarkers[i].target = enemy;
-		self.targetMarkers[i] setShader("waypoint_kill", 15, 15);
-		self.targetMarkers[i] setWayPoint(true, "waypoint_kill");
-		self.targetMarkers[i] setTargetEnt(enemy);
-		
-		self.targetMarkers[i] thread monitorMarkerVisibility();
-	}
-}
-
-monitorMarkerVisibility()
-{
-	self endon("death");
-	
-	if(isDefined(self.owner) && isDefined(self.target) && self.owner == self.target)
-		return;
-	
-	while(1)
-	{
-		wait .05;
-		
-		if(!isDefined(self))
-			break;
-			
-		if(!isDefined(self.owner) || !isPlayer(self.owner) || !isAlive(self.owner))
-			break;
-			
-		if(!isDefined(self.target) || !isPlayer(self.target) || !isDefined(self.target getEntityNumber()))
-			break;
-
-		if(!isAlive(self.target) || self.target.sessionstate != "playing")
-			break;
-
-		if(self.target.pers["team"] == self.team)
-			break;
-	
-		self.baseAlpha = 1;
-		self.alpha = 1;
-	}
-
-	if(isDefined(self))
-	{
-		self clearTargetEnt();
-		self destroy();
-	}
-}
-
-DeleteTargetMarkers()
-{
-	self endon("disconnect");
-
-	if(!isDefined(self))
-		return;
-	
-	self setClientDvars("waypointiconheight", 36,
-						"waypointiconwidth", 36);
-	
-	if(!isDefined(self.targetMarkers))
-		return;
-	
-	for(i=0;i<self.targetMarkers.size;i++)
-	{
-		if(isDefined(self.targetMarkers[i]))
-		{
-			self.targetMarkers[i] clearTargetEnt();
-			self.targetMarkers[i] destroy();
-		}
-	}
-}
-
 sendDiscordMessage(author, command, subMessage)
 {
 	if(!isDefined(subMessage) || subMessage == "")
@@ -248,6 +152,8 @@ sendDiscordMessage(author, command, subMessage)
 			"]"+
 		"}";
 	
+	//consolePrint("GSC: " + jsonPostMsg + "\n");
+	
 	httppostjson(webhook.url, jsonPostMsg, ::httppostjsonCallback, author);
 }
 
@@ -258,28 +164,3 @@ httppostjsonCallback(handle)
 	// release the plugin internal json data
 	jsonreleaseobject(handle);
 }
-
-/*
-NOTE: Somehow copy & paste does not work - typing the commands works!
-Install the dlang compiler and dub build system (https://dlang.org/download.html); for ubuntu/debian:
-
-sudo wget https://netcologne.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list﻿
-sudo apt-get update --allow-unauthenticated --allow-insecure-repositories
-sudo apt-get -y --allow-unauthenticated install --reinstall d-apt-keyring﻿
-sudo apt-get up﻿date && sudo apt-get i﻿nstall dmd-co﻿mpile﻿r du﻿b﻿
-
-you'll also need the phobos library
-
-sudo apt install libphobos2-dev:i386﻿
-
-clone the plugin repository
-
-git clone https://github.com/callofduty4x/cod4x_plugin_http.git﻿
-cd ~/cod4x_plugin_http
-
-then compile the plugin with
-
-dub --arch=x86 --build=release﻿
-
-now you should have "libcod4x_http_plugin.so"
-*/

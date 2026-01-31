@@ -200,7 +200,7 @@ initWallweaponSpot()
 		if(isDefined(player.buyingWallweapon) && player.buyingWallweapon)
 			continue;
 		
-		if(!player isLookingAt(self))
+		if(!player isLookingAtEntity(self))
 			continue;
 		
 		if(!SightTracePassed(player getEye(), self.finalPos, false, undefined))

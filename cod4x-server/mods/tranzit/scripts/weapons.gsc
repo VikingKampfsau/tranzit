@@ -12,14 +12,18 @@ init()
 
 	add_weapon("alien_servant", "winchester1200_reflex_mp", true);
 	add_weapon("fists", "defaultweapon_mp", false);
-	add_weapon("location_selector", "location_selector_mp", false);
 	add_weapon("player_death", "skorpion_reflex_mp", false);
+	
+	if(mapHasMinimap())
+		add_weapon("location_selector", "location_selector_mp", false);
+	else
+		add_weapon("location_selector", "location_selector_grenade_mp", false);
 	
 	add_effect("turret_overheat_smoke", "distortion/armored_car_overheat");	
 	add_effect("deathPortal_loop", "tranzit/raygun_mk3/fx_mk3_hole");
 	add_effect("deathPortal_end", "tranzit/raygun_mk3/fx_mk3_dead");
-
 	add_effect("zapgun_impact", "tranzit/zapguns/zapgun_impact");
+	add_effect("smoke_location_marker", "red_smoke");
 		
 	add_sound("wpn_mk3_orb_creation", "wpn_mk3_orb_creation");
 	add_sound("wpn_mk3_orb_loop", "wpn_mk3_orb_loop");
@@ -134,6 +138,8 @@ watchSpecialUsage()
 		self waittill("weapon_change");
 		curWeapon = self getCurrentWeapon();
 	
+		//iPrintLnBold("curWeapon " + curWeapon);
+	
 		if(	curWeapon == getWeaponFromCustomName("perksacola") ||
 			curWeapon == getWeaponFromCustomName("syrette"))
 		{
@@ -146,9 +152,12 @@ watchSpecialUsage()
 			if(!isDefined(self.actionSlotHardpoint))
 				continue;
 			
-			if(isDefined(self selectLocation(self.actionSlotHardpoint)))
+			if(weaponType(getWeaponFromCustomName("location_selector")) == "grenade")
+				self thread beginGrenadeLocationSelection(self.actionSlotHardpoint, lastWeapon);
+			else
 			{
-				self takeActionSlotWeapon("hardpoint");
+				if(isDefined(self beginArtilleryLocationSelection(self.actionSlotHardpoint)))
+					self takeActionSlotWeapon("hardpoint");
 				
 				if(isDefined(lastWeapon) && lastWeapon != "none")
 					self switchToWeapon(lastWeapon);
@@ -781,8 +790,9 @@ playerMoveTo(targetPos, time, offset)
 |		not added - but they work		|
 |			will i ever add it?			|
 |--------------------------------------*/
-
-selectLocation(supportType)
+//honestly i prefer the smoke grenade - just like in 'kill the king'
+//but this can also be used on maps with minimaps
+beginArtilleryLocationSelection(supportType)
 {
 	self beginLocationSelection("map_artillery_selector");
 	self.selectingLocation = true;
@@ -794,8 +804,48 @@ selectLocation(supportType)
 	self thread endSelectionOnGameEnd();
 
 	self endon("stop_location_selection");
-	self waittill("confirm_location", targetLocation);
-	//targetLocation[2] is always 0, i'll fix that in each airsupport script
+	self waittill("confirm_location", targetLocation); //targetLocation[2] is always 0, i'll fix that in each airsupport script
+	
+	used_map_artillery_selector = true;
+	
+	if(self confirmedLocationSelection(supportType, targetLocation, used_map_artillery_selector))
+		return true;
+	
+	return false;
+}
+
+beginGrenadeLocationSelection(supportType, lastWeapon)
+{
+	self notify("beginGrenadeLocationSelection_only_once");
+	self endon("beginGrenadeLocationSelection_only_once");
+
+	self waittill("grenade_fire", grenade);
+
+	self takeActionSlotWeapon("hardpoint");
+	if(isDefined(lastWeapon) && lastWeapon != "none")
+		self switchToWeapon(lastWeapon);
+
+	targetLocation = grenade.origin;
+	while(1)
+	{
+		wait .15;
+		
+		if(!isDefined(grenade))
+			break;
+		
+		if(grenade.origin == targetLocation)
+			break;
+		
+		targetLocation = grenade.origin;
+	}
+	
+	used_map_artillery_selector = false;
+	return self confirmedLocationSelection(supportType, targetLocation, used_map_artillery_selector);
+}
+
+confirmedLocationSelection(supportType, targetLocation, used_map_artillery_selector)
+{
+	self endon("disconnect");
 
 	if(!isDefined(supportType))
 		supportType = "airstrike";
@@ -812,7 +862,7 @@ selectLocation(supportType)
 				return false;
 			}
 			
-			self thread startAirSupport(supportType, targetLocation, scripts\airstrike::useAirstrike);
+			self thread startAirSupport(supportType, targetLocation, used_map_artillery_selector, scripts\airstrike::useAirstrike);
 			return true;
 		}
 		
@@ -832,7 +882,7 @@ selectLocation(supportType)
 				return false;
 			}
 
-			self thread startAirSupport(supportType, targetLocation, scripts\carepackage::useCarepackageHeli);
+			self thread startAirSupport(supportType, targetLocation, used_map_artillery_selector, scripts\carepackage::useCarepackageHeli);
 			return true;
 		}
 		
@@ -840,12 +890,12 @@ selectLocation(supportType)
 	}
 }
 
-startAirSupport(supportType, targetLocation, usedCallback)
+startAirSupport(supportType, targetLocation, used_map_artillery_selector, usedCallback)
 {
 	self notify("determine_location");
 	wait .05;
 	self thread stopLocationSelection(false);
-	self thread [[usedCallback]](supportType, targetLocation);
+	self thread [[usedCallback]](supportType, targetLocation, used_map_artillery_selector);
 }
 
 endSelectionOn(waitfor)
@@ -860,7 +910,7 @@ endSelectionOnGameEnd()
 {
 	self endon("stop_location_selection");
 	
-	level waittill("game_ended");
+	level waittill("game_ended");	
 	self thread stopLocationSelection(false);
 }
 

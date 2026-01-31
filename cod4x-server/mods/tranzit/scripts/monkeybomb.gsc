@@ -6,7 +6,6 @@ init()
 	add_sound("monkey_explo_vox", "monkey_explo_vox");
 
 	add_effect("monkeybomb_groundPop", "impacts/brickimpact_em2");
-	//add_effect("monkeybomb_devileyes", "misc/aircraft_light_cockpit_red");
 	add_effect("monkeybomb_devileyes", "tranzit/zombie/human_eye_glow");
 }
 

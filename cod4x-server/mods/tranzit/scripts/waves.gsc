@@ -165,10 +165,12 @@ prepareWave()
 	game["tranzit"].starttime = getTime();	
 	game["powerup_achieved"] = 0;
 
-	chalk_one_up();
-	
-	thread zombieOutbreak();
-	thread scripts\rank::checkForPlayerRankups();
+	if(game["debug"]["status"] && game["debug"]["startZombieSurvival"])
+	{
+		chalk_one_up();
+		thread zombieOutbreak();	
+		thread scripts\rank::checkForPlayerRankups();
+	}
 }
 
 getRandomSpecialWave()

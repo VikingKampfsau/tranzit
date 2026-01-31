@@ -15,7 +15,6 @@ init()
 	thread loadDoors();
 	thread loadBlockers();
 	thread loadBarricades();
-	thread loadMantleTriggers();
 }
 
 loadDoors()
@@ -304,13 +303,16 @@ initBarricade()
 	//the difference between a barricade and a door/blocker is that zombies can destroy it to pass
 	//to make them move to the barricade the waypoints have to be connected BEFORE the barricade removal
 	waypoints = getEntArray(self.target, "targetname");
-	//connect the waypoints to allow zombies to move the new free way
-	addWpNeighbour(getNearestWp(waypoints[0].origin, 0), getNearestWp(waypoints[1].origin, 0));
-	addWpNeighbour(getNearestWp(waypoints[1].origin, 0), getNearestWp(waypoints[0].origin, 0));
-	
-	//the waypoints are not used anymore - delete them to free entities
-	for(i=0;i<waypoints.size;i++)
-		waypoints[i] delete();
+	if(waypoints.size >= 2)
+	{
+		//connect the waypoints to allow zombies to move the new free way
+		addWpNeighbour(getNearestWp(waypoints[0].origin, 0), getNearestWp(waypoints[1].origin, 0));
+		addWpNeighbour(getNearestWp(waypoints[1].origin, 0), getNearestWp(waypoints[0].origin, 0));
+
+		//the waypoints are not used anymore - delete them to free entities
+		for(i=0;i<waypoints.size;i++)
+			waypoints[i] delete();
+	}
 
 	//wait 10; //cannot remember why this is here
 	
@@ -532,40 +534,4 @@ barricadeHasPlayerInside()
 	}
 	
 	return false;
-}
-
-loadMantleTriggers()
-{
-	level.mantleTriggers = getEntArray("trigger_mantle", "targetname");
-	
-	//for(i=0;i<level.mantleTriggers.size;i++)
-	//	level.mantleTriggers[i] thread initMantleTrigger();
-}
-
-initMantleTrigger()
-{
-	self endon("death");
-	
-	self.inUse = false;
-
-	while(1)
-	{
-		for(i=0;i<level.players.size;i++)
-		{
-			if(level.players[i] isTouching(self) && level.players[i] isAZombie())
-			{
-				if(!self.inUse && level.players[i] isMantling())
-				{
-					self.inUse = true;
-					
-					while(level.players[i] isMantling())
-						wait .05;
-					
-					self.inUse = false;
-				}
-			}
-		}
-		
-		wait .05;
-	}
 }

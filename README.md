@@ -18,11 +18,12 @@ and much more...
 
 ## Installation
 
-Install cod4x and add the required plugins to it.<br/>
-Copy the mod to your mods folder - if you already have an older version then remove it.<br/>
+Download the files from this repro and drop them into your cod4x server root folder.<br/>
+The mod requires some extra functions and libraries which are already build into the cod4x18_dedrun.
+
+If you already have a different version of the cod4x server, of any plugin or of the tranzit mod itself, then remove it.<br/>
+This mod works with the provided files - especially the cod4x server - only!<br/>
 <br/>
-The libcod4x_http_plugin requires libphobos2 v0.99 (atleast on linux)<br/>
-<code>sudo apt install libphobos2-99:i386</code>
 
 ## Configuration
 

@@ -130,7 +130,8 @@ createSpawnFile()
 							continue;
 
 						spawn.origin = (toks[1] + " " + toks[2] + " " + toks[3]);
-						spawn.origin = getSubStr(spawn.origin, 1 , spawn.origin.size-2);
+						spawn.origin = getSubStr(spawn.origin, 1 , spawn.origin.size-1);
+						spawn.origin = StrRepl(spawn.origin, "\"", "");
 					}
 					else if( isSubStr(string, "targetname") )
 					{
@@ -328,8 +329,14 @@ addMapAreaToSpawnFile(startAtLineNo)
 	{
 		if(inputFile <= 0)
 			consolePrint("^1inputFile not found - aborting\n");
-		else if(outputFile <= 0)
+		else
+			closeFile(inputFile);
+
+		if(outputFile <= 0)
 			consolePrint("^1outputFile not found - aborting\n");
+		else
+			closeFile(outputFile );
+
 	}
 	
 	level notify("navmeshtool_finished_addMapAreaToSpawnFile");

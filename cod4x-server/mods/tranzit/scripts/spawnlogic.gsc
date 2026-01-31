@@ -438,7 +438,7 @@ spawnPointInit()
 	}
 	else
 	{
-		spawnpoint.origin = PlayerPhysicsTrace(spawnpoint.origin + (0,0,10), spawnpoint.origin - (0,0,2000));
+		spawnpoint.origin = CharacterPhysicsTrace(true, spawnpoint.origin + (0,0,10), spawnpoint.origin - (0,0,2000));
 		//spawnpoint.area = 0;
 	}
 	
@@ -999,7 +999,7 @@ doPlayerSpawning(zombieType, zomTarget)
 			{
 				end = start + anglesToForward((0,i,0))*distToPlayer;
 				
-				if(PlayerPhysicsTrace(start, end) == end)
+				if(CharacterPhysicsTrace(false, start, end) == end)
 				{
 					waypoint = getNearestWp(end, 0);
 					break;

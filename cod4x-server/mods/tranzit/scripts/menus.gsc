@@ -311,7 +311,7 @@ onMenuResponse(menu, response)
 	//Weapondrop
 	if(menu == game["menu_weapondrop"] && response == "weapondrop")
 	{
-		self scripts\weapondrop::dropWeaponOnResponse();
+		self thread scripts\weapondrop::dropWeaponOnResponse();
 		return;
 	}
 	
