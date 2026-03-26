@@ -16,14 +16,24 @@ Play with up to 4 players against waves of blood thirsty zombies.<br/>
 - Rotu map support
 and much more...
 
+## Latest trailer
+[![Watch the trailer](https://img.youtube.com/vi/M5JONwGSgnY/maxresdefault.jpg)](https://www.youtube.com/watch?v=M5JONwGSgnY)
+
 ## Installation
 
+If you already have a different version of the cod4x server, of any plugin or of the tranzit mod itself, then remove it before updating the files.<br/>
+This mod works with the provided files - especially the cod4x server - only!<br/>
+<br/>
+
+### Manual installation:
 Download the files from this repro and drop them into your cod4x server root folder.<br/>
 The mod requires some extra functions and libraries which are already build into the cod4x18_dedrun.
 
-If you already have a different version of the cod4x server, of any plugin or of the tranzit mod itself, then remove it.<br/>
-This mod works with the provided files - especially the cod4x server - only!<br/>
-<br/>
+### Automatic installation
+Depending on your OS download the cod4x server binary (cod4x18_dedrun) and the start_tranzit script from this repro and drop them into your cod4x server root folder.
+Adjust the settings within the start_tranzit script to your needs and save it.
+Launch the server via the start_tranzit script.
+Important: The integrity compares your files against the files on the github repro and updates them depending of your settings.
 
 ## Configuration
 

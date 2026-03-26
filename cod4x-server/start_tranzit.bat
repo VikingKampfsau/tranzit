@@ -11,6 +11,10 @@ start "" cod4x18_dedrun.exe ^
 +set g_gametype "tranzit" ^
 +set sv_maxclients "64" ^
 +set ui_maxclients "64" ^
++set mod_integrity_check 1 ^
++set mod_integrity_check_download_missing 1 ^
++set mod_integrity_check_download_mismatch 1 ^
++set mod_integrity_check_download_folder "" ^
 +map mp_forsaken_world
 
 echo Server command executed. Check server console for status.

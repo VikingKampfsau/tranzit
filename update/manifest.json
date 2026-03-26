@@ -1,13 +1,13 @@
 {
   "comment": "CoD4x TranZit SHA256 File Integrity Manifest",
-  "generated": "2026-01-31T15:21:24.220159Z",
+  "generated": "2026-03-26T14:04:51.595811Z",
   "file_count": 137,
   "files": {
-    "cod4x-server/cod4x18_dedrun": "3b77ec2480e6605f58f269dd942d37378dae975cf16dfc350c623e3017ddcd89",
-    "cod4x-server/cod4x18_dedrun.exe": "990158630c7984210b47503bf91899435fa82052f070f464cbd84f4d26eb8107",
+    "cod4x-server/cod4x18_dedrun": "907627e1ec81bd3d5b624f6108af87d8bad838240fdfa51b685300b24477aeef",
+    "cod4x-server/cod4x18_dedrun.exe": "d5349aa6146c0f1e63d166d045c07728031fc8d917859b29d56ff09f910a770b",
     "cod4x-server/libmysql.dll": "b69732131db1ad326556d65559ac3fd37f52a5f833a776d69c01bdf4574f5107",
-    "cod4x-server/start_tranzit.bat": "b48baf50b7718e290ff892a0b617abbdd5dc54848c5e033e38d3d6bd2dafe2b0",
-    "cod4x-server/start_tranzit.sh": "ab8c14290152e91d34854aa7c32295bf228405b472895c7221e08af7868c2a7f",
+    "cod4x-server/start_tranzit.bat": "0bb4bd281f66a574eabeaf6a448ad0d6ad263c53ca4f68dce961b0bdc6a39d93",
+    "cod4x-server/start_tranzit.sh": "672c1fff4c26bf4257bbf9b82bea03c686ef91608f4cb2b390eb1a65f37cbd9a",
     "cod4x-server/lua_scripts/astar.lua": "93c0b7e70e5b744b266d9bb40b151055a89b3aad53befca0a2fcb4e0f8da1ef2",
     "cod4x-server/lua_scripts/lua_navmesh_import.lua": "d4d9d303c877d9a75ce5f2d42bc26da08ce5921537aa489aed8c2edc5cc07fc1",
     "cod4x-server/lua_scripts/rotu.lua": "34b88894a1eddca042a0d9381b9e68db9462f4f55d578ed33ade19eea02313c0",
