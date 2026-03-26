@@ -26,24 +26,25 @@ This mod works with the provided files - especially the cod4x server - only!<br/
 <br/>
 
 ### Manual installation:
-Download the files from this repro and drop them into your cod4x server root folder.<br/>
+Download the files from this repro and drop them into your cod4x server root folder.
 The mod requires some extra functions and libraries which are already build into the cod4x18_dedrun.
 
 ### Automatic installation
 Depending on your OS download the cod4x server binary (cod4x18_dedrun) and the start_tranzit script from this repro and drop them into your cod4x server root folder.
 Adjust the settings within the start_tranzit script to your needs and save it.
-Launch the server via the start_tranzit script.
+Launch the server via the start_tranzit script.<br/>
 Important: The integrity compares your files against the files on the github repro and updates them depending of your settings.
 
 ## Configuration
 
 The mod comes with a single server config only.<br/>
+Don't forget to modify it - by default it's located in mods/tranzit
 
 ## Support
 For bug reports and issues, please visit the "Issues" tab at the top.<br/>
 First look through the issues, maybe your problem has already been reported.<br/>
 If not, feel free to open a new issue.<br/>
 
-**Keep in mind that we only support the current state of the repository - older versions are not supported anymore!**
+**Keep in mind that we support the current state of the repository only - older versions are not supported anymore!**
 
 However, for any kind of question, feel free to visit our discord server at https://discord.gg/wDV8Eeu!
