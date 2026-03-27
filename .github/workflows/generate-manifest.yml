@@ -1,0 +1,31 @@
+name: Generate Manifest
+
+on:
+  push:
+    paths:
+      - 'cod4x-server/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: :contentReference[oaicite:0]{index=0}/actions/checkout@v4
+
+      - name: Set up Python
+        uses: :contentReference[oaicite:1]{index=1}/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Generate manifest
+        run: |
+          python update/generate_manifest.py
+
+      - name: Commit and push manifest
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add update/manifest.json
+          git commit -m "Auto-update manifest"
+          git push
