@@ -1,0 +1,19 @@
+*****************************************************************************************
+*	This is not a config - It's a simple explanation of the integrity check settings	*
+*		It's recommended to add the setting directly to the start parameter/script		*
+*****************************************************************************************
+
+// Enable the integrity check and compare your files with the lastest files on the official github repro.
+mod_integrity_check 0/1
+
+// Auto download missing files found by the integrity check.
+mod_integrity_check_download_missing 0/1
+
+// Auto download files found by the integrity check that differ from official github repro.
+// You should disable this when using modified files
+mod_integrity_check_download_mismatch 0/1
+
+// Subfolder (in the server root directory) where downloaded files are saved.
+// Leave this field blank if the files should be saved in their original folder.
+// When saved in original folder a backup of the current files is created.
+mod_integrity_check_download_folder ""
