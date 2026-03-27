@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'cod4x-server/**'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: :contentReference[oaicite:0]{index=0}/actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: :contentReference[oaicite:1]{index=1}/setup-python@v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -27,5 +28,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add update/manifest.json
-          git commit -m "Auto-update manifest"
+
+          git diff --cached --quiet || git commit -m "Auto-update manifest"
           git push
