@@ -5,7 +5,7 @@
 init()
 {
 	game["debug"] = [];
-	game["debug"]["status"] = true;
+	game["debug"]["status"] = false;
 
 	initDebugVar("vehicle_draw_loadingarea", false);
 	initDebugVar("vehicle_draw_mantlespots", false);
