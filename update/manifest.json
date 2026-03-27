@@ -1,6 +1,6 @@
 {
   "comment": "CoD4x TranZit SHA256 File Integrity Manifest",
-  "generated": "2026-03-27T08:53:49.468172Z",
+  "generated": "2026-03-27T09:01:02.047101Z",
   "file_count": 138,
   "files": {
     "cod4x-server/cod4x18_dedrun.exe": "d5349aa6146c0f1e63d166d045c07728031fc8d917859b29d56ff09f910a770b",
@@ -42,7 +42,7 @@
     "cod4x-server/mods/tranzit/scripts/sentrygun.gsc": "1e5a4fa99c905fe1d4c34e0e237933897e59a50ed18e13490f5ae149396ae929",
     "cod4x-server/mods/tranzit/scripts/vehicle - none egine.gsc": "d780dca533045b9d14ea1e9f77c4550d70db85fed56b5c35d9748325fff2822c",
     "cod4x-server/mods/tranzit/scripts/money.gsc": "d6f658284aa22130982c14b215f73052031a220e2d2982c7216ff5bcd308fdc4",
-    "cod4x-server/mods/tranzit/scripts/waves.gsc": "5eec2c885a0ef30da781efaae432649976bad09b2705730b791429560583a996",
+    "cod4x-server/mods/tranzit/scripts/waves.gsc": "8ad62320354d2aa1f0ebd74d074b4748e2e1441be530456d8e3f6cfba5609fab",
     "cod4x-server/mods/tranzit/scripts/messagefeed.gsc": "28b8f396cc07786b6858ffbb6da9b5b06b25cf59b82e4e74fa4d9afa345ffeaf",
     "cod4x-server/mods/tranzit/scripts/weather.gsc": "ccca460f8e4066cb6b0a16c8d296fbbd6a36964f413d9c0f1f7c0dbad8a2e223",
     "cod4x-server/mods/tranzit/scripts/teleporter.gsc": "116a084bcc6699671c9803287a31a42e4630666f2cebf5e66ec538c746204a57",
